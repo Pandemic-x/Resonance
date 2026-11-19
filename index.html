@@ -1703,7 +1703,17 @@
 <script src="js/versie.js"></script>
 <script src="js/dagroutine.js"></script>
 <script src="js/main.js"></script>
-<script>if ('serviceWorker' in navigator && location.protocol === 'https:') addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
+<script>if ('serviceWorker' in navigator && location.protocol === 'https:'){
+  const t0 = Date.now(), hadSW = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register('sw.js').then(r => r.update()).catch(() => {});
+  // nieuwe versie geïnstalleerd: vlak na het openen meteen verversen; later (midden in het oefenen) eerst een melding
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadSW || window.__swReload) return; window.__swReload = true;
+    if (Date.now() - t0 < 15000) { location.reload(); return; }
+    const m = document.createElement('button'); m.className = 'swnieuw'; m.textContent = 'Nieuwe versie klaar · tik om te laden';
+    m.onclick = () => location.reload(); document.body.appendChild(m);
+  });
+}</script>
 <nav id="tabbar" class="tabbar" aria-label="Hoofdmenu">
   <a href="#" data-t="home"><span class="tbi">🏠</span><span>Home</span></a>
   <a href="#stats" data-t="stats"><span class="tbi">📊</span><span>Statistieken</span></a>

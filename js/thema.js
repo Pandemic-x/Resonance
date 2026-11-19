@@ -96,7 +96,7 @@ const Thema = (function(){
 /* ================= Zachte start (v1.9, wens gebruiker 19-11-2026) =================
    Bij het openen verscheen alles abrupt terwijl de app nog opbouwde. Nu blijft de pagina even onzichtbaar
    (achtergrond staat al goed door het thema) en faden de inhoud in zodra de opbouw klaar is en de letters er zijn
-   (hoogstens 0,7 s wachten op de lettertypes, en altijd zichtbaar na 2,5 s, ook als er iets misgaat). */
+   (hoogstens 0,7 s wachten op de lettertypes, en altijd zichtbaar na 10 s, ook als er iets misgaat). */
 (function(){
   const root = document.documentElement;
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -115,9 +115,19 @@ const Thema = (function(){
   let klaar = false;
   const toon = () => { if (klaar) return; klaar = true; root.classList.add('ingefade', 'eerste'); requestAnimationFrame(() => root.classList.remove('laden'));
     setTimeout(() => root.classList.remove('eerste'), 1400); };
-  setTimeout(toon, 2500);
-  // wachten tot de pagina helemaal is opgebouwd (de rijen op Home komen pas bij 'load') en de letters er zijn
-  const opgebouwd = new Promise(r => { if (document.readyState === 'complete') r(); else window.addEventListener('load', () => setTimeout(r, 30)); });
+  setTimeout(toon, 10000);
+  // wachten tot de pagina is opgebouwd: op Home tot de rijen er staan, elders tot de DOM klaar is (op een trage telefoon
+  // kan 'load' lang duren; daar hoeven we niet op te wachten). Plus de letters.
+  const opgebouwd = new Promise(r => {
+    const klaarVoorTonen = () => {
+      if (document.readyState === 'complete') return true;
+      if (document.readyState === 'loading') return false;
+      const home = !location.hash || location.hash === '#', hl = document.getElementById('homeList');
+      return !home || !!(hl && hl.children.length);
+    };
+    const kijk = () => klaarVoorTonen() ? setTimeout(r, 30) : setTimeout(kijk, 40);
+    kijk();
+  });
   const letters = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 700))]) : Promise.resolve();
   Promise.all([opgebouwd, letters]).then(() => requestAnimationFrame(() => requestAnimationFrame(toon)));
 })();

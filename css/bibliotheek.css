@@ -86,3 +86,6 @@ body.instellingen #setView, body.handleiding #helpView, body.stats #statsView{pa
 .vprow{display:flex;gap:10px;line-height:1.35}
 .vpv{flex:none;width:44px;color:var(--accent);font-weight:600;display:flex;flex-direction:column}
 .vpv small{color:var(--muted);font-weight:400;font-size:11px}
+
+/* melding nieuwe versie (index.html, service worker) */
+.swnieuw{position:fixed;top:max(12px, env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:90;padding:9px 16px;border-radius:999px;border:0;background:var(--accent);color:var(--bg);font:inherit;font-size:13.5px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.35);cursor:pointer}

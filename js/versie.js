@@ -5,8 +5,9 @@
    (wens gebruiker: gewoon doortellen 1.7 → 1.8 → 1.9 → 1.10 …; het eerste getal alleen omhoog bij een
    echt grote update, zoals het gedeelde notensysteem). Zelfde nummer in artifact én website. */
 const Versie = (function(){
-  const VERSIE = '1.10';
+  const VERSIE = '1.11';
   const NIEUW = [
+    ['1.11', '19-11', 'Sneller openen op je telefoon (bestanden uit de cache), zachte start ook bij traag internet, nieuwe versie laadt vanzelf'],
     ['1.10', '19-11', 'Dagroutine: het Atlas-menu staat niet meer bovenaan de routinepagina'],
     ['1.9', '19-11', 'Zachte start: de app fadet in bij het openen in plaats van alles abrupt te tonen'],
     ['1.8', '19-11', 'Dagroutine: kern + roulerend, focus of programma; 10/20/30 min; tips per blok, overzicht en kalender'],

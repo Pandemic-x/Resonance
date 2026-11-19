@@ -203,6 +203,7 @@ const Nav = (function(){
       const b = el.classList.contains('board');
       if (b !== board){ board = b; if (el.classList.contains('on') && Date.now() - lastSlide > 200 && !still()) anim(el, b ? 'slin-l' : 'slin-r'); }
     }).observe(el, { attributes:true, attributeFilter:['class'] }); });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render); else render();   // Home-rijen zo vroeg mogelijk (zachte start, v1.11)
   window.addEventListener('load', () => { watch(); render(); });
   return { NAV, render, catOf, itemOf, slide, depth, CAT_IDS:NAV.map(c => c.id) };
 })();
