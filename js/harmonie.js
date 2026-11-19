@@ -335,10 +335,7 @@ function prAnswer(id){
   if (prQ.answered){ prHear(id); return; }
   var i = prQ.ans.length; if (i >= prQ.ids.length) return;
   prQ.ans.push(id);
-  // akkoord meteen even laten horen, in de stemming waar het in de progressie zou staan
-  var c = hrCh(mode, id), prevUp = i ? prQ.voices[i - 1].up : null;
-  hrStop(); ensureCtx(); var v = hrVoice(prQ.T, c, prevUp), t = actx.currentTime + .03;
-  Engine.note(t, v.bass, .6, { inst:prS.inst, vol:.24 }); v.up.forEach(function(m){ Engine.note(t, m, .6, { inst:prS.inst, vol:.16 }); });
+  // geen geluid bij het invullen (wens gebruiker 19-11): anders hoor je meteen of je keuze klopt. Na het nakijken kun je elk akkoord wel beluisteren.
   prRenderSlots();
   if (prQ.ans.length === prQ.ids.length) prFinish();
 }
@@ -376,7 +373,7 @@ function prRenderSlots(){
     }
     return '<button type="button" class="' + cls + '" data-i="' + i + '">' + inner + '</button>';
   }).join('');
-  box.querySelectorAll('.hrslot').forEach(function(b){ b.onclick = function(){ b.blur(); var i = +b.dataset.i; if (prQ.answered) prHear(prQ.ids[i]); else if (prQ.ans[i] != null) prHear(prQ.ans[i]); }; });
+  box.querySelectorAll('.hrslot').forEach(function(b){ b.onclick = function(){ b.blur(); var i = +b.dataset.i; if (prQ.answered) prHear(prQ.ids[i]); }; });
 }
 function prKeyFor(c){ return c.sec || c.bor || c.hide ? '' : (c.sev ? '⇧' : '') + (c.step + 1); }
 function prRenderPad(){
