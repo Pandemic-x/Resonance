@@ -5,8 +5,9 @@
    (wens gebruiker: gewoon doortellen 1.7 → 1.8 → 1.9 → 1.10 …; het eerste getal alleen omhoog bij een
    echt grote update, zoals het gedeelde notensysteem). Zelfde nummer in artifact én website. */
 const Versie = (function(){
-  const VERSIE = '1.7';
+  const VERSIE = '1.8';
   const NIEUW = [
+    ['1.8', '19-11', 'Dagroutine: kern + roulerend, focus of programma; 10/20/30 min; tips per blok, overzicht en kalender'],
     ['1.7', '19-11', 'Versienummer op het startscherm; Drone kan alle 21 toonladders uit de theoriebibliotheek; Toonsoorten uit de bibliotheek'],
     ['1.6', '19-11', 'Akkoordsymbolen: slash chords (omkeringen) en 13 uitgebreide akkoorden'],
     ['1.5', '19-11', 'Akkoordprogressies: geen geluid meer bij het invullen'],

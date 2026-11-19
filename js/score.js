@@ -209,7 +209,12 @@ const Score = (function(){
     return L.join('\n');
   }
 
-  return { def, ask, heard, log:add, tally, recent, today, clear, render, summary };
+  // voor de Dagroutine (19-11-2026): welke onderdelen er zijn, leesbare labels, antwoorden sinds een tijdstip, oefentijd per dag
+  const meta = () => Object.keys(defs).map(id => ({ id, name:defs[id].name, view:defs[id].view }));
+  const label = (id, k) => { const d = defs[id]; try { return d && d.label ? d.label(k) : k; } catch(e){ return k; } };
+  const since = t => log.filter(e => e.t >= t);
+  const daySecs = d => secs(d || dayKey());
+  return { def, ask, heard, log:add, tally, recent, today, clear, render, summary, meta, label, since, daySecs, streak };
 })();
 function scOnRoute(){ if (typeof view !== 'undefined' && view === 'stats') Score.render(); }
 window.addEventListener('load', scOnRoute);

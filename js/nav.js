@@ -127,7 +127,7 @@ const Nav = (function(){
     const out = [{ name:'Home', icon:'🏠', go:() => goRoute('') }];
     const c = catOf(v);
     if (!c){                                         // instellingen, handleiding
-      out.push({ name:v === 'instellingen' ? 'Instellingen' : v === 'handleiding' ? 'Handleiding' : v });
+      out.push({ name:v === 'instellingen' ? 'Instellingen' : v === 'handleiding' ? 'Handleiding' : v === 'dagroutine' ? 'Dagroutine' : v });
       return out;
     }
     const sibs = NAV.map(x => ({ name:x.name, icon:x.icon, on:x === c, go:() => goRoute(x.direct || x.id) }));
