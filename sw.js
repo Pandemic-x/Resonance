@@ -1,6 +1,6 @@
 // Resonance service worker: app werkt offline na het eerste bezoek.
 // Verhoog VERSION bij elke nieuwe versie, dan halen telefoons de update op.
-const VERSION = 'resonance-v12';
+const VERSION = 'resonance-v13';
 const CORE = [
  "./",
  "index.html",
@@ -68,6 +68,7 @@ const CORE = [
  "js/toonsoorten.js",
  "js/vraag-app.js",
  "js/vraag.js",
+ "js/versie.js",
  "js/sync.js",
  "js/vendor/supabase.js"
 ];

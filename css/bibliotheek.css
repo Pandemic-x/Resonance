@@ -74,3 +74,15 @@ html.libopen{overflow:hidden}
 .tabback[hidden]{display:none}
 body.instellingen #setView, body.handleiding #helpView, body.stats #statsView{padding-top:46px}
 .libtop, .libchips, .libfoot{flex:none}
+
+/* versienummer linksboven op Home (js/versie.js) */
+.versiebtn{position:absolute;top:max(22px, calc(env(safe-area-inset-top) + 8px));left:18px;padding:4px 9px;border-radius:999px;border:1px solid transparent;background:none;
+  color:var(--muted);font:inherit;font-size:11.5px;letter-spacing:.06em;cursor:pointer;opacity:.75;transition:opacity .15s, border-color .15s, color .15s}
+.versiebtn:hover{opacity:1;border-color:var(--line);color:var(--accent)}
+.versiebtn[hidden]{display:none}
+.versiepop{position:absolute;top:58px;left:14px;z-index:30;width:min(340px, calc(100% - 28px));background:var(--paper);border:1px solid var(--line);border-radius:14px;
+  padding:12px 14px;box-shadow:0 14px 40px rgba(0,0,0,.35);font-size:13px;display:flex;flex-direction:column;gap:8px}
+.versiepop > b{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.vprow{display:flex;gap:10px;line-height:1.35}
+.vpv{flex:none;width:44px;color:var(--accent);font-weight:600;display:flex;flex-direction:column}
+.vpv small{color:var(--muted);font-weight:400;font-size:11px}
