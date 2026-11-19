@@ -97,5 +97,5 @@ html.drloopt body{padding-bottom:84px}
 /* rij op Home */
 .navrow.drhome{border-color:color-mix(in srgb, var(--accent) 55%, var(--line));background:color-mix(in srgb, var(--accent) 12%, var(--paper));margin-bottom:calc(14px - clamp(36px,9vh,90px))}
 .navrow.drhome .nri{color:var(--accent)}
-body.dagroutine header .controls, body.dagroutine header .tabrow{display:none}
+body.dagroutine header .controls, body.dagroutine header .tabrow, body.dagroutine #nav{display:none}
 .dradd{background:var(--bg);color:var(--ink);border:1px dashed var(--edge, var(--line));border-radius:999px;padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer}
