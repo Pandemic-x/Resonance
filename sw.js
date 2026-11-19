@@ -1,6 +1,6 @@
 // Resonance service worker: app werkt offline na het eerste bezoek.
 // Verhoog VERSION bij elke nieuwe versie, dan halen telefoons de update op.
-const VERSION = 'resonance-v5';
+const VERSION = 'resonance-v6';
 const CORE = [
  "./",
  "index.html",
@@ -76,8 +76,8 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
-// Eerst uit de cache (snel en offline), op de achtergrond verversen.
-// Geluidsbestanden en lettertypes worden bewaard zodra ze één keer gebruikt zijn.
+// Eigen bestanden: eerst het netwerk (altijd de nieuwste versie), de cache alleen als je offline bent.
+// Geluiden en lettertypes: eerst uit de cache (groot en veranderen niet), op de achtergrond verversen.
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
@@ -85,9 +85,18 @@ self.addEventListener('fetch', e => {
   const own = url.origin === location.origin;
   const fonts = /fonts\.(googleapis|gstatic)\.com$/.test(url.hostname);
   if (!own && !fonts) return;
+  const zwaar = fonts || url.pathname.includes('/sounds/');
   e.respondWith(caches.open(VERSION).then(async c => {
-    const hit = await c.match(req, { ignoreSearch: own });
-    const net = fetch(req).then(r => { if (r && (r.ok || r.type === 'opaque')) c.put(req, r.clone()); return r; }).catch(() => hit);
-    return hit || net;
+    const hit = () => c.match(req, { ignoreSearch: own });
+    if (zwaar){
+      const h = await hit();
+      const net = fetch(req).then(r => { if (r && (r.ok || r.type === 'opaque')) c.put(req, r.clone()); return r; }).catch(() => h);
+      return h || net;
+    }
+    try {
+      const r = await fetch(req, { cache: 'no-cache' });
+      if (r && r.ok) c.put(req, r.clone());
+      return r;
+    } catch(err){ return (await hit()) || Response.error(); }
   }));
 });
