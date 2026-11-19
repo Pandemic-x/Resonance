@@ -75,9 +75,23 @@ const Theorie = (function(){
     chord('dom7b9','7♭9',                 '7♭9',                 '7♭9',    'jazz', '1 3 5 ♭7 ♭9',  false, 'dominant 7th + kleine none'),
     chord('dom7s9','7♯9',                 '7♯9',                 '7♯9',    'jazz', '1 3 5 ♭7 ♯9',  false, 'dominant 7th + overmatige none (Hendrix-akkoord)'),
     chord('dom11', '11th',                '11th',                '11',     'jazz', '1 5 ♭7 9 11',  false, 'dominant 9th met kwart, zonder terts'),
-    chord('dom13', '13th',                '13th',                '13',     'jazz', '1 3 5 ♭7 9 13',false, 'dominant 9th + grote tredecime (zonder 11)')
+    chord('dom13', '13th',                '13th',                '13',     'jazz', '1 3 5 ♭7 9 13',false, 'dominant 9th + grote tredecime (zonder 11)'),
+    // uitgebreid (19-11-2026, wens gebruiker: alle gangbare akkoorden ook als symbool oefenen)
+    chord('add9',  'add9',                'add9',                'add9',   'ext',  '1 3 5 9',      false, 'major + none, zonder septiem'),
+    chord('madd9', 'minor add9',          'minor add9',          'm(add9)','ext',  '1 ♭3 5 9',     false, 'minor + none, zonder septiem'),
+    chord('six9',  '6/9',                 '6/9',                 '6/9',    'ext',  '1 3 5 6 9',    false, 'major 6th + none'),
+    chord('sus7',  '7sus4',               '7sus4',               '7sus4',  'ext',  '1 4 5 ♭7',     false, 'sus4 + kleine septiem'),
+    chord('sus9',  '9sus4',               '9sus4',               '9sus4',  'ext',  '1 4 5 ♭7 9',   false, '7sus4 + none'),
+    chord('aug7',  'augmented 7th',       'augmented 7th',       '7♯5',    'ext',  '1 3 ♯5 ♭7',    false, 'augmented + kleine septiem (ook +7)'),
+    chord('dom7b5','7♭5',                 '7♭5',                 '7♭5',    'ext',  '1 3 ♭5 ♭7',    false, 'dominant 7th met verlaagde kwint'),
+    chord('augmaj7','augmented major 7th','augmented major 7th', 'maj7♯5', 'ext',  '1 3 ♯5 7',     false, 'augmented + grote septiem'),
+    chord('maj7s11','maj7♯11',            'maj7♯11',             'maj7♯11','ext',  '1 3 5 7 ♯11',  false, 'major 7th + overmatige undecime (lydisch)'),
+    chord('dom7s11','7♯11',               '7♯11',                '7♯11',   'ext',  '1 3 5 ♭7 ♯11', false, 'dominant 7th + overmatige undecime'),
+    chord('min11', 'minor 11th',          'minor 11th',          'm11',    'ext',  '1 ♭3 5 ♭7 9 11', false, 'minor 9th + undecime'),
+    chord('maj13', 'major 13th',          'major 13th',          'maj13',  'ext',  '1 3 5 7 9 13', false, 'major 9th + tredecime (zonder 11)'),
+    chord('min13', 'minor 13th',          'minor 13th',          'm13',    'ext',  '1 ♭3 5 ♭7 9 13', false, 'minor 9th + tredecime (zonder 11)')
   ];
-  const CHORD_GROUPS = [['drie', 'Drieklanken'], ['sept', '7th-akkoorden'], ['jazz', 'Jazz-akkoorden']];
+  const CHORD_GROUPS = [['drie', 'Drieklanken'], ['sept', '7th-akkoorden'], ['jazz', 'Jazz-akkoorden'], ['ext', 'Uitgebreid (add9, 6/9, sus, ♯11, 11, 13)']];
   const TONICS = {
     c:   [{ l:'c', a:0 }],
     wit: LETS.split('').map(l => ({ l, a:0 })),

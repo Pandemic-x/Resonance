@@ -939,7 +939,7 @@
 
 <div id="asView" class="view">
   <section class="rpanel" id="asPanel">
-    <div class="sechead pnlrow"><h2>🔣 Akkoordsymbolen</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Je ziet een akkoordsymbool, zoals in een leadsheet of jazzboek: <b>Dm7</b>, <b>B♭maj7</b>, <b>F♯ø7</b>, <b>G7♭9</b>. Tik de tonen aan op het klavier (nog eens tikken = weer weg) en kijk na. De ligging maakt niet uit, alleen welke tonen; met <i>Grondtoon onderaan</i> moet de laagste toon de grondtoon zijn. Na het nakijken zie je de juiste tonen, de formule (1 ♭3 5 ♭7) en hoor je het akkoord. <kbd data-key="controleer"></kbd> = nakijken / volgende, <kbd data-key="wis"></kbd> = alles wissen, <kbd data-key="luister"></kbd> = je keuze horen.</p></details><div class="ropts pnlkey"><label>Niveau <select id="asLevel"></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <div class="sechead pnlrow"><h2>🔣 Akkoordsymbolen</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Je ziet een akkoordsymbool, zoals in een leadsheet of jazzboek: <b>Dm7</b>, <b>B♭maj7</b>, <b>F♯ø7</b>, <b>G7♭9</b>. Tik de tonen aan op het klavier (nog eens tikken = weer weg) en kijk na. De ligging maakt niet uit, alleen welke tonen; met <i>Grondtoon onderaan</i> moet de laagste toon de grondtoon zijn. Met <i>Omkeringen</i> krijg je ook slash chords zoals <b>C/E</b> of <b>G7/B</b>: dan moet de toon na de / de laagste zijn. Na het nakijken zie je de juiste tonen, de formule (1 ♭3 5 ♭7) en hoor je het akkoord. <kbd data-key="controleer"></kbd> = nakijken / volgende, <kbd data-key="wis"></kbd> = alles wissen, <kbd data-key="luister"></kbd> = je keuze horen.</p></details><div class="ropts pnlkey"><label>Niveau <select id="asLevel"></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
     <aside class="pnl" data-title="Akkoordsymbolen">
       <div class="rlabel">Akkoorden</div>
       <div id="asChips" class="aschips"></div>
@@ -950,6 +950,7 @@
       </div>
       <div class="ropts">
         <label><input type="checkbox" id="asBassChk"> Grondtoon onderaan</label>
+        <label title="Bv. C/E of G7/B: de toon na de / moet de laagste zijn. Alleen bij akkoorden die omgekeerd hetzelfde akkoord blijven."><input type="checkbox" id="asSlash"> Omkeringen (slash chords)</label>
         <label><input type="checkbox" id="asHear"> Toon horen bij aantikken</label>
         <label><input type="checkbox" id="asAuto"> Automatisch door als het goed is</label>
       </div>
