@@ -1,18 +1,19 @@
 /* ================= Versienummer op het startscherm (19-11-2026, wens gebruiker) =================
-   Linksboven op Home staat klein "v2.6.0". Tik erop = wat er in de laatste versies veranderd is.
+   Linksboven op Home staat klein "v1.7". Tik erop = wat er in de laatste versies veranderd is.
    Uit te zetten in Instellingen → Weergave → "Versienummer op het startscherm" (opslag 'versie-tonen' = '0').
    CLAUDE: bij elke aanpassing die je in de app zet: VERSIE ophogen en bovenaan NIEUW een regel toevoegen
-   (patch = kleine fix, minor = nieuwe functie, major = grote verbouwing). Zelfde nummer in artifact én website. */
+   (wens gebruiker: gewoon doortellen 1.7 → 1.8 → 1.9 → 1.10 …; het eerste getal alleen omhoog bij een
+   echt grote update, zoals het gedeelde notensysteem). Zelfde nummer in artifact én website. */
 const Versie = (function(){
-  const VERSIE = '2.6.0';
+  const VERSIE = '1.7';
   const NIEUW = [
-    ['2.6.0', '19-11', 'Versienummer op het startscherm; Drone kan alle 21 toonladders uit de theoriebibliotheek; Toonsoorten uit de bibliotheek'],
-    ['2.5.0', '19-11', 'Akkoordsymbolen: slash chords (omkeringen) en 13 uitgebreide akkoorden'],
-    ['2.4.1', '19-11', 'Akkoordprogressies: geen geluid meer bij het invullen'],
-    ['2.4.0', '19-11', 'Absoluut gehoor: − = mol, + = kruis vóór de letter'],
-    ['2.3.0', '19-11', 'Bibliotheek met zoeken en favorieten, Doorgaan-knop, ← Home op Instellingen'],
-    ['2.2.0', '19-11', 'Synchroniseren tussen apparaten (website)'],
-    ['2.1.0', '19-11', 'Zwart thema met Resonance-paars, website met app-icoon']
+    ['1.7', '19-11', 'Versienummer op het startscherm; Drone kan alle 21 toonladders uit de theoriebibliotheek; Toonsoorten uit de bibliotheek'],
+    ['1.6', '19-11', 'Akkoordsymbolen: slash chords (omkeringen) en 13 uitgebreide akkoorden'],
+    ['1.5', '19-11', 'Akkoordprogressies: geen geluid meer bij het invullen'],
+    ['1.4', '19-11', 'Absoluut gehoor: − = mol, + = kruis vóór de letter'],
+    ['1.3', '19-11', 'Bibliotheek met zoeken en favorieten, Doorgaan-knop, ← Home op Instellingen'],
+    ['1.2', '19-11', 'Synchroniseren tussen apparaten (website)'],
+    ['1.1', '19-11', 'Zwart thema met Resonance-paars, website met app-icoon']
   ];
   const KEY = 'versie-tonen';
   const aan = () => { try { return localStorage.getItem(KEY) !== '0'; } catch(e){ return true; } };
