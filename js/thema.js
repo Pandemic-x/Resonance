@@ -22,7 +22,7 @@ const Thema = (function(){
   try { if (!localStorage.getItem('thema-v2')){ localStorage.setItem(KEY, 'donker'); localStorage.setItem(AKEY, 'resonance'); localStorage.setItem(TKEY, '60'); localStorage.setItem('thema-v2', '1'); } } catch(e){}
   // [id, naam, licht, donker]
   const ACCENTS = [
-    ['resonance','Resonance','#8b3fd9','#b57bf7'], ['oranje','Oranje','#c2410c','#f0712c'], ['rood','Rood','#be123c','#fb7185'], ['roze','Roze','#db2777','#f472b6'],
+    ['resonance','Resonance','#7442e0','#a387fb'], ['oranje','Oranje','#c2410c','#f0712c'], ['rood','Rood','#be123c','#fb7185'], ['roze','Roze','#db2777','#f472b6'],
     ['paars','Paars','#7c3aed','#a78bfa'], ['indigo','Indigo','#4f46e5','#818cf8'], ['blauw','Blauw','#2563eb','#60a5fa'],
     ['petrol','Petrol','#0f766e','#2dd4bf'], ['groen','Groen','#15803d','#4ade80'], ['goud','Goud','#a16207','#facc15']
   ];

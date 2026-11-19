@@ -1,6 +1,6 @@
 // Resonance service worker: app werkt offline na het eerste bezoek.
 // Verhoog VERSION bij elke nieuwe versie, dan halen telefoons de update op.
-const VERSION = 'resonance-v2';
+const VERSION = 'resonance-v3';
 const CORE = [
  "./",
  "index.html",

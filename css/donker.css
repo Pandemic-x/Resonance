@@ -4,7 +4,7 @@
 html.dark{
   color-scheme:dark;
   --bg:#0c0b10; --paper:#16141c; --ink:#ece8f2; --muted:#a39cb0; --line:#2c2836;
-  --accent:#b57bf7; --accent-soft:#2e2140; --beat:#433d4f; --low:#60a5fa;
+  --accent:#a387fb; --accent-soft:#262143; --beat:#433d4f; --low:#60a5fa;
   --edge:#4a4458; --soft:#1e1b26; --soft2:#25212f;
 }
 html.dark header{background:var(--header-bg)}
