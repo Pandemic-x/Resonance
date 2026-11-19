@@ -1,0 +1,463 @@
+/* ================= Partituren (#ptView) — alleen variabelen, zodat licht/donker en themakleur werken ================= */
+body.partituren nav, body.partituren .controls{display:none}
+
+#ptView.pt-lib .ptplayer, #ptView.pt-lib .ptonlyplay, #ptView.pt-lib aside.pnl{display:none}
+#ptView.pt-play .ptlibbox{display:none}
+
+/* bibliotheek */
+.ptlibbox{border:2px dashed transparent;border-radius:14px;padding:4px;transition:border-color .15s}
+.ptlibbox.drag{border-color:var(--accent);background:var(--accent-soft)}
+.ptlibhead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.ptadd{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;font-size:15px;padding:9px 16px;border-radius:999px;background:var(--accent);color:#fff;border:1px solid var(--accent)}
+.ptadd input{display:none}
+.ptlist{display:flex;flex-direction:column;gap:8px;max-width:720px}
+.ptrow{display:flex;gap:8px;align-items:stretch}
+.ptopen{flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:12px 16px;border-radius:14px;border:1px solid var(--line);background:var(--soft, var(--paper));color:var(--ink);cursor:pointer;font:inherit}
+.ptopen:hover{border-color:var(--accent)}
+.ptopen b{font-size:16px}
+.ptopen small{color:var(--muted);font-size:13px}
+.ptdel{border:1px solid var(--line);background:var(--paper);color:var(--muted);border-radius:12px;padding:0 12px;cursor:pointer;font:inherit;font-size:13px}
+.ptdel.arm{color:var(--accent);border-color:var(--accent)}
+.ptempty{margin:4px 0 8px}
+.ptwhere{font-size:13px;max-width:720px;margin-top:16px}
+
+/* speler */
+.ptbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.pttitle{display:flex;flex-direction:column;min-width:0}
+.pttitle b{font-size:17px}
+.pttitle small{color:var(--muted);font-size:13px}
+.ptsmall{font:inherit;font-size:14px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.ptsmall:hover{border-color:var(--accent)}
+.ptctrl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-bottom:10px;font-size:14px;color:var(--muted)}
+.ptplaybtn{font:inherit;font-weight:600;font-size:15px;padding:8px 18px;border-radius:999px;min-width:118px;cursor:pointer}
+.pttempo{display:inline-flex;align-items:center;gap:4px}
+.pttempo button{font:inherit;font-size:13px;padding:4px 9px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.pttempo button:hover{border-color:var(--accent)}
+.ptbpm{min-width:84px;text-align:center;color:var(--ink);font-size:15px}
+.ptbpm b{font-size:18px}
+.ptchk{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.ptblk input[type=number]{font:inherit;font-weight:600;width:62px;border:1px solid var(--line);border-radius:8px;padding:3px 6px;background:var(--paper);color:var(--ink)}
+.ptround{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ptmsg{font-size:14px;min-height:0;margin:0 0 8px}
+.ptmsg:empty{display:none}
+.ptmsg.busy{color:var(--muted)}
+.ptmsg.bad{color:#c0392b}
+.ptmsg.muted{color:var(--muted)}
+.pttip{font-size:12px;margin:8px 0 0}
+.ptnote{font-size:12px;margin:-8px 0 12px}
+#ptInc, #ptMax{width:64px}
+
+/* de partituur: kleuren volgen het thema (zoals de notatie-kern) */
+.ptsheet{background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:6px 4px;overflow-x:auto;min-height:120px;position:relative}
+/* OSMD 2 zet geen fill meer op gevulde vormen, maar één keer zwart als inline-stijl op de <svg> van de bladzijde
+   (style="fill:#000000"): die overschrijven (vandaar !important), dan erven nootkoppen, balken, tekst enz. de kleur
+   van het papier. Groepen met fill="none" blijven leeg. */
+.ptsheet svg{fill:currentColor !important}
+.ptsheet svg [fill]:not([fill="none"]){fill:currentColor}
+.ptsheet svg [stroke]:not([stroke="none"]){stroke:currentColor}
+.ptsheet svg .ptn{cursor:pointer}
+.ptsheet{--ptdim:color-mix(in srgb, currentColor 30%, transparent)}
+.ptsheet svg .ptout [fill]:not([fill="none"]), .ptsheet svg .ptout[fill]:not([fill="none"]){fill:var(--ptdim)}
+.ptsheet svg .ptout [stroke]:not([stroke="none"]), .ptsheet svg .ptout[stroke]:not([stroke="none"]){stroke:var(--ptdim)}
+.ptsheet svg .pthi [fill]:not([fill="none"]), .ptsheet svg .pthi[fill]:not([fill="none"]){fill:var(--accent)}
+.ptsheet svg .pthi [stroke]:not([stroke="none"]), .ptsheet svg .pthi[stroke]:not([stroke="none"]){stroke:var(--accent)}
+.ptsheet svg .ptout{fill:var(--ptdim)}   /* OSMD 2: vormen zonder fill erven dit van de groep */
+.ptsheet svg .pthi{fill:var(--accent)}
+.ptsheet svg .pthi{opacity:1}
+#ptUnitSym{font-family:"Segoe UI Symbol","Noto Music","Apple Symbols","Bravura Text",serif;font-size:18px}
+
+/* titelbalk, papier, rechts uitgelijnde knoppen */
+.ptinstr{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin-left:auto}
+.ptinstr select, .ptpasctl select{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:3px 6px;background:var(--paper);color:var(--ink)}
+.ptright{display:inline-flex;gap:8px;margin-left:auto}
+.ptsheet.ptpaperlight{background:#fffdf9;color:#1d1b19;border-color:#e3ded7}
+.ptsheet.ptpaperdark{background:#1b1a19;color:#ece7df;border-color:#35322e}
+
+/* bibliotheek: vandaag + filters */
+.pttoday .rlabel{margin:4px 0 6px}
+.pttodaylist{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.pttodayb{display:grid;grid-template-columns:auto 1fr;column-gap:8px;text-align:left;padding:10px 14px;border-radius:14px;border:1px solid var(--accent);background:var(--accent-soft, var(--paper));color:var(--ink);cursor:pointer;font:inherit;max-width:340px}
+.pttodayb span{grid-row:span 2;font-size:18px;align-self:center}
+.pttodayb small{color:var(--muted);font-size:12px}
+.ptfilter{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.ptfilter:empty{display:none}
+.ptfchip{font:inherit;font-size:13px;padding:4px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.ptfchip.on{border-color:var(--accent);background:var(--accent-soft, var(--paper));font-weight:600}
+
+/* passages */
+.ptpas{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:10px;background:var(--soft, var(--paper))}
+.ptpashead{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:8px}
+.ptpasname{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ptpasname input{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:5px 8px;min-width:220px;background:var(--paper);color:var(--ink)}
+.ptpaslist{display:flex;flex-wrap:wrap;gap:8px}
+.ptpasempty{font-size:13px}
+.ptpchip{display:inline-flex;align-items:stretch;border:1px solid var(--line);border-radius:12px;background:var(--paper);overflow:hidden}
+.ptpchip.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.ptpload{display:grid;grid-template-columns:auto 1fr;column-gap:8px;text-align:left;padding:7px 10px;border:0;background:none;color:var(--ink);cursor:pointer;font:inherit}
+.ptpst{grid-row:span 2;align-self:center;font-size:16px}
+.ptpload b{font-size:14px}
+.ptpload small{color:var(--muted);font-size:12px}
+.ptpdel{border:0;border-left:1px solid var(--line);background:none;color:var(--muted);padding:0 9px;cursor:pointer;font:inherit;font-size:12px}
+.ptpdel.arm{color:var(--accent)}
+.ptpasctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:13px;color:var(--muted)}
+.ptpasctl label{display:inline-flex;align-items:center;gap:6px}
+.ptpasctl input[type=number]{font:inherit;width:62px;border:1px solid var(--line);border-radius:8px;padding:3px 6px;background:var(--paper);color:var(--ink)}
+.ptpascur{color:var(--ink)}
+.ptchg{color:var(--accent);font-size:12px}
+.ptpasinfo{font-size:12px}
+#ptPasUpd.hot{border-color:var(--accent);color:var(--accent);font-weight:600}
+#ptStap{width:56px}
+.ptmsg.ok{color:var(--ink);font-weight:600}
+
+/* volledig scherm */
+body.ptfson{overflow:hidden}
+.ptfs{position:fixed;inset:0;z-index:10000;background:#e9e6e1;overflow:hidden}
+.ptfs[hidden]{display:none}
+.ptfs.ptpaperdark{background:#0f0e0d}
+.ptfsrot{position:absolute;top:0;left:0;transform-origin:0 0;display:flex;flex-direction:column}
+.ptfsbar{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;padding:6px 10px;background:var(--paper);color:var(--ink);border-bottom:1px solid var(--line);font-size:13px;overflow-x:auto;scrollbar-width:none}
+.ptfsbar::-webkit-scrollbar{display:none}
+.ptfsbar > button{font:inherit;font-size:14px;min-width:34px;padding:5px 9px;border-radius:9px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;flex:none}
+.ptfsbar > button.primary{background:var(--accent);border-color:var(--accent);color:#fff;min-width:44px}
+.ptfsbar > button:disabled{opacity:.35;cursor:default}
+.ptfsbar .pttempo{flex:none}
+.ptfsinfo{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.ptfsgap{flex:1 1 0}
+.ptfspg{color:var(--muted);white-space:nowrap;min-width:72px;text-align:center;flex:none}
+.ptfspage{flex:1;overflow:auto;padding:6px 8px}
+.ptfsbox{margin:0 auto;position:relative}
+.ptfs .ptsheet{border:0;border-radius:4px;padding:0;min-height:0;overflow:visible;box-shadow:0 2px 14px rgba(0,0,0,.18)}
+.ptfs .ptsheet > *{flex:none}
+#ptView [hidden]{display:none !important}
+#ptFsFollow.on{border-color:var(--accent);color:var(--accent);font-weight:700}
+#ptFollowBtn.on{border-color:var(--accent);color:var(--accent)}
+
+/* compacte balk + passage-strook */
+.ptstrip{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:-2px 0 10px;padding:6px 10px;border:1px solid var(--line);border-radius:12px;background:var(--soft, var(--paper));font-size:13px;color:var(--muted)}
+.ptstripname{color:var(--ink)}
+.ptstripname small{color:var(--muted)}
+.ptstripinfo{font-size:12px}
+.ptctrl .pnlbtn{margin:0}
+
+/* in het paneel: passages onder elkaar */
+aside.pnl .ptpas{padding:8px;background:transparent;border-style:dashed}
+aside.pnl .ptpaslist{flex-direction:column}
+aside.pnl .ptpchip{width:100%}
+aside.pnl .ptpload{flex:1}
+aside.pnl .ptpasname input{min-width:0;flex:1}
+aside.pnl .ptblk input[type=number]{width:62px}
+
+/* lagen en glijdende cursor */
+.ptlayer{position:relative}
+.ptline{position:absolute;width:3px;border-radius:2px;background:var(--accent);box-shadow:0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent), 0 0 10px color-mix(in srgb, var(--accent) 55%, transparent);pointer-events:none;z-index:3;opacity:.9}
+
+/* oefenblok + zoom boven de partituur */
+.ptblock{padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--soft, var(--paper))}
+.ptzoom{display:inline-flex;align-items:center;gap:6px;margin-left:auto}
+.ptzoom input[type=range]{width:110px;accent-color:var(--accent)}
+.ptzoom .ptsmall{min-width:32px;padding:4px 8px;font-weight:600}
+#ptZoomVal{min-width:40px;font-variant-numeric:tabular-nums}
+.ptblock .ptpasname input{min-width:180px}
+.ptfspage{position:relative}
+.ptfsload{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);z-index:5;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:14px 20px;font-size:15px;font-weight:600;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+.ptfsload small{display:block;font-weight:400;color:var(--muted);font-size:12px;margin-top:4px}
+
+/* ---- volledig scherm: rustiger en strakker ---- */
+.ptfs{opacity:0;transition:opacity .2s ease}
+.ptfs.show{opacity:1}
+.ptfsbox{transition:opacity .18s ease}
+.ptfsbox.prep{opacity:0}
+.ptfsbar{gap:10px;padding:6px 12px;border-bottom:1px solid color-mix(in srgb, var(--line) 70%, transparent);background:color-mix(in srgb, var(--paper) 92%, transparent);backdrop-filter:blur(6px)}
+.ptfsbar button{font:inherit;font-size:14px;line-height:1;min-width:30px;height:30px;padding:0 8px;border-radius:8px;border:0;background:transparent;color:var(--ink);cursor:pointer;flex:none;transition:background .12s}
+.ptfsbar button:hover:not(:disabled){background:color-mix(in srgb, var(--ink) 8%, transparent)}
+.ptfsbar button:disabled{opacity:.3;cursor:default}
+.ptfsg{display:inline-flex;align-items:center;gap:2px;flex:none;padding-left:10px;border-left:1px solid color-mix(in srgb, var(--line) 80%, transparent)}
+.ptfsg:first-child{padding-left:0;border-left:0}
+.ptfsbar .ptfsplay{background:var(--accent);color:#fff;min-width:38px;border-radius:999px}
+.ptfsbar .ptfsplay:hover{background:var(--accent-dark, var(--accent))}
+html.dark .ptfsbar .ptfsplay{color:#15130f}
+.ptfsbar .pttempo button{font-size:12px;color:var(--muted)}
+.ptfsbar .ptbpm{min-width:76px}
+.ptfspg{min-width:74px;font-size:12px}
+.ptfsbar #ptFsFollow.on{color:var(--accent);font-weight:700}
+.ptfsclose{margin-left:4px}
+.ptseg{display:inline-flex;flex:none;padding:2px;border-radius:9px;background:color-mix(in srgb, var(--ink) 7%, transparent)}
+.ptseg button{height:26px;font-size:12px;padding:0 10px;border-radius:7px;color:var(--muted)}
+.ptseg button.on{background:var(--paper);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.ptfs.door #ptFsPrev, .ptfs.door #ptFsNext, .ptfs.door .ptfspg{display:none}
+@media (prefers-reduced-motion: reduce){ .ptfs, .ptfsbox{transition:none} }
+
+/* ---- passage-balk: strak, zoals de balk van volledig scherm ---- */
+.ptstrip{display:block;margin:-2px 0 10px;padding:6px 10px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+.ptsrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.ptsname{display:inline-flex;flex-direction:column;line-height:1.15;min-width:0}
+.ptsname b{font-size:14px;color:var(--ink)}
+.ptsname small{font-size:11px;color:var(--muted)}
+.ptsstatus button{height:26px}
+.ptstempo{display:inline-flex;align-items:center;gap:12px;padding-left:12px;border-left:1px solid color-mix(in srgb, var(--line) 80%, transparent)}
+.ptsk{display:inline-flex;flex-direction:column;align-items:flex-start;line-height:1.1;cursor:default}
+.ptsk small{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.ptsk b{font-size:14px;color:var(--ink);font-variant-numeric:tabular-nums}
+.ptsk input{width:52px;height:20px;padding:0 4px;font:inherit;font-size:14px;font-weight:700;border:0;border-bottom:1px dashed var(--line);border-radius:0;background:transparent;color:var(--ink)}
+.ptsk input:focus{outline:none;border-bottom-color:var(--accent)}
+.ptsbar{width:70px;height:5px;border-radius:3px;background:color-mix(in srgb, var(--ink) 9%, transparent);overflow:hidden;align-self:flex-end;margin-bottom:5px}
+.ptsbar i{display:block;height:100%;width:0;background:var(--accent);border-radius:3px;transition:width .25s}
+.ptsbar i.full{background:#2e8b57}
+.ptsgap{flex:1 1 0}
+.ptsbtn{font:inherit;font-size:13px;height:30px;padding:0 10px;border-radius:8px;border:0;background:transparent;color:var(--ink);cursor:pointer;flex:none;transition:background .12s}
+.ptsbtn:hover{background:color-mix(in srgb, var(--ink) 8%, transparent)}
+.ptsbtn.ptsupd{color:var(--accent);font-weight:600}
+.ptsicon{font-size:15px;opacity:.55}
+.ptsicon.on{opacity:1}
+.ptnotesprev{margin-top:6px;padding-top:6px;border-top:1px dashed color-mix(in srgb, var(--line) 80%, transparent);font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ptnotes{margin-top:6px}
+.ptnotes textarea{width:100%;box-sizing:border-box;min-height:64px;resize:vertical;font:inherit;font-size:14px;line-height:1.4;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--soft, var(--paper));color:var(--ink)}
+.ptnotes textarea:focus{outline:none;border-color:var(--accent)}
+.ptseg button{border:0;background:transparent;font:inherit;font-size:12px;cursor:pointer;transition:background .12s}
+.ptseg button:not(.on):hover{background:color-mix(in srgb, var(--ink) 6%, transparent)}
+
+/* ---- volledig scherm in- en uitschuiven (zoals de pagina's van de app) ---- */
+/* (de browser verbiedt transform op het fullscreen-element zelf, daarom schuift de laag erbinnen, met 'translate') */
+.ptfs{transition:opacity .32s ease}
+.ptfsrot{translate:18vw 0;transition:translate .5s cubic-bezier(.2,.8,.2,1)}
+.ptfs.show .ptfsrot{translate:0 0}
+
+/* ---- omslaan: kort wegschuiven en vervagen ---- */
+.ptflip{position:absolute;z-index:4;pointer-events:none;border:0 !important;padding:0 !important;border-radius:4px !important;box-shadow:none !important;overflow:hidden !important}
+@media (prefers-reduced-motion: reduce){ .ptfsrot{translate:none;transition:none} }
+
+/* vaste cursor bij pauze / aangeklikte plek, met labeltje */
+.ptsheet{user-select:none;-webkit-user-select:none}
+.ptline.paused{opacity:.85}
+.ptline.paused::after{content:attr(data-mn);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;padding:2px 7px;border-radius:7px;background:var(--accent);color:#fff;font-size:11px;font-weight:600;line-height:1.3;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+html.dark .ptline.paused::after{color:#15130f}
+
+/* cursor vastpakken en verslepen */
+.ptline{pointer-events:auto;cursor:grab;touch-action:none}
+.ptline::before{content:'';position:absolute;top:0;bottom:0;left:-9px;right:-9px}
+.ptline.drag{cursor:grabbing;opacity:1;width:3px;box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent), 0 0 14px color-mix(in srgb, var(--accent) 60%, transparent)}
+body.ptdragging, body.ptdragging *{cursor:grabbing !important}
+
+/* ⬚ Selecteer passage */
+#ptSelBtn.on{border-color:var(--accent);color:var(--accent);font-weight:600}
+.ptselhint{font-size:13px;color:var(--accent);font-weight:600}
+.ptsheet.ptselecting, .ptsheet.ptselecting *{cursor:crosshair}
+
+.ptline{left:0;top:0;will-change:transform}
+
+.ptsheet svg .pthi [fill]:not([fill="none"]), .ptsheet svg .pthi[fill]:not([fill="none"]){fill:var(--accent)}
+.ptsheet svg .pthi [stroke]:not([stroke="none"]), .ptsheet svg .pthi[stroke]:not([stroke="none"]){stroke:var(--accent)}
+#ptFollowBtn.on{border-color:var(--accent);color:var(--accent)}
+
+/* ---------- 💬 Vraag aan Claude (js/vraag.js) ---------- */
+.pvbtn.on{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+#ptView.pt-lib .pvbox{display:none}
+.pvbox{position:fixed;top:0;right:0;bottom:0;width:min(440px,100vw);z-index:60;display:flex;flex-direction:column;gap:8px;padding:12px 14px;background:var(--paper);color:var(--ink);border-left:1px solid var(--line);box-shadow:-8px 0 30px rgba(0,0,0,.18);transform:translateX(105%);transition:transform .28s ease;visibility:hidden}
+#ptView.pvopen .pvbox{transform:none;visibility:visible}
+@media (prefers-reduced-motion: reduce){.pvbox{transition:none}}
+.pvhead{display:flex;align-items:center;gap:8px}
+.pvhead b{font-size:16px}
+.pvscope{flex:1;min-width:0;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pvx{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;width:32px;height:32px;cursor:pointer;font:inherit}
+.pvx:hover{border-color:var(--accent)}
+#pvClear.arm{border-color:var(--accent);color:var(--accent)}
+.pvmsgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 2px}
+.pvm{max-width:92%;padding:9px 12px;border-radius:14px;font-size:14.5px;line-height:1.45;overflow-wrap:anywhere}
+.pvm p{margin:0 0 6px}.pvm p:last-child{margin-bottom:0}
+.pvm ul,.pvm ol{margin:2px 0 6px;padding-left:20px}
+.pvm li{margin:2px 0}
+.pvm .pvh{font-weight:700;margin-top:6px}
+.pvm code{font-size:13px;background:var(--soft2, var(--soft));padding:0 4px;border-radius:4px}
+.pvu{align-self:flex-end;background:var(--accent-soft);border:1px solid var(--accent)}
+.pvu small{display:block;font-size:11px;color:var(--muted);margin-bottom:2px}
+.pva{align-self:flex-start;background:var(--soft, var(--paper));border:1px solid var(--line)}
+.pvwait .pvdots{color:var(--muted);animation:pvpulse 1.2s ease-in-out infinite}
+@keyframes pvpulse{50%{opacity:.4}}
+.pvempty{color:var(--ink);font-size:14px;padding:8px 4px}
+.pvempty p{margin:0 0 8px}
+.pvquick{display:flex;flex-wrap:wrap;gap:6px}
+.pvquick .ptsmall{font-size:12.5px;padding:4px 10px}
+.pvform{display:flex;gap:8px;align-items:flex-end}
+.pvform textarea{flex:1;resize:vertical;min-height:44px;max-height:160px;font:inherit;font-size:14.5px;padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--bg, var(--paper));color:var(--ink)}
+.pvform textarea:focus{outline:none;border-color:var(--accent)}
+.pvform .primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.pvfoot{font-size:11.5px;margin:0}
+
+/* ---------- 🎬 Opnames (js/opnames.js, prefix po) ---------- */
+.pobtn.on{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+#ptView.pt-lib .pobox{display:none}
+.pobox{position:fixed;top:0;right:0;bottom:0;width:min(440px,100vw);z-index:60;display:flex;flex-direction:column;gap:8px;padding:12px 14px;background:var(--paper);color:var(--ink);border-left:1px solid var(--line);box-shadow:-8px 0 30px rgba(0,0,0,.18);transform:translateX(105%);transition:transform .28s ease;visibility:hidden}
+#ptView.poopen .pobox{transform:none;visibility:visible}
+@media (prefers-reduced-motion: reduce){.pobox{transition:none}}
+.pobox input{font:inherit;font-size:16px;padding:7px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg, var(--paper));color:var(--ink);min-width:0}
+.pobox input:focus{outline:none;border-color:var(--accent)}
+.pobox input.bad{border-color:var(--bad, #c0392b)}
+.pobox .primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.poform{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
+.poform #poUrl{grid-column:1 / -1}
+.pomsg{margin:0;font-size:13px;color:var(--muted);min-height:0}
+.pomsg:empty{display:none}
+.pomsg.bad{color:var(--bad, #c0392b)}
+.poitems{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:2px}
+.poempty{font-size:14px;padding:6px 2px}.poempty p{margin:0 0 8px}
+.poitem{border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--soft, var(--paper))}
+.pohead{display:flex;align-items:center;gap:6px}
+.poname{flex:1;min-width:0;font-weight:700;color:var(--ink);text-decoration:none;overflow-wrap:anywhere}
+.poname:hover{color:var(--accent)}
+.poedit{flex:1}
+.pox{border:1px solid transparent;background:none;color:var(--muted);border-radius:8px;min-width:30px;height:30px;cursor:pointer;font:inherit;font-size:14px}
+.pox:hover{border-color:var(--line);color:var(--ink)}
+.podel.arm{border-color:var(--accent);color:var(--accent);font-size:12.5px}
+.pomarks{list-style:none;margin:8px 0 6px;padding:0;display:flex;flex-direction:column;gap:2px}
+.pomarks li{display:flex;align-items:center;gap:8px;font-size:14.5px}
+.pot{font-variant-numeric:tabular-nums;font-weight:600;color:var(--accent);text-decoration:none;min-width:48px;padding:3px 8px;border-radius:8px;background:var(--accent-soft);text-align:center}
+.pot:hover{text-decoration:underline}
+.pol{flex:1;min-width:0;overflow-wrap:anywhere}.pol small{color:var(--muted)}
+.pono{font-size:13px;margin:6px 0}
+.poadd{display:grid;grid-template-columns:64px minmax(0,1fr) 58px auto;gap:5px;margin-top:4px}
+.poadd input{font-size:16px;padding:5px 8px}
+@media (max-width:420px){.poadd{grid-template-columns:64px minmax(0,1fr) auto}.poadd .pommn{display:none}}
+.pomode{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.pomode button{font:inherit;font-size:13px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.pomode button.on{border-color:var(--accent);background:var(--accent-soft)}
+a.pox.poalt{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-size:12px;font-weight:600}
+.poset{font-size:13px}
+.poset summary{cursor:pointer;color:var(--ink);font-weight:600;padding:4px 0}
+.poset summary span{font-weight:400;color:var(--muted)}
+.poset p{margin:4px 0 6px}
+
+/* 🕹️ → Tempo's in dit stuk (alleen variabelen) */
+.pttempibox{ margin:6px 0 10px; }
+.pttempibox > summary{ cursor:pointer; font-weight:600; padding:4px 0; }
+.pttempi{ display:flex; flex-direction:column; gap:6px; margin-top:6px; }
+.pttrow{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; padding:6px 8px; border:1px solid var(--line); border-radius:8px; background:var(--soft); }
+.pttrow.start{ border-color:var(--accent); }
+.pttname{ flex:1 1 220px; min-width:0; }
+.pttname .muted{ font-size:.85em; }
+.pttin input{ width:64px; }
+.pttclr{ padding:2px 8px; }
+.pttnote{ font-size:.85em; flex-basis:100%; }
+
+/* ================= Speler: één balk, partituur zo groot mogelijk (18-11-2026) =================
+   In de speler verdwijnen de app-kop (kruimelpad) en de kop "Repertoire"; alles staat in één plakkende balk #ptHead.
+   Tijdens het spelen schuift die weg (class pt-hidebar, zie ptBarAuto in partituren.js). */
+body.partituren.ptplaymode header{display:none}
+#ptView.pt-play .sechead{display:none}
+#ptView.pt-play.pt-uitleg .sechead{display:flex}
+#ptView.pt-play > .rpanel{margin-top:0;padding:0 10px 10px;border:0;border-radius:0;background:transparent}
+#ptView.pt-play .pttip{display:none}
+.pthead{position:sticky;top:0;z-index:20;margin:0 -10px 8px;padding:6px 10px 6px;background:var(--bg, #f6f2ea);border-bottom:1px solid var(--line);transition:transform .28s ease, opacity .28s ease}
+#ptView.pt-hidebar .pthead{transform:translateY(calc(-100% - 6px));opacity:0;pointer-events:none}
+@media (prefers-reduced-motion: reduce){.pthead{transition:none}}
+.ptone{flex-wrap:wrap;gap:6px 8px;margin:0;font-size:13px}
+.ptone .pttitle{max-width:230px;min-width:0}
+.ptone .pttitle b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.ptone .pttitle small{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ptsep{width:1px;align-self:stretch;background:var(--line);margin:2px 2px}
+.ptgap{flex:1 1 0}
+.ptone .ptsmall{padding:5px 11px;font-size:13px}
+.ptone .ptic{min-width:32px;height:32px;padding:0 7px;display:inline-flex;align-items:center;justify-content:center;gap:2px;font-size:15px;line-height:1;position:relative}
+.ptone .ptic .ico{margin:0;width:17px;height:17px}
+.ptone .ptic.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.ptone .ptplaybtn{min-width:104px;padding:6px 14px;font-size:14px}
+.ptone .pttempo button{padding:3px 7px;font-size:12px}
+.ptone .ptbpm{min-width:70px;font-size:14px}
+.ptone .ptbpm b{font-size:16px}
+.ptone .ptblk input[type=number]{width:52px;padding:2px 5px}
+.ptone .ptright{display:inline-flex;gap:6px;margin:0}
+.ptone .ptzoom{display:inline-flex;align-items:center;gap:4px}
+.ptone #ptZoomVal{min-width:40px;text-align:center;font-variant-numeric:tabular-nums;color:var(--muted)}
+.ptone .pnlbtn{margin:0}
+.ptcnt{font-size:10px;line-height:1;font-weight:700;color:var(--accent);margin-left:1px}
+.pthead .ptstrip{margin:6px 0 0;padding:4px 8px}
+/* zwevende knoppen tijdens het spelen */
+.ptfab{position:fixed;right:18px;bottom:18px;z-index:25;display:flex;gap:8px}
+.ptfab[hidden]{display:none !important}
+.ptfab button{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-size:20px;line-height:1;cursor:pointer;box-shadow:0 3px 14px rgba(0,0,0,.18);opacity:.55;transition:opacity .15s;display:flex;align-items:center;justify-content:center}
+.ptfab button:hover, .ptfab button:focus-visible{opacity:1}
+.ptfab #ptFabPlay{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ptfab .ico{width:20px;height:20px;margin:0}
+body.ptplaymode .tabbar{display:none}
+@media (max-width:700px){
+  #ptView.pt-play > .rpanel{padding:0 6px 8px}
+  .pthead{margin:0 -6px 6px;padding:5px 6px}
+  .ptone .pttitle{max-width:150px}
+  .ptsep{display:none}
+}
+/* volledig scherm: 1 of 2 bladzijden, tikken/vegen om te bladeren (18-11-2026) */
+.ptfs.door #ptFsPagesSeg{display:none}
+.ptfs:not(.door) .ptfspage{touch-action:pan-y pinch-zoom}
+
+/* Mixer in 🕹️ → Wat je hoort: volume per partij + balans per klank */
+.ptmix{display:flex;flex-direction:column;gap:6px;width:100%}
+.ptmixh{font-size:12px;color:var(--muted);margin-top:4px}
+.ptmixrow{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(70px,1.2fr) 3.2em;align-items:center;gap:8px}
+.ptmixrow[data-b]{grid-template-columns:minmax(0,1.1fr) 0 minmax(70px,2.2fr) 3.2em}
+.ptmixn{display:flex;align-items:center;gap:6px;min-width:0}
+.ptmixn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ptmixk{min-width:0;width:100%}
+.ptmixv{width:100%;accent-color:var(--accent)}
+.ptmixrow output{font-variant-numeric:tabular-nums;text-align:right;font-size:13px;color:var(--muted)}
+.ptmixrow:has(.ptmixon:not(:checked)) .ptmixv,.ptmixrow:has(.ptmixon:not(:checked)) .ptmixk{opacity:.4}
+.ptmixtip{color:var(--muted);font-size:12px;line-height:1.4}
+.ptmixvib{margin-top:4px}
+
+/* Balk mag niet verspringen bij ▶/⏸ (wens gebruiker 18-11): vaste breedte voor de afspeelknop en het maat-/tempolabel */
+.ptplaybtn{white-space:nowrap;width:132px;min-width:0;text-align:center}
+.ptone .ptplaybtn{width:128px;min-width:0}
+.ptround{display:inline-block;width:11.5em;flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+@media (max-width:700px){ .ptround{width:auto;flex:0 1 auto} }
+.ptmixgalm{grid-template-columns:minmax(0,1.1fr) 0 minmax(70px,2.2fr) 3.2em}
+.ptmixg{width:100%;accent-color:var(--accent)}
+
+/* ---------- 🕹️-paneel van de speler: inklapbare blokken met vaste labelkolom (18-11-2026) ---------- */
+.ptpnl{--ptlw:7.6em}
+.ptsec{border-top:1px solid var(--line)}
+.ptsec:first-of-type{border-top:0}
+.ptsec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:12px 2px 10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);user-select:none}
+.ptsec>summary::-webkit-details-marker{display:none}
+.ptsec>summary::after{content:'';margin-left:auto;width:7px;height:7px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;transform:rotate(-45deg);transition:transform .15s;margin-right:4px}
+.ptsec[open]>summary::after{transform:rotate(45deg)}
+.ptsec>summary:hover{color:var(--ink)}
+.ptsec>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.ptsec>.ptpas{margin-bottom:12px}
+.pnl .ptrows{display:flex;flex-direction:column;align-items:stretch;gap:9px;margin:0 0 14px;color:var(--ink)}
+.ptrows .ptrow{display:grid;grid-template-columns:var(--ptlw) minmax(0,1fr);align-items:center;gap:10px;cursor:default}
+.ptrows .ptrow>span:first-child{color:var(--muted);font-size:13.5px;line-height:1.25}
+.ptrows .ptrow select{width:100%;min-width:0}
+.ptrows .ptrow input[type=range]{width:100%;min-width:0;accent-color:var(--accent)}
+.ptrows .ptchk{display:flex;align-items:center;gap:8px;cursor:pointer}
+.ptrows .ptchk input{accent-color:var(--accent);width:16px;height:16px}
+.ptpair{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.ptpair label{display:flex;align-items:center;gap:5px;color:var(--muted)}
+.ptpair small{line-height:1.3}
+.ptrange3{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:6px;color:var(--muted)}
+.ptrange2{display:grid;grid-template-columns:minmax(0,1fr) 3.2em;align-items:center;gap:8px}
+.ptrange2 output{text-align:right;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pthint{margin:-4px 0 0 calc(var(--ptlw) + 10px);font-size:12px;line-height:1.4;color:var(--muted)}
+.pthint:empty{display:none}
+.ptrows .pttempibox{margin:0}
+/* mixer in hetzelfde ritme */
+.ptrows .ptmix{gap:8px;margin-top:2px}
+.ptrows .ptmixh{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:8px 0 0;padding-top:8px;border-top:1px dashed var(--line)}
+.ptrows .ptmixrow{grid-template-columns:var(--ptlw) minmax(0,1fr) minmax(60px,.9fr) 3.2em}
+.ptrows .ptmixrow[data-b]{grid-template-columns:var(--ptlw) 0 minmax(60px,1.9fr) 3.2em}
+.ptrows .ptmixn{font-size:13.5px}
+.ptrows .ptmixvib{margin-top:0}
+.ptrows .ptmixtip{margin-top:2px}
+@media (max-width:420px){ .ptpnl{--ptlw:6.4em} }
+/* partijen: naam + klank op regel 1, volume op regel 2 (anders werd de klankkeuze afgekapt) */
+.ptrows .ptmixrow{grid-template-columns:var(--ptlw) minmax(0,1fr) 3.2em;grid-template-areas:"n k k" ". v o";row-gap:4px}
+.ptrows .ptmixrow>.ptmixn{grid-area:n}
+.ptrows .ptmixrow>.ptmixk{grid-area:k}
+.ptrows .ptmixrow>.ptmixv{grid-area:v}
+.ptrows .ptmixrow>output{grid-area:o}
+.ptrows .ptmixrow[data-b]{grid-template-areas:"n v o"}
+.ptrows .ptmixrow[data-b]>span:not(.ptmixn){display:none}
+.ptrows .ptmixrow + .ptmixrow:not([data-b]){margin-top:4px}
+.ptrows .ptmixrow input.ptmixv{width:100%}
+.ptrows .ptmixrow[data-b]{grid-template-columns:var(--ptlw) minmax(0,1fr) 3.2em}
+
+/* volledig scherm: balk loopt door op een tweede regel als hij niet past (vooral 90° gedraaid), zodat alle knoppen
+   (ook zoom − ＋) altijd zichtbaar zijn; geen zijwaarts scrollen meer nodig */
+.ptfsbar{flex-wrap:wrap;row-gap:4px;overflow:visible}

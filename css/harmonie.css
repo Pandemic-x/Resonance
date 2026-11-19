@@ -1,0 +1,44 @@
+/* Cadensen en Akkoordprogressies (harmonie.js) — alleen variabelen, werkt in licht en donker */
+#cdView, #prView{max-width:1180px;margin:0 auto;padding:20px 20px 80px}
+body.cadensen nav, body.cadensen .controls, body.progressies nav, body.progressies .controls{display:none}
+
+.hrslots{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
+.hrslot{min-width:74px;height:66px;padding:4px 8px;border:2px solid var(--line);border-radius:12px;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:inherit;color:var(--ink);cursor:default}
+button.hrslot{cursor:pointer}
+.hrslot b{font-family:Fraunces,serif;font-size:22px;font-weight:600;line-height:1}
+.hrslot small{font-size:12px;color:var(--muted);font-weight:500;min-height:14px}
+.hrslot.cur{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.hrslot.given{border-style:dashed}
+.hrslot.cad{border-color:var(--accent)}
+.hrslot.play{border-color:var(--accent);background:var(--accent-soft);transform:translateY(-2px);transition:transform .08s}
+.hrslot.right{border-color:#16a34a;background:color-mix(in srgb, #16a34a 10%, var(--paper))}
+.hrslot.wrong{border-color:#dc2626;background:color-mix(in srgb, #dc2626 10%, var(--paper))}
+.hrslot.wrong small{color:#16a34a;font-weight:600}
+
+.cdpad{display:grid;grid-template-columns:repeat(auto-fill, minmax(170px, 1fr));gap:10px;max-width:900px;margin-top:8px}
+.cdbtn{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:14px 14px 12px;border-radius:12px;background:var(--paper);text-align:left;touch-action:manipulation}
+.cdbtn strong{font-family:Fraunces,serif;font-size:18px;font-weight:600}
+.cdbtn small{color:var(--muted);font-size:13px}
+.cdbtn kbd, .prbtn kbd{position:absolute;top:5px;right:6px;font-size:10px;opacity:.55;padding:0 3px}
+.cdbtn.off{opacity:.35}
+.cdbtn.right, .prbtn.right{background:#16a34a!important;border-color:#16a34a!important;color:#fff!important}
+.cdbtn.wrong, .prbtn.wrong{background:#dc2626!important;border-color:#dc2626!important;color:#fff!important}
+.cdbtn.right small, .cdbtn.wrong small{color:#fff}
+
+.hrafter{display:flex;flex-direction:column;gap:6px;margin-top:14px;max-width:900px}
+.hrcmp{display:flex;flex-wrap:wrap;gap:6px}
+.hrcmp button{font-size:13px;padding:6px 10px}
+
+.prpad{display:flex;flex-direction:column;gap:10px;max-width:900px;margin-top:8px}
+.prgrp{display:flex;align-items:flex-start;gap:12px}
+.prfn{flex:0 0 100px;padding-top:14px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.prbtns{display:flex;flex-wrap:wrap;gap:8px}
+.prbtn{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:84px;padding:14px 24px 10px;border-radius:12px;background:var(--paper);touch-action:manipulation}
+.prbtn strong{font-family:Fraunces,serif;font-size:20px;font-weight:600}
+.prbtn small{font-size:12px;color:var(--muted)}
+.prbtn.fnT{border-left:4px solid color-mix(in srgb, #2563eb 70%, var(--line))}
+.prbtn.fnS{border-left:4px solid color-mix(in srgb, #16a34a 70%, var(--line))}
+.prbtn.fnD{border-left:4px solid color-mix(in srgb, #dc2626 70%, var(--line))}
+#prView:not(.bekend) .prbek, #prView.bekend .prvrij{display:none}
+@media (max-width:640px){ .prgrp{flex-direction:column;gap:4px} .prfn{flex:none;padding-top:0} .prbtn{min-width:64px;padding:10px 6px 8px} .hrslot{min-width:60px} }
+#cdLevel, #prLevel{max-width:min(62vw, 360px)}

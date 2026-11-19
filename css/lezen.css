@@ -1,0 +1,42 @@
+/* Termen-quiz (termen.js), Akkoordsymbolen (akkoordsymbolen.js) en Baslijn — alleen variabelen, werkt in licht en donker */
+#tmView, #asView, #blView{max-width:1180px;margin:0 auto;padding:20px 20px 80px}
+body.termen nav, body.termen .controls, body.akkoordsymbolen nav, body.akkoordsymbolen .controls, body.baslijn nav, body.baslijn .controls{display:none}
+#tmDir, #asLevel, #blLevel{max-width:min(62vw, 360px)}
+
+/* Termen */
+.tmcard{display:flex;flex-direction:column;gap:6px;margin:8px 0 14px}
+.tmask{display:flex;flex-direction:column;gap:6px}
+.tmterm{font-family:Fraunces,serif;font-style:italic;font-size:clamp(30px, 5vw, 44px);font-weight:600;line-height:1.1}
+.tmmean{font-family:Fraunces,serif;font-size:clamp(22px, 3.4vw, 30px);font-weight:500;line-height:1.25;max-width:760px}
+.tmask small{color:var(--muted);font-size:14px}
+.tmopts{display:grid;grid-template-columns:repeat(auto-fill, minmax(min(100%, 340px), 1fr));gap:10px;max-width:900px}
+.tmopt{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;background:var(--paper);text-align:left;font-size:16px;min-height:56px}
+.tmopt kbd{flex:none;font-size:11px;opacity:.6}
+.tmopt.right{background:#16a34a!important;border-color:#16a34a!important;color:#fff!important}
+.tmopt.wrong{background:#dc2626!important;border-color:#dc2626!important;color:#fff!important}
+.tmform{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 14px}
+.tmform input[type=text]{flex:1 1 200px;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font:inherit;font-size:16px}
+.tmform select, .tmfilter select{padding:8px;border-radius:10px}
+.tmform[hidden], #tmCancel[hidden]{display:none}
+.tmformmsg{font-size:14px;flex-basis:100%}
+.tmformmsg.good{color:#15803d} .tmformmsg.bad{color:#b91c1c}
+.tmfilter{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
+.tmfilter input{flex:1 1 220px;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font:inherit;font-size:16px}
+#tmList{max-height:480px;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+.tmtab{width:100%;border-collapse:collapse;font-size:14px}
+.tmtab th, .tmtab td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.tmtab th{position:sticky;top:0;background:var(--paper);color:var(--muted);font-weight:500}
+.tmtab tr.own td:first-child{border-left:3px solid var(--accent)}
+.tmact{white-space:nowrap;text-align:right}
+.tmact button{padding:3px 8px;font-size:13px;margin-left:4px}
+html.dark .tmformmsg.good{color:#4ade80} html.dark .tmformmsg.bad{color:#f87171}
+
+/* Akkoordsymbolen */
+.asstage{display:flex;flex-direction:column;gap:4px;margin:10px 0 12px;min-height:84px}
+.assym{font-family:Fraunces,serif;font-size:clamp(44px, 8vw, 72px);font-weight:600;line-height:1}
+.asklav{max-width:900px;height:150px}
+.aspicked{margin-top:6px;font-size:14px}
+.aschips{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.aschipgrp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.aschipgrp > span{flex-basis:100%;font-size:12px}
+@media (max-width:640px){ .asklav{height:120px} }

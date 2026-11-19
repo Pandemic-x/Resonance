@@ -1,0 +1,114 @@
+body.notenleer nav, body.notenleer .controls, body.toonladders nav, body.toonladders .controls, body.akkoorden nav, body.akkoorden .controls{display:none}
+/* ================= Notatie-kern (js/notatie.js) + Notenleer ================= */
+:root{ --nt-ok:#16a34a; --nt-bad:#dc2626; --ntk-w:#fffdf8; --ntk-wl:#cdbfa9; --ntk-b:#2a241d; --ntk-txt:#7a6f60 }
+
+/* notenbalk: alles in currentColor, zodat licht/donker en de goed/fout-kleuren kloppen (geen invert-filter) */
+.ntstaff{color:var(--ink)}
+.ntstaff svg{display:block;margin:0 auto;overflow:visible}
+.ntstaff svg [fill]:not([fill="none"]){fill:currentColor}
+.ntstaff svg [stroke]:not([stroke="none"]){stroke:currentColor}
+.ntstaff svg text{fill:currentColor}
+/* volgorde = voorrang: goed/fout wint van de afspeelcursor */
+.ntstaff .nt-hint{color:var(--accent)}
+.ntstaff .nt-cur{color:var(--accent)}
+.ntstaff .nt-ok{color:var(--nt-ok)}
+.ntstaff .nt-bad{color:var(--nt-bad)}
+.ntstaff .note{text-align:center;color:var(--muted)}
+
+/* pianoklavier */
+.ntklav{position:relative;height:150px;width:100%;user-select:none;margin:6px 0}
+.ntk{position:absolute;top:0;padding:0;border-radius:0 0 8px 8px;touch-action:manipulation;min-width:0}
+.ntk.w{height:100%;background:var(--ntk-w);border:1px solid var(--ntk-wl);z-index:1;display:flex;align-items:flex-end;justify-content:center;color:var(--ntk-txt)}
+.ntk.w span{font-size:13px;padding-bottom:8px;font-weight:600;white-space:nowrap;overflow:hidden}
+.ntk.b{height:62%;background:var(--ntk-b);border:1px solid var(--ntk-b);z-index:2}
+.ntk.w:hover{background:var(--accent-soft)}
+.ntk.b:hover{background:var(--accent);border-color:var(--accent)}
+.ntk:active{filter:brightness(.9)}
+.ntk.picked{box-shadow:inset 0 -6px 0 var(--accent)}
+.ntk.right{background:var(--nt-ok)!important;border-color:var(--nt-ok)!important;color:#fff!important}
+.ntk.wrong{background:var(--nt-bad)!important;border-color:var(--nt-bad)!important;color:#fff!important}
+@media (max-width:640px){ .ntklav{height:120px} .ntk.w span{font-size:10px} }
+
+/* Notenleer → Noten benoemen */
+.nlstage{display:flex;flex-direction:column;align-items:center;gap:6px;max-width:820px;margin:0 auto}
+.nlcard{width:100%;background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:10px 14px 4px;position:relative}
+#nlStaff{min-height:160px}
+.nlclock{position:absolute;left:14px;right:14px;bottom:6px;height:4px;border-radius:2px;background:var(--soft2);overflow:hidden;display:none}
+.nlclock i{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left;animation:nlclock linear forwards}
+.nlcard.timed .nlclock{display:block}
+@keyframes nlclock{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.nlinput{width:100%}
+.nlletters{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.nlletters .grow{grid-template-columns:repeat(7,minmax(0,1fr))}
+.nlacc{display:flex;gap:8px;justify-content:center}
+.nlacc button{min-width:64px;font-size:22px;font-family:Fraunces,serif;border-radius:12px}
+.nlacc button.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:var(--accent-soft)}
+.nloct{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:6px}
+.nlmsg{text-align:center;min-height:26px}
+.nlbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;width:100%}
+.nlstatbox{margin-top:14px;width:100%}
+.nlstatbox > summary{cursor:pointer;color:var(--muted);font-size:14px;list-style:none;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.nlstatbox > summary::-webkit-details-marker{display:none}
+.nlchip{display:inline-block;padding:1px 8px;border-radius:10px;background:var(--soft2);color:var(--ink);font-size:12.5px}
+.nlstatbox .statgrid{margin-top:10px}
+.nlstatbox .stat .why{color:var(--muted);font-size:12px;margin-top:4px}
+.subtabs button.soon{opacity:.5;cursor:default}
+.subtabs button.soon:hover{transform:none;border-color:var(--line)}
+#ntView.board > section > :not(.subtabs){display:none!important}
+#ntView.board > section{background:transparent;border:none;padding:0}
+/* gedeeld keuzeblok sleutels/bereik/toonsoorten (nlBereikUI) */
+.nbbox .chips{margin-bottom:8px}
+.nbkq{display:inline-flex;gap:6px;flex-wrap:wrap}
+.nbkq button{font-size:12.5px;padding:3px 10px}
+.nbbox.nokeys .nbkeys{opacity:.45}
+.nbnote{font-size:12.5px;margin:2px 0 10px}
+.nlklavwrap{width:100%;overflow-x:auto}
+.ntklav{min-width:calc(var(--ntk-n, 7) * 22px)}
+.nbbox.nbkeysonly .nbledger,.nbbox.nbkeysonly .nbaccrow,.nbbox.nbkeysonly .nbkeysigl{display:none}
+/* Notenleer: één blok per oefening (class sub-<id> op #ntView) */
+#ntView .nlsub{display:none}
+#ntView.sub-noten .nlsub[data-sub="noten"], #ntView.sub-toon .nlsub[data-sub="toon"]{display:block}
+/* Notenleer → Toonsoorten */
+.tsask{font-family:Fraunces,serif;font-size:20px;font-weight:600;text-align:center;min-height:28px}
+#tsStaff{min-height:160px}
+.tsinput{width:100%;display:flex;flex-direction:column;gap:8px}
+.tsrow{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}
+.tsrow .gbtn{font-size:19px;padding:10px 2px 8px}
+.tsrow .gbtn small,.tsmodes .gbtn small{font-family:Inter,system-ui,sans-serif;font-size:11px;font-weight:500;color:var(--muted)}
+.tsrow .gbtn.right small,.tsrow .gbtn.wrong small,.tsmodes .gbtn.right small,.tsmodes .gbtn.wrong small{color:inherit}
+.tsmodes{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.tsmodes .gbtn{font-size:18px}
+@media (max-width:640px){ .tsrow{grid-template-columns:repeat(4,minmax(0,1fr))} }
+.tsrow .gbtn,.tsmodes .gbtn{white-space:normal;min-width:0}
+.tsmodes .gbtn small{text-align:center;line-height:1.25}
+#ntView.sub-ladder .nlsub[data-sub="ladder"], #ntView.sub-akkoord .nlsub[data-sub="akkoord"], #ntView.sub-interval .nlsub[data-sub="interval"]{display:block}
+.nbbox.nbclefsonly .nbkeysec{display:none}
+/* Notenleer → Toonladders */
+#tlStaff{min-height:150px}
+.tlask{letter-spacing:.02em}
+.tsask u{text-decoration:none;display:inline-block;min-width:150px;border-bottom:2px solid var(--line);margin-left:8px;color:var(--accent)}
+.tlformula{font-size:14px;color:var(--muted);text-align:center;min-height:20px;line-height:1.6}
+.tlformula b{color:var(--ink)}
+.tltypes{width:100%;display:flex;flex-direction:column;gap:6px}
+.tltypes .tlgrp{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}
+.tltypes .tlglab{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:4px}
+.tltypes .gbtn{font-size:16px;padding:9px 4px 7px;white-space:normal;min-width:0}
+.tltypes .gbtn small{font-family:Inter,system-ui,sans-serif;font-size:11px;font-weight:500;color:var(--muted)}
+#tlTonicBox .gbtn{font-size:19px;padding:8px 2px}
+#tlTypeChips .tlgrp{margin-bottom:6px}
+.tltypes .gbtn.right small,.tltypes .gbtn.wrong small{color:inherit}
+.tlhide{display:flex;align-items:center;justify-content:center;min-height:150px;color:var(--muted);font-size:15px}
+
+/* Toonladders via Gehoor (#toonladders): zelfde oefening, geen Notenleer-overzicht/terugknop; per ingang een eigen presetlijst */
+#ntView.nl-gehoor .subback, #ntView.nl-gehoor .subtabs{display:none!important}
+#ntView.nl-gehoor .psbar.psblad, #ntView:not(.nl-gehoor) .psbar.psgehoor{display:none}
+/* Intervallen: per ingang andere opties; op gehoor alleen de gewone namen */
+#ntView.nl-gehoor .ivblad, #ntView:not(.nl-gehoor) .ivgeh, #ntView.nl-gehoor .ivnoear{display:none}
+.ivpad.tltypes{max-width:none}
+.ivpad .ivgrp{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+.ivpad.explore .gbtn{border-style:dashed}
+.ivsongbox .ivsongs{margin-top:8px}
+.nbbox.nbclefsledger .nbaccrow, .nbbox.nbclefsledger .nbkeysec{display:none}
+/* hoogte bij gehoor: sleutels + hulplijnen alleen tonen bij 'volgens sleutel en hulplijnen' */
+#ntView.nl-gehoor .nlsub.hmid .nbbox{display:none}
+.hbox.hoff{display:none}

@@ -1,0 +1,29 @@
+body.dictee nav, body.dictee .controls{display:none}
+#mdView{max-width:1180px;margin:0 auto;padding:20px 20px 80px}
+.mdstaff{background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px 10px;min-height:150px;display:flex;align-items:center;overflow-x:auto}
+.mdstaff p.note{margin:0 auto}
+.mdlab{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:10px 0 4px}
+.mdlab span:last-child{text-transform:none;letter-spacing:0;font-weight:500}
+#mdSolWrap .mdstaff{background:#fffaf3}
+.mdtools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 8px}
+#mdDurs{display:inline-flex;gap:6px;align-items:center;margin-right:8px}
+#mdDurs button{font-size:14px;padding:6px 12px}
+#mdDurs button small{font-size:11px;color:var(--muted);margin-left:3px}
+#mdDurs button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+#mdDurs button.on small{color:#cfc5b6}
+.mdpiano{position:relative;height:150px;max-width:860px;margin:6px 0 10px;user-select:none}
+.pk{position:absolute;top:0;padding:0;border-radius:0 0 8px 8px;touch-action:manipulation}
+.pk.w{height:150px;background:#fffdf8;border:1px solid #cdbfa9;z-index:1;display:flex;align-items:flex-end;justify-content:center}
+.pk.w span{font-size:12px;color:var(--muted);padding-bottom:8px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.pk.w span b{font-size:11px;color:var(--accent)}
+.pk.w.do{background:#fff4ea}
+.pk.w.out{background:#f1ece3}
+.pk.bl{height:92px;background:#2a241d;border:1px solid #2a241d;z-index:2}
+.pk.w:hover{background:var(--accent-soft);color:var(--ink)}
+.pk.bl:hover{background:var(--accent);border-color:var(--accent)}
+.pk:active{filter:brightness(.9)}
+.mddegs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px}
+.mdeg{font-family:Fraunces,serif;font-size:17px;font-weight:600;padding:5px 12px}
+.mdeg small{font-family:Inter,system-ui,sans-serif;font-size:12px;font-weight:500;color:var(--muted)}
+#mdProg{color:var(--muted);font-size:13px;margin-left:auto}
+@media (max-width:640px){ .mdpiano{height:120px} .pk.w{height:120px} .pk.bl{height:74px} .pk.w span{font-size:10px} }

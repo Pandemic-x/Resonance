@@ -1,0 +1,116 @@
+/* ================= Slimme metronoom (#metroView) — alleen variabelen, zodat licht/donker en themakleur werken ================= */
+body.metronoom nav, body.metronoom .controls{display:none}
+.mtgrid{display:grid;grid-template-columns:minmax(300px,1fr) minmax(280px,420px);gap:22px 30px;align-items:start}
+@media (max-width:820px){ .mtgrid{grid-template-columns:1fr} }
+.mtmain{display:flex;flex-direction:column;align-items:center;gap:14px;padding:10px 0}
+
+.mttempo{display:flex;align-items:center;gap:8px}
+.mttempo button{min-width:46px;font-weight:600}
+.mtbig{display:flex;flex-direction:column;align-items:center;min-width:150px;line-height:1}
+.mtbig b{font-family:Fraunces,serif;font-size:64px;font-weight:700;color:var(--ink)}
+.mtbig span{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+.mtbig small{font-family:Fraunces,serif;font-style:italic;font-size:16px;color:var(--accent);margin-top:6px;min-height:1em}
+.mtslider{width:min(420px,100%);accent-color:var(--accent)}
+
+.mtbeats{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:8px 0 2px}
+.mtb{width:52px;height:52px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;
+     border:2px solid var(--line);background:var(--soft);color:var(--muted);font-weight:600;font-size:13px;
+     transition:transform .06s, box-shadow .06s, background .06s}
+.mtb.gstart{margin-left:14px}
+.mtb.lv-a{background:var(--accent);border-color:var(--accent);color:#fff}
+.mtb.lv-b{background:var(--soft2);border-color:var(--muted);color:var(--ink)}
+.mtb.lv-z{transform:scale(.72);background:var(--soft);border-color:var(--line)}
+.mtb.lv-x{background:transparent;border-style:dashed;border-color:var(--line);opacity:.6}
+.mtb:hover{border-color:var(--accent)}
+.mtb.hit{box-shadow:0 0 0 5px var(--accent-soft), 0 0 18px var(--accent-shadow, var(--accent-soft));transform:scale(1.12)}
+.mtb.lv-z.hit{transform:scale(.85)}
+.mtb.mute{box-shadow:0 0 0 3px var(--line);border-style:dotted}
+
+.mtstatus{min-height:1.4em;font-size:14px;color:var(--muted);text-align:center}
+.mtbtns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.mttap.flash{background:var(--accent-soft);border-color:var(--accent)}
+.mtsmall{font-size:13px;padding:3px 10px}
+.mtnote{margin:-6px 0 12px;font-size:13px;color:var(--muted);line-height:1.45}
+#mtGroups{font:inherit;font-weight:600;width:80px;border:1px solid var(--line);border-radius:8px;padding:3px 6px;background:var(--paper);color:var(--ink)}
+.mtswing input{width:110px;accent-color:var(--accent)}
+
+.mtprog{display:flex;align-items:center;gap:10px;width:min(420px,100%);font-size:13px;color:var(--muted)}
+.mtprogbar{flex:1;height:8px;border-radius:4px;background:var(--soft2);overflow:hidden}
+#mtProgBar{height:100%;width:0;background:var(--accent);transition:width .3s}
+
+/* tonen/verbergen per keuze */
+#metroView .mtauto, #metroView .mthand, #metroView .mtgap, #metroView .mtdun, #metroView .mtrand, #metroView .mtswing, #metroView .mteigen{display:none}
+#metroView[data-ramp=auto] .mtauto{display:flex}
+#metroView[data-ramp=hand] .mthand{display:flex}
+#metroView[data-test=gap] .mtgap, #metroView[data-test=dun] .mtdun, #metroView[data-test=rand] .mtrand{display:flex}
+#metroView.swing .mtswing, #metroView.eigen .mteigen{display:flex}
+#metroView p.mtnote{display:none}
+#metroView[data-ramp=auto] p.mtauto, #metroView[data-ramp=hand] p.mthand,
+#metroView[data-test=gap] p.mtgap, #metroView[data-test=dun] p.mtdun, #metroView[data-test=rand] p.mtrand{display:block}
+
+/* aftellen / maatteller / timer */
+.mtnow{min-height:1.3em;font-size:15px;color:var(--ink)}
+.mtcount{display:flex;gap:14px;align-items:stretch;justify-content:center;flex-wrap:wrap}
+.mtbar, .mttimer{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:120px;padding:8px 16px;border:1px solid var(--line);border-radius:14px;background:var(--bg);line-height:1.1}
+.mtbar b, .mttimer #mtTime{font-family:Fraunces,serif;font-size:34px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.mtbar span, .mttlbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
+.mttbtns{display:flex;gap:6px;margin-top:6px}
+.mttbtns button{font-size:13px;padding:2px 10px}
+#mtTime.done{color:var(--accent)}
+#metroView p.mtshow{display:block}
+
+/* setlist */
+.mtset{margin-top:22px;padding-top:14px;border-top:1px solid var(--line)}
+.mtlist{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.mtempty{font-size:14px;margin:4px 0}
+.mtrow{display:grid;grid-template-columns:28px minmax(220px,1fr) auto auto;gap:10px;align-items:center;padding:6px 10px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+.mtrow.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.mtnum{font-weight:700;color:var(--muted);text-align:center}
+.mtload{display:flex;flex-direction:column;align-items:flex-start;text-align:left;white-space:normal;background:transparent;border:none;padding:2px 0;color:var(--ink);font-size:14px}
+.mtload:hover{color:var(--accent);background:transparent}
+.mtload small{color:var(--muted);font-size:12.5px;margin-top:2px}
+.mtstat{font-size:12.5px;color:var(--muted);text-align:right}
+.mtrbtn{display:flex;gap:4px}
+.mtrbtn button{font-size:12px;padding:2px 8px}
+.mtrbtn button.sure{border-color:var(--accent);color:var(--accent)}
+.mtsave input[type=text]{font:inherit;font-weight:600;width:170px;border:1px solid var(--line);border-radius:8px;padding:4px 8px;background:var(--paper);color:var(--ink)}
+@media (max-width:700px){ .mtrow{grid-template-columns:24px 1fr} .mtstat{text-align:left;grid-column:2} .mtrbtn{grid-column:2} }
+#metroView button:disabled{opacity:.45;cursor:default}
+#metroView.nobar .mtbar, #metroView.notime .mttimer, #metroView.notime .mttmin{display:none}
+#metroView.nobar.notime .mtcount{display:none}
+
+/* tempoverloop */
+#metroView .mtflow{display:none}
+#metroView[data-ramp=flow] .mtflow{display:block}
+#metroView[data-ramp=hand] .mtokwrap{display:none}
+.mtflowbox{margin:-4px 0 10px}
+.mtflowlist{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.mtfrow{display:grid;grid-template-columns:22px 1fr;align-items:center;gap:4px 8px;padding:6px 8px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-size:13.5px;color:var(--muted)}
+.mtfrow label{display:flex;align-items:center;gap:5px}
+.mtf1, .mtf2{display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap}
+.mtf2{grid-column:2}
+.mtfrow .mtnum{grid-row:span 2}
+.mtfrow input[type=number]{font:inherit;font-weight:600;width:58px;border:1px solid var(--line);border-radius:8px;padding:2px 5px;background:var(--paper);color:var(--ink)}
+.mtfrow select{font:inherit;font-weight:600;border:1px solid var(--line);border-radius:8px;padding:2px 5px;background:var(--paper);color:var(--ink);max-width:170px}
+.mtfrow button{font-size:12px;padding:1px 8px;margin-left:auto}
+.mttag{font-family:Fraunces,serif;font-style:italic;color:var(--accent)}
+.mtflowinfo{font-size:12.5px;color:var(--muted)}
+.mtbeats.ro .mtb{cursor:default}
+/* stem */
+#metroView .mtnovoice{display:none}
+#metroView.novoice .mtnovoice{display:inline}
+#metroView.novoice #mtVoice, #metroView.novoice #mtVLead{opacity:.4;pointer-events:none}
+/* setlist: datums en slim voorstel */
+.mtstat small{display:block;opacity:.8;margin-top:2px}
+.mtsethead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px}
+.mtsmartlbl{margin-left:auto;display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;cursor:pointer}
+.mttoday{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin:4px 0 12px;padding:10px;border-radius:12px;background:var(--accent-soft)}
+.mttodayh{width:100%;font-size:13px;font-weight:600;color:var(--ink)}
+.mttip{display:flex;flex-direction:column;align-items:flex-start;text-align:left;white-space:normal;flex:1;min-width:180px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:6px 10px;color:var(--ink);font-size:13.5px}
+.mttip:hover{border-color:var(--accent);color:var(--ink)}
+.mttip small{color:var(--muted);font-size:12px;margin-top:2px}
+/* meetikken (16-11-2026) */
+.mtmeet{display:flex;flex-direction:column;align-items:center;gap:4px;margin:4px 0 8px;text-align:center}
+.mtmeet[hidden]{display:none}
+.mtmeet .tapsum{justify-content:center}
+.mtmeetl{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px}

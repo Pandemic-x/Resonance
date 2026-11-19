@@ -1,0 +1,17 @@
+body.intervallen nav, body.intervallen .controls{display:none}
+.ivpad{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;max-width:760px;margin-top:6px}
+.ivpad .gbtn{position:relative}
+.ivpad .gbtn small{font-size:12px;text-align:center;line-height:1.2}
+.ivkbd{position:absolute;top:5px;right:7px;font-family:Inter,system-ui,sans-serif;font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.gbtn.right .ivkbd,.gbtn.wrong .ivkbd{color:#fff;border-color:rgba(255,255,255,.5)}
+#ivPanel.explore .gbtn{border-style:dashed}
+.ivdir{display:inline-block;font-family:Fraunces,serif;font-size:22px;font-weight:600;margin:0 0 6px}
+.ivinfo{line-height:1.6;margin:0 0 10px;max-width:760px}
+.ivinfo div:last-child{color:var(--muted)}
+.ivafter{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.ivsongs{display:flex;flex-direction:column;gap:6px;max-width:900px}
+.ivsong{display:grid;grid-template-columns:200px 1fr 1fr;gap:8px;align-items:center;font-size:14px}
+.ivsong.head{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.ivsong input{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:5px 8px;background:var(--paper);color:var(--ink);min-width:0}
+.ivsong input::placeholder{color:#a89d8f}
+@media (max-width:620px){ .ivsong{grid-template-columns:1fr 1fr} .ivsong span:first-child{grid-column:1 / -1} }

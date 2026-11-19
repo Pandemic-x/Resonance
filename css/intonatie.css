@@ -1,0 +1,93 @@
+/* Intonatie boven een drone (intonatie.js) — alleen variabelen, werkt in licht en donker */
+body.intonatie nav, body.intonatie .controls{display:none}
+#inView:not(.kies) .forkies, #inView:not(.stem) .forstem, #inView:not(.vals) .forvals, #inView:not(.drie) .fordrie{display:none !important}
+.inseg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:4px 0 12px;background:var(--paper)}
+.inseg button{border:0;border-radius:0;background:transparent;padding:6px 14px;font-weight:600;color:var(--muted)}
+.inseg button + button{border-left:1px solid var(--line)}
+.inseg button.on{background:var(--accent-soft);color:var(--ink)}
+.inask{font-size:18px;margin:6px 0 12px;min-height:26px}
+.inbtns{display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:10px;max-width:620px;margin-bottom:12px}
+.inbtns button{padding:16px 6px;font-size:17px;font-weight:600;border-radius:12px}
+.inbtns button kbd{font-size:11px;margin-left:4px;opacity:.6}
+.inbtns button.right{border-color:var(--nt-ok, #16a34a);box-shadow:0 0 0 2px var(--nt-ok, #16a34a) inset}
+.inbtns button.wrong{border-color:var(--nt-bad, #dc2626);box-shadow:0 0 0 2px var(--nt-bad, #dc2626) inset;opacity:.85}
+.instem{display:flex;flex-wrap:wrap;align-items:center;gap:10px;max-width:620px;margin-bottom:12px}
+.instem input[type=range]{flex:1 1 220px;accent-color:var(--accent)}
+.instem button{padding:10px 14px;font-weight:600}
+.inmeter{max-width:620px;margin:4px 0 10px}
+.inscale{position:relative;height:16px;border-radius:999px;background:var(--soft);border:1px solid var(--line)}
+.inzero{position:absolute;left:50%;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:var(--muted)}
+.inmark{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent-shadow, var(--accent))}
+.instart{position:absolute;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;border:2px dashed var(--muted);background:transparent}
+.instart[hidden]{display:none}
+.inlabels{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px}
+.instatbox{margin-top:14px;max-width:620px}
+.instatbox > summary{cursor:pointer;color:var(--muted);font-weight:600}
+.instat{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px solid var(--line)}
+#inCentsRow.dim{opacity:.45}
+#inPanel .qmsg.ok{color:var(--nt-ok, #16a34a)}
+#inPanel .qmsg.bad{color:var(--nt-bad, #dc2626)}
+#inPanel .qmsg.muted{color:var(--muted);font-weight:500}
+@media (max-width:560px){ .inbtns button{padding:14px 4px;font-size:15px} .inseg button{padding:6px 10px;font-size:13px} }
+.insteps{display:flex;flex-wrap:wrap;align-items:center;gap:6px;flex-basis:100%}
+.insteps button{padding:8px 0;min-width:46px;font-weight:600;font-variant-numeric:tabular-nums}
+.insteps button[data-d="1"]{margin-left:10px}
+.insg{font-size:12px;color:var(--muted)}
+#inCmp[hidden], #inMeter[hidden]{display:none !important}
+.insys{display:inline-block;cursor:pointer;color:var(--ink);font-size:13px;font-weight:600;padding:1px 9px;margin-left:4px;border-radius:999px;border:1px solid var(--accent);background:var(--accent-soft);vertical-align:2px}
+.insysbox{max-width:760px;font-size:14px;line-height:1.5;padding:10px 40px 10px 12px;margin:-4px 0 12px;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:8px;background:var(--soft);position:relative}
+.insysbox .pttclr{position:absolute;top:6px;right:6px;padding:2px 8px}
+.insysbox[hidden]{display:none}
+
+.invals{display:flex;flex-wrap:wrap;gap:8px;max-width:760px;margin-bottom:12px}
+.invals button{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:62px;padding:10px 6px;border-radius:12px}
+.invals button b{font-size:18px}
+.invals button span{font-size:12px;color:var(--muted)}
+.invals button.cur{border-color:var(--accent);background:var(--accent-soft)}
+.invals button.right{border-color:var(--nt-ok, #16a34a);box-shadow:0 0 0 2px var(--nt-ok, #16a34a) inset}
+.invals button.wrong{border-color:var(--nt-bad, #dc2626);box-shadow:0 0 0 2px var(--nt-bad, #dc2626) inset}
+.inviool{margin:6px 0;font-size:13px} ul.inviool{padding-left:18px} ul.inviool li{margin:3px 0}
+.incents{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0}
+.incents th, .incents td{border:1px solid var(--line);padding:5px 7px;text-align:left;vertical-align:top}
+.incents thead th{background:var(--soft);font-weight:600}
+.incents tbody th{font-weight:600;white-space:nowrap}
+.insrc a{color:var(--accent)}
+#inRef, #inMode{max-width:100%}
+/* ruimere instellingen (16-11) */
+#inView aside.pnl .rlabel{margin-top:22px;margin-bottom:8px}
+#inView aside.pnl .ropts{gap:10px 16px;margin-bottom:10px}
+#inView aside.pnl .chips{gap:8px;margin-bottom:14px}
+#inView aside.pnl .ptnote{margin:4px 0 12px;line-height:1.5}
+.inbox{border:1px solid var(--line);border-radius:10px;background:var(--soft);padding:8px 12px;margin:10px 0 14px}
+.inbox > summary{cursor:pointer;font-weight:600;font-size:14px;list-style-position:outside;margin-left:2px}
+.inbox[open] > summary{margin-bottom:8px}
+.inbox p{margin:8px 0;font-size:13px;line-height:1.5}
+.incentsbox{max-width:760px;margin-top:16px}
+.inmijn{font-size:14px !important;font-weight:600}
+.inwide{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;width:100%}
+.inwide select{flex:1 1 220px;min-width:0;max-width:100%}
+.incmpc{margin:4px 0 10px}
+.incmpbtns{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.incmpbtns button{min-width:46px;padding:7px 0;font-weight:600;font-variant-numeric:tabular-nums}
+.incmpbtns button.zero{border-color:var(--accent)}
+.incmpbtns button.on{background:var(--accent-soft);border-color:var(--accent)}
+.intry{position:absolute;top:-3px;bottom:-3px;width:4px;margin-left:-2px;border-radius:2px;background:var(--muted);opacity:.8}
+.intry[hidden]{display:none}
+.incmpq button{min-width:0;padding:8px 14px}
+#inCmpQBox[hidden]{display:none}
+.incmpq button{display:inline-flex;align-items:center;gap:6px}
+.incmpq button.opd{border-color:var(--accent);border-width:2px}
+.inopd{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 6px;border-radius:999px;background:var(--accent);color:var(--paper)}
+/* 📈 grafiek grens */
+.inchartsel{margin:4px 0 8px}
+.inchart{width:100%;height:auto;display:block;margin:4px 0}
+.inchart .incg{stroke:var(--line);stroke-width:1}
+.inchart .incref{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 4;opacity:.7}
+.inchart .inct{fill:var(--muted);font-size:11px}
+.inchart .incl{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.inchart .incd{fill:var(--accent);stroke:var(--paper);stroke-width:2}
+.inchart .incmin{fill:var(--paper);stroke:var(--accent);stroke-width:1.5}
+.inchart .inhit{fill:transparent;cursor:pointer}
+.inchart .inpt:hover .incd{r:6}
+.inchartnote{font-size:12px !important}
+.incttab{max-width:420px}

@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#c2410c">
+<meta name="description" content="Resonance – For The Complete Musician">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Resonance">
+<title>Resonance</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/intervallen.css">
+<link rel="stylesheet" href="css/dictee.css">
+<link rel="stylesheet" href="css/drone.css">
+<link rel="stylesheet" href="css/metronoom.css">
+<link rel="stylesheet" href="css/notatie.css">
+<link rel="stylesheet" href="css/partituren.css">
+<link rel="stylesheet" href="css/intonatie.css">
+<link rel="stylesheet" href="css/harmonie.css">
+<link rel="stylesheet" href="css/ritmetrainer.css">
+<link rel="stylesheet" href="css/lezen.css">
+<link rel="stylesheet" href="css/donker.css">
+<script src="js/thema.js"></script>
+<script src="js/iconen.js"></script>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1 hidden><a href="#" id="homeLink">Resonance</a></h1>
+    <div id="crumbs" class="crumbs" hidden></div>
+    <a href="#handleiding" class="helpbtn" title="Handleiding en sneltoetsen">?</a>
+    <a href="#instellingen" class="gear" title="Instellingen">⚙️</a>
+    <div class="tabrow" hidden>
+    <div class="tabs" id="catTabs">
+      <button data-view="bladmuziek">🎼 Bladmuziek</button>
+      <button data-view="ritme">🥁 Ritme</button>
+      <button data-view="gehoortraining">🎶 Gehoor</button>
+      <button data-view="notenlezen">📖 Notenlezen</button>
+    </div>
+    </div>
+    <div class="controls">
+      <label>Tempo <input id="bpm" type="range" min="40" max="200" value="70"> <span id="bpmVal">70</span></label>
+      <div id="playOpts" class="playopts">
+      <label><input id="metro" type="checkbox" checked> Metronoom</label>
+      <label><input id="countin" type="checkbox" checked> Aftellen</label>
+      <label title="Uit = je hoort alleen de metronoom en tikt zelf het ritme (alleen bij Atlas en Tikken)"><input id="rhyOn" type="checkbox" checked> Ritme meespelen</label>
+      <label class="atlasonly" title="Klank van de metronoom">Tik <select id="hMetro"></select></label>
+      <label class="atlasonly" title="Klank van het ritme">Ritme <select id="hUp"></select></label>
+      <label class="atlasonly" title="Klank van de onderste laag bij polyritmes">Lage stem <select id="hLow"></select></label>
+      <label><input id="loop" type="checkbox"> Herhalen</label>
+      </div>
+      <button id="pause" data-ktitle="Pauze / verder ({pauze})">⏸ Pauze</button>
+      <button id="stop" data-ktitle="Stop ({stop})">■ Stop</button>
+    </div>
+  </div>
+  <nav id="nav"></nav>
+</header>
+<div id="catView" class="view"></div>
+<div id="homeView" class="view">
+  <div class="homewrap">
+    <div class="homelogo"><span class="hl2">Resonance</span><span class="hl1">For The Complete Musician</span></div>
+    <div id="homeList" class="navlist"></div>
+  </div>
+</div>
+<div id="statsView" class="view">
+  <div class="statswrap">
+    <div class="sechead"><h2>📊 Statistieken</h2><p>Je dagreeks, oefentijd, zwakste punten en niveau-advies per oefening (ook per opgeslagen oefening).</p></div>
+    <div id="scorePanel" class="scpanel"></div>
+  </div>
+</div>
+
+<div id="setView" class="view">
+  <section class="rpanel">
+    <div class="sechead"><h2>🌓 Weergave</h2><p>Licht of donker en je eigen themakleur. Automatisch volgt de instelling van je apparaat. </p></div>
+    <div class="ropts">
+      <label>Thema <select id="sTheme"><option value="auto">Automatisch (apparaat)</option><option value="licht">Licht</option><option value="donker">Donker</option></select></label>
+    </div>
+    <div class="rlabel">Themakleur (knoppen, markeringen, voortgang)</div>
+    <div class="swatches" id="sAccents"></div>
+    <div class="ropts">
+      <label>Kleur in de achtergrond <input type="range" id="sTint" min="0" max="100" step="5"> <span id="sTintVal" class="muted"></span></label>
+    </div>
+  </section>
+  <section class="rpanel">
+    <div class="sechead"><h2>🔊 Geluid</h2><p>Geldt voor de hele app. Bij elke keuze hoor je een kort voorbeeld.</p></div>
+    <div class="ropts">
+      <label>Hoofdvolume <input id="vol" type="range" min="0" max="100"> <span id="volVal" class="muted"></span></label>
+      <button id="volTest">▶ Test</button>
+    </div>
+    <div class="ropts">
+      <label>Metronoomklank <select id="sMetro"></select></label>
+      <button data-prev="metro">▶</button>
+    </div>
+    <div class="ropts">
+      <label>Klank van het ritme <select id="sUp"></select></label>
+      <button data-prev="up">▶</button>
+      <label>Lage stem (polyritmes) <select id="sLow"></select></label>
+      <button data-prev="low">▶</button>
+    </div>
+    <div class="ropts">
+      <label title="Echte instrumentopnames voor de vraagtonen en de orgeldrone. Worden van internet geladen; lukt dat niet, dan klinken de nagebouwde klanken."><input type="checkbox" id="sSamples"> Opgenomen klanken (echte instrumenten)</label>
+      <span id="sSamplesMsg" class="muted"></span>
+    </div>
+    <p class="gtip">Het ritme helemaal uitzetten doe je met <b>Ritme meespelen</b> in de balk bovenaan bij Atlas en Tikken. Zo kun je het tijdens het oefenen snel aan en uit zetten.</p>
+  </section>
+  <section class="rpanel">
+    <div class="sechead"><h2>🎹 Klank voor gehoortraining</h2><p>Zet in één keer dezelfde klank bij Relatief gehoor, Intervallen en Melodisch dictee. Per onderdeel kun je hem daarna nog steeds los wijzigen.</p></div>
+    <div class="ropts">
+      <label>Klank <select id="sInst"></select></label>
+      <button data-prev="inst">▶</button>
+      <button id="sInstAll" class="primary">Gebruik overal</button>
+      <span id="sInstMsg" class="muted"></span>
+    </div>
+  </section>
+  <section class="rpanel">
+    <div class="sechead"><h2>⌨️ Sneltoetsen</h2><p>Kies zelf welke toets wat doet. Een actie betekent in elk onderdeel hetzelfde, en de uitleg in de app past zich vanzelf aan. Klik op <b>+ toets</b> en druk op de toets die je wilt (Esc = annuleren). Een actie mag meerdere toetsen hebben. De antwoordtoetsen (cijfers, nootnamen) liggen per onderdeel vast.</p></div>
+    <div id="kList" class="klist"></div>
+    <div class="ropts kfoot">
+      <button id="kResetAll">↺ Alles terug naar standaard</button>
+      <span id="kMsg" class="kmsg"></span>
+    </div>
+    <details class="kfixed"><summary>Vaste antwoordtoetsen per onderdeel</summary><div id="kFixed"></div></details>
+  </section>
+  <section class="rpanel">
+    <div class="sechead"><h2>🥁 Tik-vertraging</h2><p>Correctie voor de vertraging van je scherm, toetsenbord en speakers bij de tik-score. Meten doe je in Tikken met <b>Kalibreer vertraging</b>.</p></div>
+    <div class="ropts">
+      <span>Huidige correctie: <b id="calNow"></b></span>
+      <a href="#tikken">Naar Tikken om te meten →</a>
+      <button id="calReset">Zet op 0</button>
+    </div>
+  </section>
+  <section class="rpanel">
+    <div class="sechead"><h2>💾 Je gegevens</h2><p>Alles staat alleen in deze browser: je voortgang en instellingen, en in Repertoire je stukken met passages, aantekeningen, gesprekken met Claude en opnames. Maak af en toe een back-up en bewaar het bestand ergens veilig (bijvoorbeeld in je cloudopslag). Op een ander apparaat of na het wissen zet je hem terug met 📂 Terugzetten uit bestand.</p></div>
+    <div class="ropts">
+      <button id="bkSave" class="primary" hidden>💾 Back-up opslaan als bestand</button>
+      <button id="bkLoad">📂 Terugzetten uit bestand</button>
+      <input id="bkFile" type="file" accept=".json,.txt,application/json,text/plain" hidden>
+    </div>
+    <div class="ropts">
+      <button id="bkCopy">📋 Kopieer back-up als tekst</button>
+      <button id="bkRestore">⤴ Herstel uit tekst</button>
+      <button id="bkWipe">🗑 Alles wissen</button>
+      <span id="bkMsg" class="muted"></span>
+    </div>
+    <textarea id="bkText" rows="5" placeholder="Hier verschijnt je back-up, of plak hier een back-up om te herstellen." style="width:100%;font:12px monospace;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--paper);color:var(--ink)"></textarea>
+  </section>
+</div>
+
+<div id="helpView" class="view"></div>
+
+<div id="metroView" class="view">
+  <section class="rpanel">
+    <div class="sechead"><h2>⏱️ Slimme metronoom</h2><p>Klik op een tel om hem te wisselen: accent, normaal, zacht of stil. Toetsen: <kbd data-key="metronoom"></kbd> = start/stop, <kbd data-key="pauze"></kbd> = pauze, <kbd data-key="tik"></kbd> = tempo intikken, <kbd data-key="sneller"></kbd> / <kbd data-key="langzamer"></kbd> = tempo ±1 (met Shift ±5), <kbd data-key="stop"></kbd> = stop. Bij handmatig opbouwen: <kbd data-key="volgende"></kbd> = gelukt, <kbd data-key="vorige"></kbd> = te snel.</p></div>
+    <div class="mtgrid">
+      <div class="mtmain">
+        <div id="mtNow" class="mtnow"></div>
+        <div class="mttempo">
+          <button data-d="-5">−5</button><button data-d="-1">−1</button>
+          <div class="mtbig"><b id="mtBpmVal">80</b><span>bpm</span><small id="mtTerm"></small></div>
+          <button data-d="1">+1</button><button data-d="5">+5</button>
+        </div>
+        <input type="range" id="mtBpm" class="mtslider" min="20" max="300">
+        <div id="mtBeats" class="mtbeats"></div>
+        <div class="mtcount">
+          <div id="mtBar" class="mtbar"><b>–</b><span>maat</span></div>
+          <div class="mttimer"><span id="mtTime">00:00</span><span id="mtTimerLbl" class="mttlbl">stopwatch</span>
+            <span class="mttbtns"><button id="mtTimerBtn" title="Timer starten / pauzeren">▶</button><button id="mtTimerReset" title="Timer terug op nul">↺</button></span></div>
+        </div>
+        <div id="mtStatus" class="mtstatus"></div>
+        <div id="mtMeetBox" class="mtmeet" hidden><div id="mtMeetLive" class="taplive">–</div><div id="mtMeetSum" class="tapsum"></div></div>
+        <div class="mtprog mtauto"><div class="mtprogbar"><div id="mtProgBar"></div></div><span id="mtProgTxt"></span></div>
+        <div class="mtbtns">
+          <button id="mtPlay" class="primary big" data-ktitle="Start / stop ({metronoom})">▶ Start</button>
+          <button id="mtPause" data-ktitle="Pauze / verder ({pauze})">⏸ Pauze</button>
+          <button id="mtTap" class="mttap" data-ktitle="Tik een paar keer in het tempo ({tik})">👆 Tik tempo</button>
+        </div>
+        <div class="mtbtns mthand">
+          <button id="mtUp" data-ktitle="Ging goed: sneller ({volgende})">✓ Gelukt</button>
+          <button id="mtDown" data-ktitle="Te snel: langzamer ({vorige})">✗ Te snel</button>
+        </div>
+        <div class="mtbtns mtokwrap"><button id="mtOk" class="mtsmall" data-ktitle="Dit tempo ging schoon: bewaren bij het stuk ({volgende})">✓ Schoon gespeeld</button></div>
+      </div>
+      <div class="mtside">
+        <div class="rlabel">Maat</div>
+        <div class="ropts">
+          <label>Maatsoort <select id="mtMeter"></select></label>
+          <label class="mteigen" title="Aantal tellen (bv. 4) of groepen (bv. 3+3+2)">Tellen / groepen <input type="text" id="mtGroups" size="7"></label>
+          <label>Onderverdeling <select id="mtSub"></select></label>
+          <label class="mtswing" title="50% = recht, 67% = triolen-swing">Swing <input type="range" id="mtSwing" min="50" max="75"> <span id="mtSwingVal"></span></label>
+          <label>Klank <select id="mtSound"></select></label>
+          <button id="mtResetPat" class="mtsmall" title="Accenten terug naar de standaard van deze maatsoort">↺ Accenten</button>
+        </div>
+        <div class="rlabel">Start, maten en tijd</div>
+        <div class="ropts">
+          <label>Aftellen <select id="mtCi"><option value="0">geen</option><option value="1">1 maat</option><option value="2">2 maten</option></select></label>
+          <label title="Lengte van de passage: de teller laat maat x van n en de ronde zien (0 = gewoon doortellen)">Passage <input type="number" id="mtLen" min="0" max="999"> maten</label>
+          <label title="Grote maatteller tonen"><input type="checkbox" id="mtShowBar"> Maatteller</label>
+          <label title="Timer / stopwatch tonen en laten lopen"><input type="checkbox" id="mtShowTime"> Timer</label>
+          <label class="mttmin" title="Oefentimer in minuten; bij 0 loopt er een stopwatch">Timer <input type="number" id="mtTmin" min="0" max="120"> min</label>
+        </div>
+        <div class="ropts mtvoicerow">
+          <label title="Een stem telt de tellen hardop (via de spraak van je browser)">Stem telt <select id="mtVoice"><option value="uit">uit</option><option value="af">alleen bij aftellen</option><option value="aan">altijd</option></select></label>
+          <label title="De app meet zelf hoe laat de spraak begint en start de stem zoveel eerder. Klinkt hij nog te laat, zet hier een positief getal; te vroeg, een negatief getal.">bijstellen <input type="number" id="mtVLead" min="-300" max="500" step="10"> ms eerder</label>
+          <span id="mtVInfo" class="mtflowinfo"></span>
+          <span class="mtnovoice muted">Je browser heeft geen spraak.</span>
+        </div>
+        <p class="mtnote mtshow">Aftellen telt niet mee voor de maatteller, het opbouwen of de stille maten. De timer start vanzelf met de metronoom; is de tijd om, dan klinkt er een signaal en stopt de metronoom.</p>
+        <div class="rlabel">Tempo opbouwen</div>
+        <div class="ropts">
+          <label><select id="mtRamp"><option value="uit">Uit</option><option value="auto">Automatisch</option><option value="hand">Handmatig per ronde</option><option value="flow">Tempoverloop (per deel)</option></select></label>
+          <label class="mtauto mthand" title="Doeltempo (ook gebruikt voor het slimme voorstel in de setlist)">doel <input type="number" id="mtTo" min="20" max="300"> bpm</label>
+          <label class="mtauto mthand">stap <input type="number" id="mtStep" min="1" max="40"> bpm</label>
+          <label class="mtauto">elke <input type="number" id="mtEvery" min="1" max="64"> maten</label>
+          <label class="mtauto" title="+stap, +stap, −stap: netto één stap per drie, maar je speelt steeds even sneller dan je doel"><input type="checkbox" id="mtBack"> Twee vooruit, één terug</label>
+        </div>
+        <p class="mtnote mtauto">Begint op het tempo links en klimt naar het doel; daar blijft hij staan.</p>
+        <div class="mtflowbox mtflow">
+          <div id="mtFlow" class="mtflowlist"></div>
+          <div class="ropts">
+            <button id="mtFlowAdd" class="mtsmall">+ Deel</button>
+            <button id="mtFlowRit" class="mtsmall" title="7 maten a tempo, laatste maat vertragen">Voorbeeld: rit. aan het eind</button>
+            <button id="mtFlowAcc" class="mtsmall" title="8 maten geleidelijk sneller">Voorbeeld: accelerando</button>
+            <button id="mtFlowMix" class="mtsmall" title="4/4 → 3/4 → 4/4 met rit.">Voorbeeld: wisselende maat</button>
+          </div>
+          <div class="ropts">
+            <label><input type="checkbox" id="mtFlowLoop"> Herhalen</label>
+            <label title="Speel het hele verloop langzamer of sneller; de knoppen en pijltjes bij het tempo veranderen dit ook">Alles op <input type="number" id="mtFlowPct" min="25" max="200"> %</label>
+            <span id="mtFlowInfo" class="mtflowinfo"></span>
+          </div>
+        </div>
+        <p class="mtnote mtflow">Elk deel heeft een aantal maten, een maatsoort en een tempo van → tot. Hetzelfde tempo = a tempo; lager = ritardando, hoger = accelerando (geleidelijk, tel voor tel). Handig voor een slot met rit., een stuk met maatwisselingen of een langzame inleiding.</p>
+        <p class="mtnote mthand">Speel de passage. Ging het goed? <b>Gelukt</b> = een stap sneller. Niet schoon? <b>Te snel</b> = een stap terug.</p>
+        <div class="rlabel">Timing testen</div>
+        <div class="ropts">
+          <label><select id="mtTest"><option value="uit">Uit</option><option value="gap">Stille maten</option><option value="dun">Uitdunnen</option><option value="rand">Willekeurig tellen weg</option></select></label>
+          <label class="mtgap"><input type="number" id="mtOn" min="1" max="32"> maten aan,</label>
+          <label class="mtgap"><input type="number" id="mtOff" min="1" max="32"> maten stil</label>
+          <label class="mtdun">elke <input type="number" id="mtDun" min="1" max="16"> maten een stap</label>
+          <label class="mtrand"><input type="number" id="mtPct" min="5" max="90"> % van de tellen weg</label>
+        </div>
+        <p class="mtnote mtgap">Speel door in de stille maten. Valt de klik daarna precies op jouw tel? Dan hield je het tempo vast.</p>
+        <p class="mtnote mtdun">Steeds minder houvast: alle tellen → alleen tel 1 → tel 1 om de maat → helemaal stil, en dan weer van voren af aan.</p>
+        <p class="mtnote mtrand">Tel 1 blijft altijd klinken; de andere tellen vallen af en toe weg.</p>
+        <label class="mtmeetl"><input type="checkbox" id="mtMeet"> Meetikken: tik elke tel mee met de spatiebalk; de app meet hoe strak je blijft, met klik en in de stilte</label>
+      </div>
+    </div>
+    <div class="mtset">
+      <div class="rlabel mtsethead">🎼 Setlist <span class="drsub">(per stuk of passage: alle instellingen hierboven, het hoogste tempo, je “schone” tempo en hoeveel je erop geoefend hebt)</span>
+        <label class="mtsmartlbl" title="Voorstel wat je vandaag oefent en op welk tempo je begint"><input type="checkbox" id="mtSmart"> Slim voorstel</label></div>
+      <div id="mtToday" class="mttoday"></div>
+      <div id="mtList" class="mtlist"></div>
+      <div class="ropts mtsave">
+        <label>Stuk <input type="text" id="mtPiece" placeholder="bv. Bach Bourrée"></label>
+        <label>Passage <input type="text" id="mtPassage" placeholder="bv. maat 1–8"></label>
+        <button id="mtSaveNew">＋ Opslaan als nieuw</button>
+        <button id="mtSaveCur" title="Huidige instellingen opslaan in het geladen stuk">💾 Bijwerken</button>
+        <button id="mtNextItem" class="primary">Volgende in de setlist ▶</button>
+      </div>
+    </div>
+    <p class="gtip">Zo gebruik je hem bij een lastige passage: zoek het tempo waarop je hem <i>schoon</i> speelt (niet het tempo waarop het net lukt) en bouw vanaf daar op met kleine stappen van 2–4 bpm. Wordt het rommelig, ga dan terug en niet door. In 6/8 of bij snelle stukken kun je de metronoom op de hele tel zetten (6/8 in 2) en de onderverdeling zacht laten meetikken. Zet af en toe stille maten aan: het doel is dat jij het tempo draagt, niet de klik.</p>
+  </section>
+</div>
+
+<div id="ntView" class="view board">
+  <section class="rpanel">
+    <div class="subtabs" id="nlSubs"><button data-sub="noten"><span class="mi">🎯</span><strong>Noten benoemen</strong><span>Eén noot op de balk: welke is het? Viool- en bassleutel, met hulplijnen en voortekens.</span></button><button data-sub="toon"><span class="mi">🔑</span><strong>Toonsoorten</strong><span>De toonsoort herkennen aan de voortekening: majeur, mineur en de kerktoonladders (dorisch, lydisch …).</span></button><button data-sub="interval"><span class="mi">📐</span><strong>Intervallen (blad)</strong><span>Twee noten op de balk: welk interval? Van secunde tot dubbel octaaf, ook overmatig en verminderd.</span></button><button data-sub="ladder"><span class="mi">🪜</span><strong>Toonladders (blad)</strong><span>Een toonladder op de balk: welke soort is het? Majeur, mineur, modi, pentatonisch, blues, heletoons en meer.</span></button><button data-sub="akkoord"><span class="mi">🎹</span><strong>Akkoorden (blad)</strong><span>Een akkoord op de balk: welke soort? Major, minor, diminished, 7th- en jazz-akkoorden, ook in omkering.</span></button></div>
+    <div class="subback"><button class="backbtn" data-back="notenleer">← Notenleer-overzicht</button></div>
+    <div class="nlsub" data-sub="noten">
+    <div class="sechead pnlrow"><h2>🎯 Noten benoemen</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Je ziet één noot op de notenbalk (viool-, bas-, C-sleutels of de pianobalk). Welke noot is het? Staat er een voortekening (toonsoort), dan geldt die voor de noot: in D-groot is elke F een Fis. Druk op de juiste toets van het pianoklavier, of (onder 🕹️ Instellingen) op de letter. Bij het klavier telt elke toets met dezelfde naam (elke C is goed bij een C), tenzij je <i>Ook het octaaf</i> aanzet; dan moet je precies de goede toets kiezen. Bij de letters kies je eerst ♭ of ♯ en dan de letter. Lees de noot zo snel als je kunt zonder te tellen vanaf een vaste noot: dat wordt vanzelf sneller. Toetsen: C–B = letter (Shift = ♯), <kbd>-</kbd> = ♭ (nog eens = 𝄫, als dubbele voortekens aan staan), <kbd>+</kbd> = ♯ (nog eens = 𝄪), 1–8 = octaaf, <kbd data-key="luister"></kbd> = noot horen, <kbd data-key="volgende"></kbd> = volgende.</p></details><div class="ropts pnlkey"><label>Niveau <select id="nlLevel"></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Noten benoemen">
+      <div class="rlabel">Invoer</div>
+      <div class="ropts">
+        <label>Antwoorden met <select id="nlInput"><option value="klavier">pianoklavier</option><option value="letters">letters (C D E …)</option></select></label>
+        <label><input type="checkbox" id="nlNames"> Nootnamen op het klavier</label>
+        <label>Namen <select id="nlStyle"><option value="nl">Nederlands (Fis, Bes)</option><option value="en">Engels (F♯, B♭)</option></select></label>
+      </div>
+      <div class="ropts">
+        <label><input type="checkbox" id="nlOctave"> Ook het octaaf (C4 = centrale C)</label>
+      </div>
+      <div class="nbbox" id="nlBereik"></div>
+      <p class="muted nbnote">Past dit precies bij een niveau, dan springt het niveau daarheen; anders staat er "eigen keuze".</p>
+      <div class="rlabel">Opties</div>
+      <div class="ropts">
+        <label><input type="checkbox" id="nlHear"> Noot horen na je antwoord</label>
+        <label><input type="checkbox" id="nlAuto"> Automatisch door als het goed is</label>
+        <label>Klank <select id="nlInst"></select></label>
+      </div>
+      <div class="ropts">
+        <label><input type="checkbox" id="nlTimed"> Tijdmodus</label>
+        <label>seconden per noot <input type="number" id="nlLimit" min="1" max="30" step="1" style="width:60px"></label>
+      </div>
+    </aside>
+    <div class="nlstage">
+      <div class="qbar nlbar">
+        <button id="nlNext">Volgende →</button>
+        <button id="nlHearBtn" data-ktitle="Noot horen ({luister})">🔊 Noot horen</button>
+        <div class="qscore"><span id="nlRight">0</span> / <span id="nlTotal">0</span> goed · reeks <span id="nlStreak">0</span> · vandaag <span id="nlToday">0</span></div>
+      </div>
+      <div class="nlcard" id="nlCard"><div id="nlStaff"></div><div class="nlclock"><i id="nlClockBar"></i></div></div>
+      <div id="nlMsg" class="qmsg nlmsg"></div>
+      <div class="nlinput">
+        <div class="nlklavwrap" id="nlKlavWrap"><div id="nlKlav"></div></div>
+        <div class="nlletters" id="nlLetters">
+          <div class="nlacc" id="nlAccRow"><button type="button" class="dbl" data-acc="-2">𝄫</button><button type="button" data-acc="-1">♭</button><button type="button" data-acc="1">♯</button><button type="button" class="dbl" data-acc="2">𝄪</button></div>
+          <div class="grow" id="nlLetRow"></div>
+        </div>
+        <div class="nloct" id="nlOctRow"></div>
+      </div>
+      <details class="nlstatbox" id="nlStatBox"><summary id="nlStatSum"></summary><div id="nlStats" class="statgrid"></div><p><button id="nlReset">Wis statistieken</button></p></details>
+      <p class="gtip">Tip: leer eerst een paar vaste ankernoten (vioolsleutel: G4 op de tweede lijn, C5 in de derde ruimte, C4 en A5 op de hulplijnen; bassleutel: F3 op de vierde lijn, C3 in de tweede ruimte, C4 op de hulplijn erboven) en ga pas een niveau omhoog bij 90% goed. Snelheid komt vanzelf: de app laat de noten die je mist of traag leest vaker terugkomen.</p>
+    </div>
+    </div>
+    <div class="nlsub" data-sub="toon">
+    <div class="sechead pnlrow"><h2>🔑 Toonsoorten</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Je ziet een voortekening op de balk. <b>Welke toonsoort hoort erbij?</b> De soort staat erboven, bijvoorbeeld <b>___ majeur</b> of <b>___ dorisch</b>; jij vult de grondtoon in met de knoppen of de letter (Shift = ♯, eerst <kbd>-</kbd> = ♭, eerst <kbd>+</kbd> = ♯). Drie mollen en <i>___ majeur</i> = Es-groot; drie mollen en <i>___ dorisch</i> = F-dorisch. (Andersom, de grondtoon gegeven en de soort zoeken, doe je bij 🪜 Toonladders.) Zo vind je het: met kruizen ligt de majeur-grondtoon een halve toon boven het laatste kruis; met mollen is het de voorlaatste mol (één mol = F-groot). Mineur ligt een kleine terts lager (D-groot → b-klein). Een modus tel je vanaf de majeur-grondtoon: trap 1 ionisch, 2 dorisch, 3 frygisch, 4 lydisch, 5 mixolydisch, 6 aeolisch, 7 locrisch. <kbd data-key="luister"></kbd> = laten horen, <kbd data-key="volgende"></kbd> = volgende.</p></details><div class="ropts pnlkey"><label>Niveau <select id="tsLevel"></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Toonsoorten">
+      <div class="rlabel">Wat wordt er gevraagd</div>
+      <div class="chips" id="tsAskChips">
+        <label class="chip"><input type="checkbox" value="maj"> Majeur</label>
+        <label class="chip"><input type="checkbox" value="min"> Mineur</label>
+        <label class="chip"><input type="checkbox" value="modus"> Kerktoonladders (modi)</label>
+      </div>
+      <div id="tsModesBox">
+        <div class="rlabel">Welke modi</div>
+        <div class="chips" id="tsModeChips"></div>
+      </div>
+      <div class="nbbox" id="tsBereik"></div>
+      <p class="muted nbnote">Past dit precies bij een niveau, dan springt het niveau daarheen; anders staat er "eigen keuze".</p>
+      <div class="rlabel">Opties</div>
+      <div class="ropts">
+        <label>Namen <select id="tsStyle"><option value="nl">Nederlands (D-groot, fis-klein)</option><option value="en">Engels (D major, F♯ minor)</option></select></label>
+        <label>Na je antwoord <select id="tsHear"><option value="drieklank">drieklank horen</option><option value="ladder">toonladder horen</option><option value="uit">niets</option></select></label>
+        <label>Klank <select id="tsInst"></select></label>
+      </div>
+      <div class="ropts">
+        <label><input type="checkbox" id="tsAuto"> Automatisch door als het goed is</label>
+        <label><input type="checkbox" id="tsTimed"> Tijdmodus</label>
+        <label>seconden per vraag <input type="number" id="tsLimit" min="1" max="30" step="1" style="width:60px"></label>
+      </div>
+    </aside>
+    <div class="nlstage">
+      <div class="qbar nlbar">
+        <button id="tsNext">Volgende →</button>
+        <button id="tsHearBtn" data-ktitle="Laten horen ({luister})">🔊 Laten horen</button>
+        <div class="qscore"><span id="tsRight">0</span> / <span id="tsTotal">0</span> goed · reeks <span id="tsStreak">0</span> · vandaag <span id="tsToday">0</span></div>
+      </div>
+      <div id="tsAsk" class="tsask"></div>
+      <div class="nlcard" id="tsCard"><div id="tsStaff"></div><div class="nlclock"><i id="tsClockBar"></i></div></div>
+      <div id="tsMsg" class="qmsg nlmsg"></div>
+      <div class="tsinput" id="tsKeysBox">
+        <div class="tsrow" id="tsSharpRow"></div>
+        <div class="tsrow" id="tsFlatRow"></div>
+      </div>
+      <div class="tsinput tsmodes" id="tsModeBox"></div>
+      <details class="nlstatbox" id="tsStatBox"><summary id="tsStatSum"></summary><div id="tsStats" class="statgrid"></div><p><button id="tsReset">Wis statistieken</button></p></details>
+      <p class="gtip">Tip: leer eerst de volgorde van de voortekens uit je hoofd. Kruizen: Fis Cis Gis Dis Ais Eis Bis; mollen: precies andersom (Bes Es As Des Ges Ces Fes). Dan hoef je bij elke voortekening alleen nog het laatste kruis of de voorlaatste mol te zien. Voor de modi: denk eerst "welke majeur?" en tel dan vanaf daar de trappen op (dorisch = trap 2, frygisch 3, lydisch 4, mixolydisch 5, aeolisch 6, locrisch 7).</p>
+    </div>
+    </div>
+    <div class="nlsub" data-sub="ladder">
+    <div class="sechead pnlrow"><h2 id="tlTitle">🪜 Toonladders (blad)</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Er staat een toonladder op de balk (stijgend, met losse voortekens). De grondtoon staat erboven: <b>D ____</b>. Welke soort toonladder is het? Kies met de knoppen of de cijfers (1–9, 0). Zet je onder 🕹️ <i>Ook de grondtoon kiezen</i> aan (zoals in Tenuto), dan kies je eerst ook de grondtoon zelf: letter (Shift = ♯, eerst − = ♭) of de knoppen. Bij <i>Zien en horen</i> klinkt de ladder meteen, bij <i>Alleen horen</i> zie je hem pas na je antwoord: dan is het gehoortraining. Na je antwoord zie je de opbouw in trappen (bv. dorisch = 1 2 ♭3 4 5 6 ♭7) naast die van jouw keuze. <kbd data-key="luister"></kbd> = (nog eens) horen, <kbd data-key="volgende"></kbd> = volgende.</p></details><div class="ropts pnlkey"><label>Niveau <select id="tlLevel"></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Toonladders (blad)">
+      <div class="rlabel">Zien of horen</div>
+      <div class="ropts">
+        <label>Vraag <select id="tlMode"><option value="zien">alleen zien</option><option value="beide">zien en horen</option><option value="horen">alleen horen (gehoortraining)</option></select></label>
+        <label title="Hoe snel de tonen na elkaar klinken (♩ = één toon). Langzamer helpt bij nieuwe toonladders, akkoorden en grote sprongen.">Tempo <select id="tlBpm"></select></label>
+        <label class="ivgeh">Hoogte <select id="tlHoogte"><option value="midden">midden (zoals altijd)</option><option value="balk">volgens sleutel en hulplijnen</option></select></label>
+        <label><input type="checkbox" id="tlNaam"> Ook de grondtoon kiezen (zoals Tenuto)</label>
+      </div>
+      <div class="rlabel">Welke toonladders</div>
+      <div id="tlTypeChips"></div>
+      <div class="rlabel">Grondtonen</div>
+      <div class="ropts">
+        <label>Grondtoon <select id="tlTonics"><option value="c">alleen C</option><option value="wit">witte toetsen (C D E F G A B)</option><option value="alle">alle (ook Fis, Bes, Cis …)</option></select></label>
+        <label><input type="checkbox" id="tlDbl"> Ook met 𝄪 / 𝄫 (bv. Gis harmonisch mineur)</label>
+      </div>
+      <div class="nbbox" id="tlBereik"></div>
+      <p class="muted nbnote">Past dit precies bij een niveau, dan springt het niveau daarheen; anders staat er "eigen keuze".</p>
+      <div class="rlabel">Opties</div>
+      <div class="ropts">
+        <label>Namen <select id="tlStyle"><option value="nl">Nederlands (Fis, dorisch)</option><option value="en">Engels (F♯, Dorian)</option></select></label>
+        <label><input type="checkbox" id="tlHear"> Toonladder horen na je antwoord</label>
+        <label>Klank <select id="tlInst"></select></label>
+      </div>
+      <div class="ropts">
+        <label><input type="checkbox" id="tlAuto"> Automatisch door als het goed is</label>
+        <label><input type="checkbox" id="tlTimed"> Tijdmodus</label>
+        <label>seconden per vraag <input type="number" id="tlLimit" min="1" max="30" step="1" style="width:60px"></label>
+      </div>
+    </aside>
+    <div class="nlstage">
+      <div class="qbar nlbar">
+        <button id="tlNext">Volgende →</button>
+        <button id="tlHearBtn" data-ktitle="Horen ({luister})">🔊 Horen</button>
+        <div class="qscore"><span id="tlRight">0</span> / <span id="tlTotal">0</span> goed · reeks <span id="tlStreak">0</span> · vandaag <span id="tlToday">0</span></div>
+      </div>
+      <div id="tlAsk" class="tsask tlask"></div>
+      <div class="nlcard" id="tlCard"><div id="tlStaff"></div><div class="nlclock"><i id="tlClockBar"></i></div></div>
+      <div id="tlMsg" class="qmsg nlmsg"></div>
+      <div id="tlFormula" class="tlformula"></div>
+      <div class="tsinput" id="tlTonicBox">
+        <div class="nlacc" id="tlAccRow"><button type="button" data-acc="-1">♭</button><button type="button" data-acc="1">♯</button></div>
+        <div class="grow" id="tlLetRow"></div>
+      </div>
+      <div id="tlTypeBox" class="tltypes"></div>
+      <details class="nlstatbox" id="tlStatBox"><summary id="tlStatSum"></summary><div id="tlStats" class="statgrid"></div><p><button id="tlReset">Wis statistieken</button></p></details>
+      <p class="gtip">Tip: kijk eerst naar de terts (groot = majeur-familie, klein = mineur-familie) en zoek dan het ene kenmerkende verschil: een grote sext (dorisch), kleine secunde (frygisch), overmatige kwart (lydisch), kleine septiem (mixolydisch), grote septiem met kleine sext (harmonisch mineur). Minder dan 7 tonen? Dan is het pentatonisch, blues of heletoons; 8 tonen = verminderd (octatonisch).</p>
+    </div>
+    </div>
+    <div class="nlsub" data-sub="akkoord">
+    <div class="sechead pnlrow"><h2 id="akTitle">🎹 Akkoorden (blad)</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Er staat een akkoord op de balk. De grondtoon staat erboven: <b>C ____</b>. Welke soort akkoord is het? Kies met de knoppen of de cijfers (1–9, 0). Staan omkeringen aan, dan staat het akkoord soms niet in grondligging (de grondtoon is dan niet de onderste noot); met <i>Ook de ligging benoemen</i> zeg je ook welke omkering. Met <i>Ook de grondtoon kiezen</i> (zoals Tenuto) kies je ook de grondtoon zelf: letter (Shift = ♯, eerst − = ♭) of de knoppen. Bij <i>Alleen horen</i> zie je het akkoord pas na je antwoord. Na je antwoord zie je de opbouw (bv. dominant 7th = 1 3 5 ♭7) naast die van jouw keuze. sus2, sus4, overmatig en de jazz-akkoorden komen nooit in omkering voor: omgekeerd worden ze een ander akkoord (Csus4 → Fsus2, C6 → Am7). <kbd data-key="luister"></kbd> = (nog eens) horen, <kbd data-key="volgende"></kbd> = volgende.</p></details><div class="ropts pnlkey"><label>Niveau <select id="akLevel"></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Akkoorden (blad)">
+      <div class="rlabel">Zien of horen</div>
+      <div class="ropts">
+        <label>Vraag <select id="akMode"><option value="zien">alleen zien</option><option value="beide">zien en horen</option><option value="horen">alleen horen (gehoortraining)</option></select></label>
+        <label title="Hoe snel de tonen na elkaar klinken (♩ = één toon). Langzamer helpt bij nieuwe toonladders, akkoorden en grote sprongen.">Tempo <select id="akBpm"></select></label>
+        <label class="ivgeh">Hoogte <select id="akHoogte"><option value="midden">midden (zoals altijd)</option><option value="balk">volgens sleutel en hulplijnen</option></select></label>
+        <label><input type="checkbox" id="akNaam"> Ook de grondtoon kiezen (zoals Tenuto)</label>
+      </div>
+      <div class="ropts">
+        <label><input type="checkbox" id="akInv"> Omkeringen (bij major, minor, diminished en de 7th-akkoorden)</label>
+        <label><input type="checkbox" id="akInvName"> Ook de ligging benoemen</label>
+      </div>
+      <div class="rlabel">Welke akkoorden</div>
+      <div id="akTypeChips"></div>
+      <div class="rlabel">Grondtonen</div>
+      <div class="ropts">
+        <label>Grondtoon <select id="akTonics"><option value="c">alleen C</option><option value="wit">witte toetsen (C D E F G A B)</option><option value="alle">alle (ook Fis, Bes, Cis …)</option></select></label>
+        <label><input type="checkbox" id="akDbl"> Ook met 𝄪 / 𝄫 (bv. C diminished 7th met B𝄫)</label>
+      </div>
+      <div class="nbbox" id="akBereik"></div>
+      <p class="muted nbnote">Past dit precies bij een niveau, dan springt het niveau daarheen; anders staat er "eigen keuze".</p>
+      <div class="rlabel">Opties</div>
+      <div class="ropts">
+        <label>Namen <select id="akStyle"><option value="nl">Nederlands (Fis, dorisch)</option><option value="en">Engels (F♯, Dorian)</option></select></label>
+        <span class="akdirs"><span>Richting:</span><label><input type="checkbox" class="akd" value="up"> stijgend</label><label><input type="checkbox" class="akd" value="down"> dalend</label><label><input type="checkbox" class="akd" value="harm"> samen</label></span>
+        <label title="Bij stijgend of dalend klinkt (en staat) het akkoord daarna ook nog samen"><input type="checkbox" id="akThen"> daarna ook samen</label>
+        <label><input type="checkbox" id="akHear"> Akkoord horen na je antwoord</label>
+        <label>Klank <select id="akInst"></select></label>
+      </div>
+      <div class="ropts">
+        <label><input type="checkbox" id="akAuto"> Automatisch door als het goed is</label>
+        <label><input type="checkbox" id="akTimed"> Tijdmodus</label>
+        <label>seconden per vraag <input type="number" id="akLimit" min="1" max="30" step="1" style="width:60px"></label>
+      </div>
+    </aside>
+    <div class="nlstage">
+      <div class="qbar nlbar">
+        <button id="akNext">Volgende →</button>
+        <button id="akHearBtn" data-ktitle="Horen ({luister})">🔊 Horen</button>
+        <div class="qscore"><span id="akRight">0</span> / <span id="akTotal">0</span> goed · reeks <span id="akStreak">0</span> · vandaag <span id="akToday">0</span></div>
+      </div>
+      <div id="akAsk" class="tsask tlask"></div>
+      <div class="nlcard" id="akCard"><div id="akStaff"></div><div class="nlclock"><i id="akClockBar"></i></div></div>
+      <div id="akMsg" class="qmsg nlmsg"></div>
+      <div id="akFormula" class="tlformula"></div>
+      <div class="tsinput" id="akInvBox"></div>
+      <div class="tsinput" id="akTonicBox">
+        <div class="nlacc" id="akAccRow"><button type="button" data-acc="-1">♭</button><button type="button" data-acc="1">♯</button></div>
+        <div class="grow" id="akLetRow"></div>
+      </div>
+      <div id="akTypeBox" class="tltypes"></div>
+      <details class="nlstatbox" id="akStatBox"><summary id="akStatSum"></summary><div id="akStats" class="statgrid"></div><p><button id="akReset">Wis statistieken</button></p></details>
+      <p class="gtip">Tip: kijk eerst naar de terts (groot = major, klein = minor) en de kwint (rein, verminderd = diminished, overmatig = augmented), dan naar de septiem: ♭7 = dominant 7th / minor 7th, 7 = major 7th. Staat het akkoord in omkering, zoek dan de grondtoon (de noot boven de "kwart-opening") en stapel opnieuw in tertsen. Op gehoor: major klinkt helder, minor donker, diminished gespannen, augmented zwevend.</p>
+    </div>
+    </div>
+    <div class="nlsub" data-sub="interval">
+    <div class="sechead pnlrow"><h2 id="ivTitle">📐 Intervallen (blad)</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p><b>Blad:</b> er staan twee noten op de balk (na elkaar of samen). Welk interval is het? Tel eerst de letters (C D E = terts), dan de halve tonen (3 = klein, 4 = groot). Overmatige en verminderde intervallen (bv. C–D♯ = overmatige secunde) zet je aan met niveau 8 of zelf onder 🕹️. <b>Gehoor:</b> Je hoort twee tonen, na elkaar of samen. Hoe groot is de afstand? Zing ze zachtjes mee en denk aan je geheugensteun-liedje, klik pas daarna. <kbd data-key="luister"></kbd> = opnieuw, 1–9 en 0 = antwoord, <kbd data-key="volgende"></kbd> = volgende. Op gehoor tellen gelijk klinkende intervallen als hetzelfde (k3 = o2). Kies met de knoppen of de cijfers (1–9, 0); <kbd data-key="luister"></kbd> = (nog eens) horen, <kbd data-key="volgende"></kbd> = volgende.</p></details><div class="ropts pnlkey"><label>Niveau <select id="ivLevel"></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Intervallen (blad)">
+      <div class="rlabel">Zien of horen</div>
+      <div class="ropts">
+        <label>Vraag <select id="ivMode"><option value="zien">alleen zien</option><option value="beide">zien en horen</option><option value="horen">alleen horen (gehoortraining)</option></select></label>
+        <label title="Hoe snel de tonen na elkaar klinken (♩ = één toon). Langzamer helpt bij nieuwe toonladders, akkoorden en grote sprongen.">Tempo <select id="ivBpm"></select></label>
+        <label class="ivgeh">Hoogte <select id="ivHoogte"><option value="midden">midden (zoals altijd)</option><option value="balk">volgens sleutel en hulplijnen</option></select></label>
+        <label><input type="checkbox" id="ivExplore"> Vrij luisteren (niets wordt geteld)</label>
+      </div>
+      <div class="ropts" id="ivDirs">
+        <span>Richting:</span>
+        <label><input type="checkbox" class="ivd" value="up"> stijgend</label>
+        <label><input type="checkbox" class="ivd" value="down"> dalend</label>
+        <label><input type="checkbox" class="ivd" value="harm"> samen</label>
+      </div>
+      <div class="rlabel">Intervallen in deze oefening</div>
+      <div id="ivChips"></div>
+      <div class="ropts ivgeh"><label>Begintoon <select id="ivStart"></select></label></div>
+      <div class="ivblad">
+        <div class="rlabel">Grondtonen (onderste noot)</div>
+        <div class="ropts">
+          <label>Onderste noot <select id="ivTonics"><option value="c">alleen C</option><option value="wit">witte toetsen (C D E F G A B)</option><option value="alle">alle (ook Fis, Bes, Cis …)</option></select></label>
+          <label><input type="checkbox" id="ivDbl"> Ook met 𝄪 / 𝄫</label>
+        </div>
+      </div>
+      <div class="nbbox" id="ivBereik"></div>
+      <p class="muted nbnote">Past dit precies bij een niveau, dan springt het niveau daarheen; anders staat er "eigen selectie".</p>
+      <div class="rlabel">Opties</div>
+      <div class="ropts">
+        <label>Namen <select id="ivStyle"><option value="nl">Nederlands (k3, r5)</option><option value="en">Engels (m3, P5)</option></select></label>
+        <label>Klank <select id="ivInst"></select></label>
+        <label><input type="checkbox" id="ivHear"> Interval horen na je antwoord</label>
+      </div>
+      <div class="ropts">
+        <label><input type="checkbox" id="ivAuto"> Automatisch door als het goed is</label>
+        <label><input type="checkbox" id="ivTimed"> Tijdmodus</label>
+        <label>seconden per vraag <input type="number" id="ivLimit" min="1" max="30" step="1" style="width:60px"></label>
+      </div>
+    </aside>
+    <div class="nlstage">
+      <div class="qbar nlbar">
+        <button id="ivNext">Volgende →</button>
+        <button id="ivHearBtn" data-ktitle="Horen ({luister})">🔊 Horen</button>
+        <div class="qscore"><span id="ivRight">0</span> / <span id="ivTotal">0</span> goed · reeks <span id="ivStreak">0</span> · vandaag <span id="ivToday">0</span></div>
+      </div>
+      <div id="ivAsk" class="tsask"></div>
+      <div class="nlcard" id="ivCard"><div id="ivStaff"></div><div class="nlclock"><i id="ivClockBar"></i></div></div>
+      <div id="ivMsg" class="qmsg nlmsg"></div>
+      <div id="ivInfo" class="ivinfo"></div>
+      <div class="ivafter" id="ivAfter" style="display:none">
+        <button id="ivAgain">▶ Nog eens</button>
+        <button id="ivMine">▶ Jouw keuze</button>
+        <button id="ivBoth">▶ Samen</button>
+      </div>
+      <div class="tltypes ivpad" id="ivPad"></div>
+      <details class="nlstatbox" id="ivStatBox"><summary id="ivStatSum"></summary><div id="ivStats" class="statgrid"></div><p><button id="ivReset">Wis statistieken</button></p></details>
+      <details class="nlstatbox ivsongbox"><summary>🎵 Jouw geheugensteunen <span class="muted">(liedjes per interval) ▸</span></summary><p class="note">Vervang een voorbeeld door een liedje of stuk dat jij goed kent, het liefst uit je eigen repertoire. Leeg laten = het voorbeeld (grijs) blijft staan.</p><div id="ivSongs" class="ivsongs"></div></details>
+      <p class="gtip">Zo werkt het: begin op niveau 1 met alleen stijgend, en voeg dalend en samen toe als je rond de 90% zit. Bij een fout antwoord hoor je met <b>Jouw keuze</b> het verschil met het goede interval, zo leer je het snelst. <b>Samen</b> is de klank van een dubbelgreep: een reine kwint klinkt als twee losse vioolsnaren, tertsen en sexten als een warme samenklank. Op blad: tel eerst de letters, dan de halve tonen.</p>
+    </div>
+    </div>
+  </section>
+</div>
+
+<div id="droneView" class="view board">
+  <section class="rpanel">
+    <div class="subtabs drsubtabs" id="drSubs"><button data-sub="vrij"><span class="mi">🎻</span><strong>Vrij spelen</strong><span>Drone aan, toonladders toon voor toon spelen en zuiver leren intoneren.</span></button><button data-sub="trap"><span class="mi">🎯</span><strong>Degrees</strong><span>Hoor een toon boven de drone en tik de juiste trap aan in de cirkel.</span></button><button data-sub="melo"><span class="mi">🎼</span><strong>Melodieën</strong><span>Hoor een korte melodie boven de drone en speel hem na in de cirkel, noot voor noot.</span></button></div>
+    <div class="subback"><button class="backbtn" data-back="drone">← Drone-overzicht</button></div>
+    <div class="sechead drtrap drhead"><h2>🎯 Degrees</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>De drone legt de grondtoon neer, daarna hoor je één toon. Welke trap is het? Luister niet naar de afstand, maar naar het <i>gevoel</i> van de toon tegen de drone: rust, spanning, trekken. Zing hem zachtjes mee en tik dan de trap aan in de cirkel. Het midden = luisteren / volgende. <kbd data-key="luister"></kbd> = toon nog eens, 1–7 = trap, Shift+2/3/6/7 = ♭2/♭3/♭6/♭7, T = tritonus (♯4), <kbd data-key="volgende"></kbd> = volgende, <kbd data-key="grondtoon"></kbd> = drone aan/uit.</p></details></div>
+    <div class="sechead drmelo drhead"><h2>🎼 Melodieën</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>De drone legt de grondtoon neer en je hoort een korte melodie (3 tot 20 noten). Speel hem na door de trappen in de goede volgorde in de cirkel aan te tikken. Onder 🕹️ kies je hoe je nakijkt. <b>Per noot</b>: na elke tik zie je meteen of het klopt (goed = de bol licht op en het vakje kleurt; fout = stippelring en je probeert die noot opnieuw; na een paar fouten laat de app hem zien). <b>Aan het eind</b>: je vult eerst de hele melodie in, verbetert met <kbd data-key="wis"></kbd> en kijkt na met <kbd data-key="controleer"></kbd>; dan zie je per vakje wat goed en fout was. Daarna hoor je de melodie nog eens terwijl de bollen meelichten. Je kunt ook de grootte van de sprongen kiezen, de toonsoort laten wisselen (met wentijd) en een tijdmodus aanzetten. <kbd data-key="luister"></kbd> = melodie nog eens, 1–7 = trap, Shift+2/3/6/7 = ♭2/♭3/♭6/♭7, T = tritonus (♯4), <kbd data-key="volgende"></kbd> = nieuwe melodie, <kbd data-key="grondtoon"></kbd> = drone aan/uit.</p></details></div>
+    <div class="sechead drfree drhead"><h2>🎻 Drone</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Kies de toonsoort boven de cirkel en zet de drone aan (middenknop, do in de cirkel of <kbd data-key="grondtoon"></kbd>). Klik een toon in de cirkel aan om hem mee te laten klinken (ingevuld = klinkt), nog eens klikken = weer uit. Zo maak je grondtoon + kwint of een heel akkoord. De toon die je in de toonladder speelt, pulseert. Speel daarna je toonladder toon voor toon. Toetsen: <kbd data-key="volgende"></kbd> = volgende toon, <kbd data-key="vorige"></kbd> = vorige, <kbd data-key="luister"></kbd> = toon nog eens, <kbd data-key="begin"></kbd> = terug naar het begin, <kbd data-key="grondtoon"></kbd> = drone aan/uit, <kbd data-key="pauze"></kbd> = pauze, <kbd data-key="metronoom"></kbd> = metronoom, <kbd data-key="stop"></kbd> = alles stil. De kleur hoort bij de trap: de 3 is in elke toonsoort rood, de 5 paars.</p></details></div>
+    <div class="drstage">
+      <div class="drtop ropts">
+        <label class="drkey">Toonsoort <select id="drRoot"></select></label>
+        <div id="drState"></div>
+        <button id="drPanelBtn" class="pnlbtn">🕹️ Instellingen</button>
+      </div>
+      <div id="drCircle"></div>
+      <div class="drtrap dtfb"><div id="dtMsg"></div><div id="dtFeel" class="dtfeel"></div>
+          <div class="dtbar"><button id="dtNext" data-ktitle="Volgende ({volgende})">Volgende ▶</button><span class="muted dtcount">Vandaag: <b id="dtToday">0</b> · reeks <b id="dtStreak">0</b></span></div></div>
+      <div class="drtrap dtstatwrap">
+          <details class="dtstatbox" id="dtStatBox">
+            <summary><span class="dtsumtitle">📊 Statistieken</span><span id="dtStatSum" class="dtstatsum"></span><span class="dtmore">alles ▸</span></summary>
+            <div class="rlabel dtstathead">Per trap <span class="drsub">(laatste 40 pogingen, zwakste bovenaan; die komen ook vaker terug)</span> <button id="dtReset" class="dtreset">Wis</button></div>
+            <div id="dtStats" class="dtstats"></div>
+          </details>
+      </div>
+      <div class="drmelo dmfb"><div id="dmSlots" class="dmslots"></div><div id="dmMsg"></div>
+          <div class="dtbar"><button id="dmAgain" data-ktitle="Melodie nog eens ({luister})">🔁 Nog eens</button><button id="dmWis" data-ktitle="Laatste noot weg ({wis})">⌫ Wis</button><button id="dmCheck" class="primary" data-ktitle="Nakijken ({controleer})">✓ Controleer</button><button id="dmShowBtn" title="Melodie nog eens met meelichtende bollen">▶ Met kleuren</button><button id="dmNext" data-ktitle="Nieuwe melodie ({volgende})">Nieuwe melodie ▶</button><span class="muted dtcount">Vandaag: <b id="dmToday">0</b> noten · foutloos op rij <b id="dmStreak">0</b></span></div></div>
+      <div class="drmelo dtstatwrap">
+          <details class="dtstatbox" id="dmStatBox">
+            <summary><span class="dtsumtitle">📊 Statistieken</span><span id="dmStatSum" class="dtstatsum"></span><span class="dtmore">alles ▸</span></summary>
+            <div class="rlabel dtstathead">Per trap <span class="drsub">(<span id="dmStatMode"></span>; laatste 40 noten, zwakste bovenaan)</span> <button id="dmReset" class="dtreset">Wis</button></div>
+            <div id="dmStats" class="dtstats"></div>
+          </details>
+      </div>
+      <div class="drfree drstep">
+        
+          <div class="drnow"><div id="drNote"></div><div><div id="drInfo"></div><div id="drHint"></div></div></div>
+          <div class="drbtns">
+            <button id="drPrev" data-ktitle="Vorige toon ({vorige})">◀</button>
+            <button id="drNext" class="primary big" data-ktitle="Volgende toon ({volgende})">Volgende toon ▶</button>
+            <button id="drReplay" data-ktitle="Toon nog eens horen ({luister})">🔁</button>
+            <button id="drAgain" data-ktitle="Opnieuw beginnen ({begin})">↺ Opnieuw</button>
+            <button id="drPause" class="drpause" data-ktitle="Pauze / verder ({pauze})">⏸ Pauze</button>
+          </div>
+          <div class="drslots" id="drSlots"></div>
+        </div>
+    </div>
+    <aside class="pnl" id="drPanel" data-title="Drone">
+      <div class="rlabel">Drone</div>
+      <div class="ropts">
+        <label>Octaaf <select id="drOct"></select></label>
+        <label>Klank <select id="drInst"></select></label>
+          <label>Volume <input type="range" id="drVol" min="2" max="100"></label>
+          <label title="Ruimte rond de drone (0 = droog)">Galm <input type="range" id="drRev" min="0" max="100"></label>
+      </div>
+      <div class="rlabel">Klank <span class="drsub">(voorbeeldtoon bij Vrij spelen, vraagtoon bij Degrees, melodie bij Melodieën)</span></div>
+      <div class="ropts">
+        <label title="Hoe hard de voorbeeldtoon en de vraagtoon klinken; de drone heeft zijn eigen Volume hierboven">Klankvolume <input type="range" id="drNoteVol" min="0" max="100"></label>
+      </div>
+      <div class="drfree">
+        <div class="rlabel">Tonen in de drone <span class="drsub">(klik een toon in de cirkel aan of uit; do = drone aan/uit)</span></div>
+        <div class="ropts">
+          <span class="drpresets" id="drPresets"></span>
+          <label><input type="checkbox" id="drOctave"> + octaaf van de grondtoon</label>
+        </div>
+        </div>
+      <div class="drtrap">
+          <div class="rlabel">Degrees</div>
+          <div class="ropts">
+            <label>Niveau <select id="dtLevel"></select></label>
+            <label>Klank <select id="dtInst"></select></label>
+            <label title="De toon klinkt soms een octaaf hoger of lager"><input type="checkbox" id="dtOct"> Wisselend octaaf</label>
+            <label title="Na je antwoord loopt de toon via de toonladder terug naar do"><input type="checkbox" id="dtRes"> Oplossen naar do</label>
+            <label><input type="checkbox" id="dtAuto"> Automatisch door</label>
+          </div>
+          <div class="ropts">
+            <label title="Na een aantal vragen kiest de app zelf een nieuwe toonsoort"><input type="checkbox" id="dtKeyRand"> Wisselende toonsoort, elke</label>
+            <label><input type="number" id="dtKeyEvery" min="1" max="200" step="1"> vragen</label>
+            <label title="Bij de start en na elke nieuwe toonsoort klinkt eerst alleen de drone (0 = geen wentijd)">Wentijd <input type="number" id="dtIntro" min="0" max="20" step="0.5"> s</label>
+          </div>
+          <div class="ropts">
+            <label title="Je moet binnen de tijd antwoorden; de klok start zodra de toon klinkt. Te laat = fout."><input type="checkbox" id="dtTimed"> Tijdmodus: antwoord binnen</label>
+            <label><input type="number" id="dtLimit" min="1" max="30" step="0.5"> s</label>
+          </div>
+          <div class="dtown" id="dtOwn"></div>
+        </div>
+      <div class="drmelo">
+        <div class="rlabel">Melodieën</div>
+        <div class="ropts">
+          <label>Niveau <select id="dmLevel"></select></label>
+          <label>Lengte <select id="dmLen"></select></label>
+          <label title="Per noot: na elke tik meteen goed of fout. Aan het eind: eerst alles invullen, dan controleren.">Nakijken <select id="dmCheckMode"><option value="noot">per noot</option><option value="eind">aan het eind</option></select></label>
+        </div>
+        <div class="ropts">
+          <label title="De kleinste sprong tussen twee opeenvolgende noten">Sprongen van <select id="dmMinI"></select></label>
+          <label title="De grootste sprong tussen twee opeenvolgende noten">tot <select id="dmMaxI"></select></label>
+        </div>
+        <p class="drsub dmintmsg" id="dmIntMsg"></p>
+        <div class="ropts">
+          <label>Tempo <select id="dmBpm"></select></label>
+          <label>Klank <select id="dmInst"></select></label>
+          <label title="Alleen bij per noot nakijken: na hoeveel foute pogingen op dezelfde noot de app hem laat zien">Hulp na <select id="dmTries"><option value="1">1 fout</option><option value="2">2 fouten</option><option value="3">3 fouten</option></select></label>
+        </div>
+        <div class="ropts">
+          <label><input type="checkbox" id="dmStartDo"> Begint altijd op do</label>
+          <label title="Uit = je hoort je eigen invoer niet, dus je moet de melodie in één keer goed onthouden in plaats van hem na te spelen op het gehoor"><input type="checkbox" id="dmHear"> Je eigen invoer horen</label>
+          <label><input type="checkbox" id="dmAuto"> Automatisch door als hij foutloos is</label>
+        </div>
+        <div class="ropts">
+          <label title="Na een aantal melodieën kiest de app zelf een nieuwe toonsoort"><input type="checkbox" id="dmKeyRand"> Wisselende toonsoort, elke</label>
+          <label><input type="number" id="dmKeyEvery" min="1" max="200" step="1"> melodieën</label>
+          <label title="Bij de start en na elke nieuwe toonsoort klinkt eerst alleen de drone (0 = geen wentijd)">Wentijd <input type="number" id="dmIntro" min="0" max="20" step="0.5"> s</label>
+        </div>
+        <div class="ropts">
+          <label title="De klok start zodra de melodie klaar is met spelen; je krijgt zoveel seconden per noot. Te laat = de rest is fout."><input type="checkbox" id="dmTimed"> Tijdmodus:</label>
+          <label><input type="number" id="dmLimit" min="1" max="30" step="0.5"> s per noot</label>
+        </div>
+      </div>
+      <div class="drfree">
+        <div class="rlabel">Toonladder</div>
+        <div class="ropts">
+          <label><select id="drScale"></select></label>
+          <label>vanaf <select id="drStart"></select></label>
+          <label><select id="drOcts"><option value="1">1 octaaf</option><option value="2">2 octaven</option><option value="3">3 octaven</option></select></label>
+          <label><input type="checkbox" id="drHear"> Voorbeeldtoon</label>
+          <label>klank <select id="drNoteInst"></select></label>
+        </div>
+        <div class="rlabel">Metronoom</div>
+        <div class="ropts">
+          <label><input type="checkbox" id="drMetroChk"> Metronoom</label>
+          <label><input type="number" id="drBpm" min="30" max="240"> bpm</label>
+          <label><select id="drPer"><option value="1">1 tel</option><option value="2">2 tellen</option><option value="3">3 tellen</option><option value="4">4 tellen</option></select> per toon</label>
+          <label id="drAutoWrap"><input type="checkbox" id="drAuto"> Automatisch door</label>
+        </div>
+      </div>
+    </aside>
+    <p class="gtip drtrap">Zo werkt het: elke trap heeft tegen de grondtoon een eigen karakter. Do is thuis, ti trekt omhoog, fa wil zakken. Na je antwoord zie je dat karakter en hoor je hoe de toon naar do terugloopt. Begin met 1 · 3 · 5 en ga pas verder als het niveau-advies het zegt. De kleuren zijn dezelfde als bij Vrij spelen: de 3 is altijd rood, de 5 paars. Toonsoort kies je rechts (of laat hem wisselen); in de drone klinkt alleen de grondtoon, zodat niets het antwoord verraadt.</p>
+    <p class="gtip drmelo">Zo pak je het aan: luister eerst helemaal, zing de melodie zachtjes na en voel bij elke toon waar hij staat ten opzichte van do (rust, spanning, trekken). Tik pas daarna. Begin met 1 · 3 · 5 en 3 of 4 noten, alleen stappen. Gaat het meestal foutloos, maak de melodie dan langer, zet sprongen aan of kies een volgend niveau. Op viool of piano kun je hem daarna ook naspelen tegen de drone.</p>
+    <p class="gtip drfree">Zo gebruik je het op viool: drone op de grondtoon, langzaam (bijvoorbeeld 2 tellen per toon op 60), en bij elke toon luisteren of het samen <i>rustig</i> klinkt. Zweeft of “wauwelt” het, schuif dan met je vinger tot het stilstaat. Grondtoon, kwint en kwart moeten helemaal stil staan; tertsen en sexten zuiver spelen betekent anders dan op de piano (zie de tip bij die toon). Zet de voorbeeldtoon uit zodra je de toonladder kent, anders speel je na in plaats van te luisteren.</p>
+  </section>
+</div>
+
+<div id="inView" class="view">
+  <section class="rpanel" id="inPanel">
+    <div class="sechead pnlrow"><h2>🎚️ Intonatie</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Boven een drone klinkt een toon. <b>Hoog, laag of zuiver?</b> Zeg of hij te laag (<kbd>1</kbd>), zuiver (<kbd>2</kbd>) of te hoog (<kbd>3</kbd>) is. Met <i>Automatisch aanpassen</i> wordt het verschil kleiner zolang het goed gaat, zo zoekt de app je grens. <b>Uit je hoofd</b>: eerst klinkt de drone, dan valt hij weg, dan een stilte, dan de toon <i>zonder</i> drone: vergelijk met de drone die je nog in je hoofd hebt. <b>Dubbelgreep</b>: twee tonen samen zonder drone; is de bovenste te laag, zuiver of te hoog? <b>Wie is er vals?</b>: een toonladder of melodie met één valse noot; kies welke (<kbd>1</kbd>–<kbd>9</kbd>). <b>Drieklank</b>: drie tonen samen; is de terts (<kbd>1</kbd>) of de kwint (<kbd>2</kbd>) vals, of alles zuiver (<kbd>3</kbd>)? <b>Andere rol</b>: dezelfde noot is zuiver gestemd voor deze rol (bijvoorbeeld terts boven C) of voor een andere (kwint boven A); klopt hij hier? <b>Zelf zuiver zetten</b>: de toon begint ernaast; schuif met de cent-knoppen (−10 … +10), <kbd>↑</kbd> <kbd>↓</kbd> (1 cent, Shift = 5) of de schuif tot hij zuiver is, dan <kbd data-key="controleer"></kbd>. Luister naar het <b>zweven</b>: een snel golven in de klank dat langzamer wordt naarmate je dichterbij komt en verdwijnt als het zuiver is. <kbd data-key="luister"></kbd> = toon nog eens, <kbd data-key="grondtoon"></kbd> = drone aan/uit, <kbd data-key="pauze"></kbd> = pauze (drone en toon even stil, nog eens = verder), <kbd data-key="stop"></kbd> = alles stil.</p></details><div class="ropts pnlkey"><label>Niveau <select id="inLevel"></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Intonatie">
+      <div class="rlabel">Oefening</div>
+      <div class="ropts">
+        <label class="inwide">Stand <select id="inMode"><option value="kies">Hoog, laag of zuiver?</option><option value="hoofd">Uit je hoofd (drone eerst, dan stilte)</option><option value="dubbel">Dubbelgreep (twee tonen samen, zonder drone)</option><option value="vals">Wie is er vals? (toonladder of melodie)</option><option value="drie">Drieklank (terts of kwint vals?)</option><option value="rol">Dezelfde noot, andere rol</option><option value="stem">Zelf zuiver zetten</option></select></label>
+        <label class="inwide">Stemming <select id="inRef"><option value="zuiver">rein (zoals tegen een drone: 5:4, 3:2 …)</option><option value="gelijk">gelijkzwevend (zoals de piano)</option><option value="pyth">Pythagoreïsch (zuivere kwinten, hoge tertsen)</option><option value="midden">middentoon ¼-komma (zuivere tertsen, smalle kwinten)</option><option value="werck">Werckmeister III (welgetemperd, per toonsoort anders)</option><option value="mix">Wisselend: elke vraag een ander systeem</option></select></label>
+      </div>
+      <details class="inbox"><summary>ⓘ Hoe werken de stemmingen? En welke zijn belangrijk voor viool?</summary>
+        <p><b>Rein</b>: intervallen als eenvoudige verhoudingen (octaaf 2:1, kwint 3:2, grote terts 5:4). De boventonen vallen samen, het zweven houdt op. Zo speel je tegen een drone.</p>
+        <p><b>Gelijkzwevend</b>: 12 gelijke halve tonen van 100 cent, zoals de piano. Elke toonsoort hetzelfde; alleen het octaaf is zuiver (kwint −2, grote terts +14 cent).</p>
+        <p><b>Pythagoreïsch</b>: alles uit zuivere kwinten, zoals je je snaren stemt. Kwinten zuiver, grote terts 22 cent hoger dan rein. Middeleeuwen; helder voor melodie, ruw in akkoorden.</p>
+        <p><b>Middentoon ¼-komma</b>: kwinten 5,4 cent smaller, zodat vier kwinten een reine grote terts geven. Tertsen zuiver, kwinten zweven licht. Renaissance en vroege barok.</p>
+        <p><b>Werckmeister III</b> (1691): vier kwinten een beetje kleiner, de rest zuiver. Elke toonsoort heeft een eigen kleur: C-groot bijna rein, Fis-groot zo scherp als Pythagoreïsch. De tijd van Bach.</p>
+        <p class="inviool"><b>🎻 Welke zijn belangrijk voor viool?</b></p>
+        <ul class="inviool">
+          <li><b>Pythagoreïsch</b>: je snaren stem je in zuivere kwinten, en in melodieën spelen violisten vaak in deze richting: hoge grote tertsen en leidtonen. Onderzoek bij professionele violisten en een strijkkwartet vond dat hun toonhoogtes het dichtst bij Pythagoreïsch lagen, of tussen Pythagoreïsch en gelijkzwevend.</li>
+          <li><b>Rein</b>: voor dubbelgrepen, akkoorden (Bach, Seitz), tegen een drone en in een strijkkwartet. Daar wil je dat het zweven ophoudt, vooral bij tertsen en sexten.</li>
+          <li><b>Gelijkzwevend</b>: als je met piano speelt. Lange noten en unisono's met de piano moeten daarop passen, anders botst het.</li>
+          <li><b>Middentoon en Werckmeister</b> kom je vooral tegen in barokmuziek met klavecimbel of orgel. Leuk als extra uitdaging, minder belangrijk voor gewoon vioolspel.</li>
+        </ul>
+        <p class="muted">Goede violisten wisselen dus: melodisch richting Pythagoreïsch, harmonisch (dubbelgrepen, akkoorden) richting rein, met piano gelijkzwevend.</p>
+      </details>
+      <p class="muted ptnote">"Zuiver" = goed in dat stemmingssysteem. Alleen bij <i>rein</i> houdt het zweven helemaal op; in de andere systemen moet je de kleine, juiste hoeveelheid zweven leren horen. Dat is veel lastiger. Bij <i>Wisselend</i> staat bij elke vraag welk systeem het is.</p>
+      <div class="rlabel">Intervallen boven de drone</div>
+      <div class="chips" id="inInts"></div>
+      <div class="rlabel">Drone</div>
+      <div class="ropts">
+        <label>Toon <select id="inKeySel"></select></label>
+        <label>wissel elke <input type="number" id="inKeyEvery" min="1" max="50" step="1"> vragen</label>
+        <label>Octaaf <select id="inOct"><option value="2">2 (laag, cello)</option><option value="3">3 (midden, altviool/viool)</option><option value="4">4 (hoog)</option></select></label>
+      </div>
+      <div class="ropts">
+        <label>Klank drone <select id="inDInst"><option value="rijk">Rijk (met boventonen)</option><option value="zacht">Zacht (weinig boventonen)</option><option value="sinus">Sinus</option></select></label>
+        <label>Volume drone <input type="range" id="inDVol" min="0" max="100" step="1"></label>
+      </div>
+      <div class="rlabel">Toon</div>
+      <div class="ropts">
+        <label>Klank toon <select id="inTInst"><option value="rijk">Rijk (met boventonen)</option><option value="zacht">Zacht (weinig boventonen)</option><option value="sinus">Sinus</option></select></label>
+        <label>Volume toon <input type="range" id="inTVol" min="0" max="100" step="1"></label>
+      </div>
+      <div class="ropts">
+        <label>Toon duurt <input type="number" id="inDur" min="0.8" max="8" step="0.5"> s</label>
+        <label>Eerst drone alleen <input type="number" id="inWait" min="0" max="6" step="0.5"> s</label>
+      </div>
+      <p id="inSinusTip" class="muted ptnote">Eerlijk gezegd: met een sinus heb je geen boventonen, dus bij een kwint, terts of sext hoor je bijna geen zweving. Sinus werkt goed voor unisono en (met een rijke drone) het octaaf; voor de andere intervallen is <i>Rijk</i> veel duidelijker.</p>
+      <div class="rlabel">Hoog, laag of zuiver?</div>
+      <div class="ropts">
+        <label><input type="checkbox" id="inAdapt"> Automatisch aanpassen (zoekt je grens)</label>
+        <label id="inCentsRow">Vast verschil <input type="number" id="inCents" min="1" max="50" step="1"> cent</label>
+        <label>Zuiver in <input type="number" id="inShare" min="0" max="80" step="5"> % van de vragen</label>
+      </div>
+      <div class="rlabel">Vibrato</div>
+      <div class="ropts">
+        <label><input type="checkbox" id="inVib"> Vibrato op de toon (zoals op de viool)</label>
+        <label>breedte ± <input type="number" id="inVibD" min="3" max="60" step="1"> cent</label>
+        <label>snelheid <input type="number" id="inVibR" min="3" max="8" step="0.5"> per s</label>
+      </div>
+      <p class="muted ptnote">Met vibrato beoordeel je het midden van de toon, net als in echte muziek. Dat is lastiger: met vibrato laten mensen zo'n 10 cent meer door. Vibrato van violisten is vaak ±15 tot ±30 cent, 5 à 6 keer per seconde. Geldt voor de toon, niet voor de drone.</p>
+      <div class="rlabel">Drieklank</div>
+      <div class="ropts">
+        <label>Soort <select id="inAMd"><option value="beide">majeur en mineur</option><option value="maj">alleen majeur</option><option value="min">alleen mineur</option></select></label>
+      </div>
+      <div class="rlabel">Wie is er vals?</div>
+      <div class="ropts">
+        <label>Wat <select id="inVMat"><option value="ladder-maj">Toonladder majeur</option><option value="ladder-min">Toonladder mineur</option><option value="melo-maj">Melodie majeur</option><option value="melo-min">Melodie mineur</option><option value="chrom">Chromatische melodie</option><option value="mix">Wisselend</option></select></label>
+        <label>Melodie <select id="inVDiff"><option value="makkelijk">makkelijk (5 noten, stapjes)</option><option value="middel">middel (7 noten, af en toe een sprong)</option><option value="lastig">lastig (9 noten, grote sprongen)</option></select></label>
+        <label>Noot duurt <input type="number" id="inVNote" min="0.25" max="2" step="0.05"> s</label>
+        <label><input type="checkbox" id="inVDrone"> Met drone eronder</label>
+      </div>
+      <p class="muted ptnote">Zonder drone is de eerste noot nooit vals (die is je referentie). De intervallen hierboven tellen hier niet; het verschil (automatisch of vast) wel.</p>
+      <div class="rlabel">Uit je hoofd</div>
+      <div class="ropts">
+        <label>Drone klinkt <input type="number" id="inHold" min="1" max="10" step="0.5"> s</label>
+        <label>dan stilte <input type="number" id="inGap" min="0" max="15" step="0.5"> s</label>
+      </div>
+      <p class="muted ptnote">Daarna klinkt de toon zonder drone: je vergelijkt met de drone in je hoofd. Een langere stilte = moeilijker.</p>
+      <div class="rlabel">Zelf zuiver zetten</div>
+      <div class="ropts">
+        <label>Goed als je binnen <input type="number" id="inTol" min="1" max="25" step="1"> cent zit</label>
+      </div>
+      <div class="ropts"><label><input type="checkbox" id="inAuto"> Automatisch door als het goed is</label></div>
+    </aside>
+    <div class="inseg" id="inModeSeg"><button type="button" data-m="kies">Hoog, laag of zuiver?</button><button type="button" data-m="hoofd" title="Eerst de drone, dan stilte, dan de toon zonder drone">Uit je hoofd</button><button type="button" data-m="dubbel" title="Twee tonen samen, zonder drone">Dubbelgreep</button><button type="button" data-m="vals" title="Toonladder of melodie met één valse noot">Wie is er vals?</button><button type="button" data-m="drie" title="Drieklank: terts of kwint vals?">Drieklank</button><button type="button" data-m="rol" title="Dezelfde noot in een andere rol (terts, kwint …)">Andere rol</button><button type="button" data-m="stem">Zelf zuiver zetten</button></div>
+    <div class="qbar">
+      <button id="inStart" class="primary big">▶ Start</button>
+      <button id="inNext">Volgende →</button>
+      <button id="inDroneBtn">🎻 Drone aan</button>
+      <button id="inPauseBtn" data-ktitle="Pauze / verder ({pauze})">⏸ Pauze</button>
+      <div class="qscore"><span id="inRight">0</span> / <span id="inTotal">0</span> goed · reeks <span id="inStreak">0</span> · vandaag <span id="inToday">0</span><span id="inGrens"></span></div>
+    </div>
+    <div id="inAsk" class="inask"></div>
+    <div id="inSysBox" class="insysbox" hidden></div>
+    <div id="inKies" class="inbtns forkies">
+      <button type="button" data-a="laag">⬇ Te laag <kbd>1</kbd></button>
+      <button type="button" data-a="zuiver">✓ Zuiver <kbd>2</kbd></button>
+      <button type="button" data-a="hoog">⬆ Te hoog <kbd>3</kbd></button>
+    </div>
+    <div id="inVals" class="invals forvals"></div>
+    <div id="inDrie" class="inbtns fordrie">
+      <button type="button" data-a="terts">Terts vals <kbd>1</kbd></button>
+      <button type="button" data-a="kwint">Kwint vals <kbd>2</kbd></button>
+      <button type="button" data-a="geen">✓ Alles zuiver <kbd>3</kbd></button>
+    </div>
+    <div id="inStem" class="instem forstem">
+      <div class="insteps" id="inSteps">
+        <span class="insg">lager</span>
+        <button type="button" data-d="-10">−10</button><button type="button" data-d="-5">−5</button><button type="button" data-d="-2">−2</button><button type="button" data-d="-1" title="↓">−1</button>
+        <button type="button" data-d="1" title="↑">+1</button><button type="button" data-d="2">+2</button><button type="button" data-d="5">+5</button><button type="button" data-d="10">+10</button>
+        <span class="insg">hoger</span>
+      </div>
+      <input type="range" id="inSlider" min="-60" max="60" step="0.5" aria-label="Toonhoogte">
+      <button type="button" id="inCheck" class="primary">✓ Klaar</button>
+    </div>
+    <div id="inMeter" class="inmeter" hidden><div class="inscale"><span class="inzero"></span><span class="instart" title="Hier begon hij"></span><span class="intry" hidden title="Wat je nu beluistert"></span><span class="inmark"></span></div><div class="inlabels"><span>−50 cent</span><span>zuiver</span><span>+50 cent</span></div></div>
+    <div id="inMsg" class="qmsg"></div>
+    <div id="inCmp" hidden>
+      <div class="incmpc" id="inCmpQBox"><span class="muted" id="inCmpQTxt"></span>
+        <div class="incmpbtns incmpq" id="inCmpQ"></div>
+      </div>
+      <div class="incmpc"><span class="muted">Vergelijk zelf, cent ten opzichte van zuiver:</span>
+        <div class="incmpbtns" id="inCmpC"><button type="button" data-c="-30">−30</button><button type="button" data-c="-20">−20</button><button type="button" data-c="-10">−10</button><button type="button" data-c="-5">−5</button><button type="button" data-c="-2">−2</button><button type="button" data-c="0" class="zero">0</button><button type="button" data-c="2">+2</button><button type="button" data-c="5">+5</button><button type="button" data-c="10">+10</button><button type="button" data-c="20">+20</button><button type="button" data-c="30">+30</button></div>
+      </div>
+    </div>
+    <p id="inInfo" class="gtip"></p>
+    <details class="inbox incentsbox"><summary>📏 Hoe klein hoor je het? Jij vergeleken met anderen (in cent)</summary>
+      <p id="inMijnGrens" class="inmijn"></p>
+      <table class="incents">
+        <thead><tr><th></th><th>Twee losse tonen vlak na elkaar</th><th>In een echt stuk</th></tr></thead>
+        <tbody>
+          <tr><th>Geen muzikale training</th><td>≈ 12–28 cent</td><td>vaak pas rond 50 cent</td></tr>
+          <tr><th>Gemiddelde muzikant</th><td>≈ 4–10 cent*</td><td>≈ 20–30 cent</td></tr>
+          <tr><th>Professionele violist</th><td>≈ 2–4 cent (de grens van het oor)</td><td>≈ 5–10 cent*; tegen een drone of in een dubbelgreep nog kleiner, door het zweven</td></tr>
+        </tbody>
+      </table>
+      <p class="muted">100 cent = een halve toon. * = schatting tussen de gemeten groepen in. Onderzoek meet op verschillende manieren, dus zie dit als grove richtlijn. Klassieke musici hadden in één studie een 6 keer kleinere drempel dan niet-muzikanten; na een paar uur oefenen werd het verschil al kleiner. In een stuk hoor je minder dan bij twee losse tonen: met vibrato of in een melodie valt een afwijking minder op.</p>
+      <p class="muted">Jouw <i>grens</i> bij Hoog, laag of zuiver? kun je ongeveer vergelijken met de linkerkolom (met drone is het wel iets makkelijker).</p>
+      <p class="muted insrc">Bronnen: <a href="https://auditory.org/mhonarc/2006/msg00571.html" target="_blank" rel="noopener">Micheyl e.a. 2006</a> · <a href="https://acoustics.ippt.pan.pl/index.php/aa/article/download/586/517" target="_blank" rel="noopener">Rakowski (≈ 3 cent)</a> · <a href="https://dspace.ut.ee/bitstreams/339d457d-cf84-4e7a-b418-8532233f512d/download" target="_blank" rel="noopener">musici vs niet-musici (Tartu)</a> · <a href="https://core.ac.uk/download/345078758.pdf" target="_blank" rel="noopener">Geringer e.a. (strijkers, 10–30 cent; violisten en Pythagoreïsch)</a> · <a href="https://www.scribd.com/document/552648608/2015Warren" target="_blank" rel="noopener">Warren 2015 (zang: 30 en 50 cent)</a></p>
+    </details>
+    <details class="inbox incentsbox" id="inChartBox"><summary>📈 Je grens over tijd</summary>
+      <label class="inwide inchartsel">Welke <select id="inChartKey"></select></label>
+      <div id="inChart"></div>
+    </details>
+    <details class="instatbox"><summary id="inStatSum">📊 Statistieken</summary><div id="inStats"></div><button type="button" id="inStatReset">Wis deze statistieken</button></details>
+    <p class="gtip">Tip: speel daarna op je viool dezelfde intervallen tegen de Drone (🎶 Gehoor → Drone → Vrij spelen). Wat je hier hoort (het zweven), is precies waar je bij het spelen op stemt.</p>
+  </section>
+</div>
+
+<div id="absView" class="view">
+  <section class="rpanel" id="absPanel">
+    <div class="sechead pnlrow"><h2>🎯 Absoluut gehoor</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Je hoort één toon, zonder cadens of referentie. Welke noot is het? <kbd data-key="luister"></kbd> = opnieuw, letters C–B = antwoord (Shift = een halve toon hoger), 1–8 = octaaf, <kbd data-key="volgende"></kbd> = volgende.</p></details><div class="ropts pnlkey"><label>Niveau <select id="aLevel"></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Absoluut gehoor">
+    <div class="ropts">
+      
+      <label>Van <select id="aLo"></select></label>
+      <label>tot <select id="aHi"></select></label>
+      <span id="aRangeTxt" class="muted"></span>
+    </div>
+    <div class="ropts">
+      <span>Snel kiezen:</span>
+      <button class="rpreset" data-lo="24" data-hi="48">Heel laag</button>
+      <button class="rpreset" data-lo="48" data-hi="72">Laag-midden</button>
+      <button class="rpreset" data-lo="55" data-hi="84">Midden</button>
+      <button class="rpreset" data-lo="72" data-hi="96">Hoog</button>
+      <button class="rpreset" data-lo="84" data-hi="108">Heel hoog</button>
+      <button class="rpreset" data-lo="55" data-hi="100">Viool</button>
+      <button class="rpreset" data-lo="21" data-hi="108">Hele piano</button>
+    </div>
+    <div class="rlabel">Opties</div>
+    <div class="ropts">
+      <label><input type="checkbox" id="aOctave"> Ook het octaaf raden</label>
+      <label><input type="checkbox" id="aAuto"> Automatisch door als het goed is</label>
+      <label><input type="checkbox" id="aNoiseChk"> Ruis vóór elke toon (wist je toongeheugen)</label>
+      <label><input type="checkbox" id="aExplore"> Verkennen (knoppen spelen de noot af)</label>
+    </div>
+    <div class="rlabel">Instrumenten (bij meer dan één kiest de app per vraag willekeurig)</div>
+    <div class="chips" id="aInsts"></div>
+    <div class="rlabel">Noten in deze oefening</div>
+    <div class="chips" id="aNotes"></div>
+    </aside>
+    <div class="qbar">
+      <button id="aPlay" class="primary big">▶ Luister</button>
+      <button id="aNext">Volgende →</button>
+      <div class="qscore"><span id="aRight">0</span> / <span id="aTotal">0</span> goed · reeks <span id="aStreak">0</span> · vandaag <span id="aToday">0</span></div>
+    </div>
+    <div class="gkeyline"><span id="aInst" class="muted"></span></div>
+    <div id="aMsg" class="qmsg"></div>
+    <div class="gpad">
+      <div class="grow top" id="aTop"></div>
+      <div class="grow" id="aBot"></div>
+      <div class="orow" id="aOctRow"></div>
+    </div>
+    <p class="gtip">Eerlijk vooraf: absoluut gehoor is voor volwassenen lastig aan te leren. Met veel oefenen gaan de meeste mensen wel vooruit, vooral bij een paar noten en een vertrouwd instrument. Begin daarom met 2 of 3 noten op piano in het middenregister. Voeg pas meer noten, instrumenten of extreme registers toe als je rond de 90% goed hebt. Zet <b>Ruis vóór elke toon</b> aan als je merkt dat je de vorige toon als referentie gebruikt, want dan oefen je eigenlijk relatief gehoor.</p>
+  </section>
+  <section class="stats">
+    <div class="sechead"><h2>Per noot</h2><p>Je score per noot (alleen de nootnaam, niet het octaaf), bewaard in deze browser. De zwakste staat bovenaan.</p><button id="aReset">Wis statistieken</button></div>
+    <div id="aStats" class="statgrid"></div>
+  </section>
+</div>
+
+<div id="tmView" class="view">
+  <section class="rpanel" id="tmPanel">
+    <div class="sechead pnlrow"><h2>🔤 Termen</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Muziektermen oefenen: tempo, dynamiek, karakter, articulatie, strijktechniek, pianopedaal en herhalingstekens. Kies de goede betekenis (of andersom: de goede term bij een betekenis). Termen die je vaak mist komen vaker terug. Onderaan staat de hele lijst; daar kun je ook <b>je eigen termen</b> toevoegen, bijvoorbeeld als je een nieuwe term in een stuk tegenkomt. Die doen meteen mee. <kbd>1</kbd>–<kbd>4</kbd> = antwoord, <kbd data-key="volgende"></kbd> = volgende.</p></details><div class="ropts pnlkey"><label>Vraag <select id="tmDir"><option value="tb">term → betekenis</option><option value="bt">betekenis → term</option><option value="mix">door elkaar</option></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Termen">
+      <div class="rlabel">Onderwerpen</div>
+      <div class="chips" id="tmChips"></div>
+      <p class="muted ptnote" id="tmPoolN"></p>
+      <div class="ropts"><label><input type="checkbox" id="tmAuto"> Automatisch door als het goed is</label></div>
+    </aside>
+    <div class="qbar">
+      <button id="tmNext" class="primary big">Volgende →</button>
+      <div class="qscore"><span id="tmRight">0</span> / <span id="tmTotal">0</span> goed · reeks <span id="tmStreak">0</span> · vandaag <span id="tmToday">0</span></div>
+    </div>
+    <div class="tmcard"><span id="tmCat" class="muted"></span><div id="tmAsk" class="tmask"></div></div>
+    <div id="tmOpts" class="tmopts"></div>
+    <div id="tmMsg" class="qmsg"></div>
+  </section>
+  <section class="stats">
+    <div class="sechead"><h2>Alle termen</h2><p>Zoek een term, of zet er zelf een bij. Eigen termen gaan mee in je back-up.</p></div>
+    <div class="tmform">
+      <input type="text" id="tmNewT" placeholder="Term (bijv. con anima)" autocomplete="off">
+      <input type="text" id="tmNewB" placeholder="Betekenis (bijv. met bezieling)" autocomplete="off">
+      <select id="tmNewC" aria-label="Onderwerp"></select>
+      <button type="button" id="tmAdd" class="primary">＋ Toevoegen</button>
+      <button type="button" id="tmCancel" hidden>Annuleren</button>
+      <span id="tmFormMsg" class="tmformmsg"></span>
+    </div>
+    <div class="tmfilter"><input type="search" id="tmSearch" placeholder="Zoeken…"><select id="tmListCat" aria-label="Onderwerp"></select><span id="tmCount" class="muted"></span></div>
+    <div id="tmList"></div>
+  </section>
+  <section class="stats">
+    <div class="sechead"><h2>Per term</h2><p>De termen die je het vaakst mist staan bovenaan.</p><button id="tmReset">Wis statistieken</button></div>
+    <div id="tmStats" class="statgrid"></div>
+  </section>
+</div>
+
+<div id="asView" class="view">
+  <section class="rpanel" id="asPanel">
+    <div class="sechead pnlrow"><h2>🔣 Akkoordsymbolen</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Je ziet een akkoordsymbool, zoals in een leadsheet of jazzboek: <b>Dm7</b>, <b>B♭maj7</b>, <b>F♯ø7</b>, <b>G7♭9</b>. Tik de tonen aan op het klavier (nog eens tikken = weer weg) en kijk na. De ligging maakt niet uit, alleen welke tonen; met <i>Grondtoon onderaan</i> moet de laagste toon de grondtoon zijn. Na het nakijken zie je de juiste tonen, de formule (1 ♭3 5 ♭7) en hoor je het akkoord. <kbd data-key="controleer"></kbd> = nakijken / volgende, <kbd data-key="wis"></kbd> = alles wissen, <kbd data-key="luister"></kbd> = je keuze horen.</p></details><div class="ropts pnlkey"><label>Niveau <select id="asLevel"></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Akkoordsymbolen">
+      <div class="rlabel">Akkoorden</div>
+      <div id="asChips" class="aschips"></div>
+      <div class="ropts">
+        <label>Grondtonen <select id="asTonics"><option value="c">alleen C</option><option value="wit">witte toetsen</option><option value="alle">alle (ook ♯ en ♭)</option></select></label>
+        <label>Namen op het klavier <select id="asNames"><option value="all">alle witte toetsen</option><option value="c">alleen C</option><option value="none">geen</option></select></label>
+        <label>Klank <select id="asInst"></select></label>
+      </div>
+      <div class="ropts">
+        <label><input type="checkbox" id="asBassChk"> Grondtoon onderaan</label>
+        <label><input type="checkbox" id="asHear"> Toon horen bij aantikken</label>
+        <label><input type="checkbox" id="asAuto"> Automatisch door als het goed is</label>
+      </div>
+    </aside>
+    <div class="qbar">
+      <button id="asCheckBtn" class="primary big">✓ Nakijken</button>
+      <button id="asHearBtn">▶ Mijn keuze</button>
+      <button id="asWisBtn">⌫ Wissen</button>
+      <button id="asNext">Volgende →</button>
+      <div class="qscore"><span id="asRight">0</span> / <span id="asTotal">0</span> goed · reeks <span id="asStreak">0</span> · vandaag <span id="asToday">0</span></div>
+    </div>
+    <div class="asstage"><div id="asSym" class="assym"></div><div id="asName" class="muted"></div></div>
+    <div id="asKlav" class="asklav"></div>
+    <div class="aspicked muted" id="asPicked"></div>
+    <div id="asMsg" class="qmsg"></div>
+    <p class="gtip">Zo bouw je een akkoord uit een symbool: de letter is de grondtoon. Geen toevoeging = major (grote terts), <b>m</b> = minor, <b>°</b> = verminderd, <b>+</b> = overmatig. Een <b>7</b> is altijd de kleine septiem (♭7), <b>maj7</b> de grote. <b>ø7</b> = halfverminderd (m7♭5). 9, 11 en 13 stapelen verder tertsen boven de septiem. Voor jazzpiano: probeer daarna alleen 3 en 7 te spelen (de "guide tones"), dat is de kern van elk akkoord.</p>
+  </section>
+  <section class="stats">
+    <div class="sechead"><h2>Per akkoordsoort</h2><p>Je score per soort, bewaard in deze browser.</p><button id="asReset">Wis statistieken</button></div>
+    <div id="asStats" class="statgrid"></div>
+  </section>
+</div>
+
+<div id="rdView" class="view">
+  <section class="rpanel" id="rdPanel">
+    <div class="sechead pnlrow"><h2>🥢 Rudiments</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>De basisfiguren van het slagwerk, voor je practice pad. <b>R</b> = rechts, <b>L</b> = links, <b>&gt;</b> = accent, een klein letter ervoor = voorslag (flam: één, drag: twee, met de andere hand). Speel eerst langzaam en ontspannen; accenten hoog, zachte slagen laag bij het vel. Zet <i>Stokken hoorbaar</i> uit als je alleen de metronoom wilt en het zelf speelt. Met <i>Tempo opbouwen</i> wordt hij na elke paar herhalingen een stapje sneller. <kbd data-key="metronoom"></kbd> of <kbd>Spatie</kbd> = start/stop, <kbd data-key="pauze"></kbd> = pauze (nog eens = verder waar je was), <kbd data-key="sneller"></kbd> <kbd data-key="langzamer"></kbd> = tempo (Shift ±5), <kbd data-key="volgende"></kbd> <kbd data-key="vorige"></kbd> = volgende/vorige rudiment, <kbd data-key="stop"></kbd> = stop.</p></details><div class="ropts pnlkey"><label>Rudiment <select id="rdSel"></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Rudiments">
+      <div class="ropts">
+        <label>Tempo ♩ = <input type="number" id="rdBpm" min="20" max="300" step="1"></label>
+        <label>Begint met <select id="rdLead"><option value="R">rechts</option><option value="L">links</option></select></label>
+      </div>
+      <div class="ropts">
+        <label><input type="checkbox" id="rdMetro"> Metronoom op de tel</label>
+        <label><input type="checkbox" id="rdSticks"> Stokken hoorbaar</label>
+        <label><input type="checkbox" id="rdCi"> Eerst 4 tellen aftellen</label>
+      </div>
+      <div class="rlabel">Tempo opbouwen</div>
+      <div class="ropts"><label><input type="checkbox" id="rdRamp"> Steeds een beetje sneller</label></div>
+      <div class="ropts" id="rdRampBox">
+        <label>+ <input type="number" id="rdStep" min="1" max="40"> bpm</label>
+        <label>elke <input type="number" id="rdEvery" min="1" max="32"> herhalingen</label>
+        <label>tot ♩ = <input type="number" id="rdMax" min="30" max="300"></label>
+      </div>
+    </aside>
+    <div class="qbar">
+      <button id="rdStart" class="primary big">▶ Start</button>
+      <button id="rdPause" data-ktitle="Pauze / verder ({pauze})">⏸ Pauze</button>
+      <button id="rdPrev">← Vorige</button>
+      <button id="rdNextBtn">Volgende →</button>
+      <div class="qscore"><span id="rdBpmNow" class="rtbig"></span> <span id="rdCount" class="muted"></span></div>
+    </div>
+    <div class="rdhead"><span id="rdName" class="gkey"></span> <span id="rdMeta" class="muted"></span></div>
+    <div id="rdGrid" class="rdgrid"></div>
+    <p id="rdTip" class="rdtip"></p>
+    <p class="gtip">Zo oefen je rudiments: kies een tempo waarop alles gelijkmatig en ontspannen gaat, ook de zachte slagen. Pas als dat vijf keer achter elkaar lukt, een paar bpm sneller. Wissel ook af welke hand begint: veel figuren worden met links veel lastiger, en juist dat maakt je handen gelijkwaardig. Op de piano helpt dit trouwens ook: het is precies dezelfde onafhankelijkheid van je handen.</p>
+  </section>
+</div>
+
+<div id="pyView" class="view">
+  <section class="rpanel" id="pyPanel">
+    <div class="sechead pnlrow"><h2>🌀 Polyritme</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Twee ritmes tegelijk die niet in elkaar opgaan, zoals 3 tegen 2: rechts slaat er drie in dezelfde tijd waarin links er twee slaat. Het raster laat zien waar elke slag valt; tel gelijkmatig door tot het getal onderaan en zeg alleen de vette getallen hardop. Zet één hand stil om die zelf te spelen. Met <i>Meetikken</i> tik je mee: <kbd>F</kbd> = links, <kbd>J</kbd> = rechts, en je ziet per hand hoe strak het is. <kbd data-key="metronoom"></kbd> of <kbd>Spatie</kbd> = start/stop, <kbd data-key="sneller"></kbd> <kbd data-key="langzamer"></kbd> = tempo, <kbd data-key="stop"></kbd> = stop.</p></details><div class="ropts pnlkey"><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Polyritme">
+      <div class="ropts">
+        <label>Rechts <select id="pyR"></select></label>
+        <label>tegen links <select id="pyL"></select></label>
+        <button type="button" id="pySwap">⇄ Wissel</button>
+        <label title="Hoeveel slagen van de linkerhand per minuut">Tempo (links) ♩ = <input type="number" id="pyBpm" min="20" max="200" step="1"></label>
+      </div>
+      <div class="rlabel">Wat je hoort</div>
+      <div class="ropts">
+        <label><input type="checkbox" id="pyMuteR"> Rechts stil (zelf spelen)</label>
+        <label><input type="checkbox" id="pyMuteL"> Links stil (zelf spelen)</label>
+        <label><input type="checkbox" id="pyPulse"> Klik op het begin van elke ronde</label>
+        <label><input type="checkbox" id="pyGridChk"> Alle tellen zacht hoorbaar (het raster)</label>
+        <label><input type="checkbox" id="pyCi"> Eerst één ronde links aftellen</label>
+      </div>
+      <div class="rlabel">Meetikken</div>
+      <div class="ropts"><label><input type="checkbox" id="pyTapChk"> Meetikken met F (links) en J (rechts)</label></div>
+    </aside>
+    <div class="qbar">
+      <button id="pyStart" class="primary big">▶ Start</button>
+      <div class="pyquick" id="pyQuick"></div>
+      <div class="qscore"><span id="pyCount" class="muted"></span></div>
+    </div>
+    <div class="rdhead"><span id="pyTitle" class="gkey"></span></div>
+    <div id="pyGrid" class="pygrid"></div>
+    <p id="pyHow" class="rdtip"></p>
+    <div class="pytap">
+      <div class="pypads"><button type="button" id="pyPadL" class="tappad">Links <kbd>F</kbd></button><button type="button" id="pyPadR" class="tappad">Rechts <kbd>J</kbd></button></div>
+      <div id="pyLive" class="taplive">–</div>
+      <div id="pySum" class="tapsum"></div>
+    </div>
+    <p class="gtip">Zo leer je een polyritme: eerst alleen het samengestelde ritme (de rij <i>Samen</i>) met één hand tikken en hardop tellen. Dan met twee handen, heel langzaam. Pas als het vanzelf gaat, sneller. Voor de piano: 3 tegen 2 en 4 tegen 3 kom je tegen in Chopin; de Fantaisie-Impromptu is zelfs 4 tegen 3 (rechts zestienden tegen links triolen).</p>
+  </section>
+</div>
+
+<div id="tpView" class="view">
+  <section class="rpanel" id="tpPanel">
+    <div class="sechead pnlrow"><h2>📈 Tempo-ladder</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>De ladder wordt steeds een trede sneller zolang je strak blijft. Elke trede: één maat aftellen, dan een paar maten spelen. In de stand <b>Meten</b> tik je de gekozen noten mee met de spatiebalk (of op het vak); de app meet of je strak genoeg was (genoeg raak, kleine spreiding, niet slepen of jagen) en gaat dan omhoog, anders een trede terug. In de stand <b>Zelf beoordelen</b> speel je op je instrument of pad en zeg je na elke trede zelf of het strak was. Na een paar mislukte treden op rij stopt hij en zie je je hoogste strakke tempo. <kbd data-key="tik"></kbd> = tikken, <kbd data-key="metronoom"></kbd> = start/stop, bij zelf beoordelen <kbd data-key="volgende"></kbd> = strak, <kbd data-key="vorige"></kbd> = niet strak.</p></details><div class="ropts pnlkey"><label>Stand <select id="tpMode"><option value="meten">Meten (meetikken)</option><option value="zelf">Zelf beoordelen</option></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Tempo-ladder">
+      <div class="ropts">
+        <label>Begin ♩ = <input type="number" id="tpStartBpm" min="20" max="300"></label>
+        <label>stap + <input type="number" id="tpStep" min="1" max="30"> bpm</label>
+        <label>doel ♩ = <input type="number" id="tpMax" min="30" max="300"></label>
+      </div>
+      <div class="ropts">
+        <label class="tpmeet">Tikken in <select id="tpSub"><option value="1">kwarten</option><option value="2">achtsten</option><option value="3">triolen</option><option value="4">zestienden</option></select></label>
+        <label>Maatsoort <select id="tpBeats"><option value="2">2 tellen</option><option value="3">3 tellen</option><option value="4">4 tellen</option><option value="5">5 tellen</option><option value="6">6 tellen</option><option value="7">7 tellen</option></select></label>
+        <label>Maten per trede <select id="tpBars"><option value="2">2</option><option value="4">4</option><option value="8">8</option><option value="16">16</option></select></label>
+      </div>
+      <div class="ropts">
+        <label class="tpmeet">Strak = <select id="tpCrit"><option value="streng">streng (spreiding ≤ 18 ms)</option><option value="normaal">normaal (≤ 28 ms)</option><option value="ruim">ruim (≤ 42 ms)</option></select></label>
+        <label class="tpmeet">en minstens <select id="tpHit"><option value="80">80%</option><option value="90">90%</option><option value="95">95%</option><option value="100">100%</option></select> raak</label>
+      </div>
+      <div class="ropts">
+        <label>Niet strak: <select id="tpAfter"><option value="terug">een trede terug</option><option value="blijf">zelfde tempo nog eens</option></select></label>
+        <label>Stop na <select id="tpFails"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="5">5</option></select> mislukte treden op rij</label>
+        <label class="tpmeet"><input type="checkbox" id="tpSubClick"> Onderverdeling hoorbaar</label>
+      </div>
+      <p class="muted ptnote">Meetikken gebruikt dezelfde vertragingscorrectie als Tikken (⚙️ Instellingen → kalibreren). Strak hangt ook van het tempo af: bij zestienden op 140 is 28 ms al bijna een kwart van een noot.</p>
+    </aside>
+    <div class="qbar">
+      <button id="tpStart" class="primary big">▶ Start</button>
+      <div class="qscore"><span id="tpBpmNow" class="rtbig"></span> <span id="tpPhase" class="muted"></span></div>
+    </div>
+    <div id="tpJudge" class="tpjudge" hidden><button type="button" id="tpOk" class="primary">✓ Strak <kbd data-key="volgende"></kbd></button><button type="button" id="tpBad">✗ Niet strak <kbd data-key="vorige"></kbd></button></div>
+    <div class="tptap tpmeet">
+      <button type="button" id="tpPad" class="tappad">Tik hier of met <kbd data-key="tik"></kbd></button>
+      <div id="tpLive" class="taplive">–</div>
+    </div>
+    <div id="tpMsg" class="qmsg"></div>
+    <div id="tpLadder" class="tpladder"></div>
+    <p id="tpRecs" class="tprecs"></p>
+    <p class="gtip">Tip: begin ruim onder je grens, zodat de eerste treden makkelijk gaan. Je lichaam leert het meest op het tempo net onder waar het misgaat; daarom gaat de ladder na een fout een trede terug in plaats van te stoppen. Wil je hem met een echt stuk gebruiken, kies dan <i>Zelf beoordelen</i> en speel je passage op elke trede.</p>
+  </section>
+</div>
+
+<div id="swView" class="view">
+  <section class="rpanel" id="swPanel">
+    <div class="sechead pnlrow"><h2>🎷 Swing</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Swing = de achtsten lang-kort spelen. Hoe lang de eerste is ten opzichte van de tweede bepaalt het gevoel: <b>recht</b> (50 : 50), <b>licht</b> (± 58 : 42), <b>triool</b> (67 : 33, de standaard) of <b>zwaar</b> (75 : 25, gepunteerd). <b>Luisteren</b>: je hoort een paar maten op een ride-bekken; welke swing is het? <kbd data-key="luister"></kbd> = nog eens, <kbd>1</kbd>–<kbd>4</kbd> = antwoord, <kbd data-key="volgende"></kbd> = volgende. <b>Meetikken</b>: de metronoom klikt (op 2 en 4, zoals in jazz), jij tikt achtsten met swing op de spatiebalk; de app meet waar jouw tweede achtste valt en hoe gelijkmatig dat is. <kbd data-key="metronoom"></kbd> = start/stop.</p></details><div class="ropts pnlkey"><label>Niveau <select id="swLevel"></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Swing">
+      <div class="ropts"><label>Stand <select id="swModeSel"><option value="luister">Luisteren: hoeveel swing?</option><option value="meten">Meetikken: jouw swing meten</option></select></label></div>
+      <div class="rlabel">Luisteren</div>
+      <div class="chips" id="swChips"></div>
+      <div class="ropts">
+        <label>Tempo van ♩ = <input type="number" id="swTmin" min="40" max="300"></label>
+        <label>tot <input type="number" id="swTmax" min="40" max="300"></label>
+        <label>Lengte <select id="swBars"><option value="1">1 maat</option><option value="2">2 maten</option><option value="4">4 maten</option></select></label>
+        <label><input type="checkbox" id="swAuto"> Automatisch door als het goed is</label>
+      </div>
+      <div class="rlabel">Meetikken</div>
+      <div class="ropts">
+        <label>Tempo ♩ = <input type="number" id="swBpm" min="40" max="300"></label>
+        <label>Doel <select id="swTarget"></select></label>
+        <label>Metronoom op <select id="swMetroOn"><option value="24">2 en 4 (jazz)</option><option value="alle">elke tel</option></select></label>
+        <label><input type="checkbox" id="swGuide"> Doel-swing zacht meespelen</label>
+      </div>
+    </aside>
+    <div class="inseg swseg" id="swSeg"><button type="button" data-m="luister">Luisteren</button><button type="button" data-m="meten">Meetikken</button></div>
+    <div class="swluister">
+      <div class="qbar">
+        <button id="swPlayBtn" class="primary big">▶ Luister</button>
+        <button id="swNext">Volgende →</button>
+        <div class="qscore"><span id="swRight">0</span> / <span id="swTotal">0</span> goed · reeks <span id="swStreak">0</span> · vandaag <span id="swToday">0</span></div>
+      </div>
+      <div class="gkeyline"><span id="swAskBpm" class="gkey"></span></div>
+      <div id="swMsg" class="qmsg"></div>
+      <div id="swPad" class="swpad"></div>
+      <p id="swAfter" class="muted" hidden>Klik op een soort om dezelfde maten zo te horen.</p>
+    </div>
+    <div class="swmeten">
+      <div class="qbar">
+        <button id="swMStart" class="primary big">▶ Start</button>
+        <div class="qscore"><span id="swPhase" class="muted"></span></div>
+      </div>
+      <button type="button" id="swPadTap" class="tappad">Tik achtsten hier of met <kbd data-key="tik"></kbd></button>
+      <div id="swMeasOut" class="swmeas"></div>
+    </div>
+    <p class="gtip">Swing hoor je het best op de <i>tweede</i> achtste van elke tel: hoe later die valt, hoe zwaarder de swing. In snelle stukken wordt swing vanzelf rechter (bij ♩ = 220 speelt bijna niemand nog 2 : 1). Voor jazzpiano: laat de linkerhand op de tel rustig blijven en speel de rechterhand lang-kort, met een licht accent op de tweede achtste.</p>
+  </section>
+  <section class="stats swluister">
+    <div class="sechead"><h2>Per soort</h2><p>Je score per soort swing (luisteren), bewaard in deze browser.</p><button id="swReset">Wis statistieken</button></div>
+    <div id="swStats" class="statgrid"></div>
+  </section>
+</div>
+
+<div id="cdView" class="view">
+  <section class="rpanel" id="cdPanel">
+    <div class="sechead pnlrow"><h2>🏁 Cadensen</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Je hoort een korte frase van vier akkoorden. Hoe eindigt hij? <b>Authentiek slot</b> (V → I: af, een punt), <b>half slot</b> (eindigt op V: een komma, een vraag), <b>plagaal slot</b> (IV → I: het zachte "Amen"), <b>bedrieglijk slot</b> (V → vi: je verwacht I, maar het gaat door) of, in mineur, het <b>Frygisch half slot</b> (iv⁶ → V: de bas zakt een halve toon) en de <b>Picardische terts</b> (mineur dat op een majeurakkoord eindigt). In majeur is er ook het <b>mineur-plagaal slot</b> (iv → I). Let vooral op de laatste twee akkoorden en op de bas. Na je antwoord kun je dezelfde aanloop met elk ander slot laten horen. <kbd data-key="luister"></kbd> = nog eens, <kbd>1</kbd>–<kbd>7</kbd> = antwoord (zie de knoppen), <kbd data-key="volgende"></kbd> = volgende.</p></details><div class="ropts pnlkey"><label>Niveau <select id="cdLevel"></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Cadensen">
+      <div class="rlabel">Welke slotformules</div>
+      <div class="chips" id="cdChips"></div>
+      <div class="ropts">
+        <label>Toonaard <select id="cdModes"><option value="maj">majeur</option><option value="min">mineur</option><option value="beide">majeur en mineur</option></select></label>
+        <label>Toonsoort <select id="cdKey"></select></label>
+        <label>Wissel <select id="cdKeyEvery"><option value="1">elke vraag</option><option value="5">na 5 vragen</option><option value="10">na 10 vragen</option><option value="25">na 25 vragen</option></select></label>
+        <label title="♩ = één akkoord">Tempo <select id="cdBpm"></select></label>
+        <label>Klank <select id="cdInst"></select></label>
+      </div>
+      <div class="rlabel">Opties</div>
+      <div class="ropts">
+        <label><input type="checkbox" id="cdSev"> V als septiemakkoord (V7)</label>
+        <label><input type="checkbox" id="cdAuto"> Automatisch door als het goed is</label>
+      </div>
+    </aside>
+    <div class="qbar">
+      <button id="cdPlay" class="primary big">▶ Luister</button>
+      <button id="cdNext">Volgende →</button>
+      <div class="qscore"><span id="cdRight">0</span> / <span id="cdTotal">0</span> goed · reeks <span id="cdStreak">0</span> · vandaag <span id="cdToday">0</span></div>
+    </div>
+    <div class="gkeyline"><span id="cdKeyName" class="gkey"></span></div>
+    <div id="cdSlots" class="hrslots"></div>
+    <div id="cdMsg" class="qmsg"></div>
+    <div id="cdPad" class="cdpad"></div>
+    <div id="cdAfter" class="hrafter" hidden>
+      <span class="muted">Dezelfde aanloop, met een ander slot:</span>
+      <div id="cdCmp" class="hrcmp"></div>
+      <span id="cdCmpTxt" class="muted"></span>
+    </div>
+    <p class="gtip">Zo herken je ze: eindigt het op de <b>tonica</b> (rust), dan is het authentiek of plagaal. Authentiek komt van V (spanning met de leidtoon die omhoog gaat), plagaal van IV (zachter, geen leidtoon). Eindigt het <b>niet</b> in rust, dan is het een half slot (blijft op V hangen) of een bedrieglijk slot (de bas stapt van 5 naar 6 in plaats van naar 1). Zing de bas zachtjes mee: dat helpt het meest.</p>
+  </section>
+  <section class="stats">
+    <div class="sechead"><h2>Per slot</h2><p>Je score per cadens, bewaard in deze browser. De zwakste staat bovenaan en komt ook vaker terug.</p><button id="cdReset">Wis statistieken</button></div>
+    <div id="cdStats" class="statgrid"></div>
+  </section>
+</div>
+
+<div id="blView" class="view">
+  <section class="rpanel" id="blPanel">
+    <div class="sechead pnlrow"><h2>🎸 Baslijn</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Je hoort een reeks akkoorden. Schrijf alleen de <b>bastonen</b> op, als trappen (1 = do, 5 = sol …). Dat is de eerste stap naar akkoordprogressies op gehoor: wie de bas hoort, weet meestal ook het akkoord. Vanaf niveau 4 staan sommige akkoorden in omkering (sextakkoord, I⁶): dan ligt de terts in de bas en loopt de baslijn vaak stapsgewijs. <kbd data-key="luister"></kbd> = nog eens, <kbd>B</kbd> = alleen de bas, <kbd>1</kbd>–<kbd>7</kbd> = trap, <kbd data-key="wis"></kbd> = terug, <kbd data-key="cadens"></kbd> = cadens, <kbd data-key="volgende"></kbd> = volgende.</p></details><div class="ropts pnlkey"><label>Niveau <select id="blLevel"></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Baslijn">
+      <div class="ropts">
+        <label>Toonaard <select id="blMode"><option value="maj">majeur</option><option value="min">mineur</option></select></label>
+        <label>Lengte <select id="blLen"></select></label>
+        <label>Toonsoort <select id="blKey"></select></label>
+        <label>Wissel <select id="blKeyEvery"><option value="1">elke vraag</option><option value="5">na 5 vragen</option><option value="10">na 10 vragen</option><option value="25">na 25 vragen</option></select></label>
+        <label title="♩ = één akkoord">Tempo <select id="blBpm"></select></label>
+        <label>Klank <select id="blInst"></select></label>
+      </div>
+      <div class="rlabel">Akkoorden in majeur</div>
+      <div class="chips" id="blChipsMaj"></div>
+      <div class="rlabel">Akkoorden in mineur</div>
+      <div class="chips" id="blChipsMin"></div>
+      <div class="rlabel">Opties</div>
+      <div class="ropts">
+        <label><input type="checkbox" id="blInv"> Ook omkeringen (sextakkoorden)</label>
+        <label><input type="checkbox" id="blLoud"> Bas iets luider</label>
+        <label><input type="checkbox" id="blFirst"> Eerste bastoon gegeven</label>
+        <label><input type="checkbox" id="blEndI"> Eindigt op I</label>
+        <label><input type="checkbox" id="blCadQ"> Cadens vóór elke vraag</label>
+        <label><input type="checkbox" id="blAuto"> Automatisch door als het goed is</label>
+      </div>
+    </aside>
+    <div class="qbar">
+      <button id="blPlay" class="primary big">▶ Luister</button>
+      <button id="blBass">▶ Alleen de bas</button>
+      <button id="blWis">⌫ Terug</button>
+      <button id="blNext">Volgende →</button>
+      <div class="qscore"><span id="blRight">0</span> / <span id="blTotal">0</span> goed · reeks <span id="blStreak">0</span> · vandaag <span id="blToday">0</span></div>
+    </div>
+    <div class="gkeyline"><span id="blKeyName" class="gkey"></span></div>
+    <div id="blSlots" class="hrslots"></div>
+    <div id="blMsg" class="qmsg"></div>
+    <div class="gpad"><div class="grow" id="blPad"></div></div>
+    <p class="gtip">Zo luister je naar de bas: zing hem zachtjes mee, een octaaf hoger als dat makkelijker is, en vraag je af of hij stapt of springt. Springt hij een kwart omhoog of een kwint omlaag, dan is het vaak V → I. Gaat hij stapsgewijs, dan is er vaak een omkering. Lukt het niet, luister dan eerst naar <i>Alleen de bas</i> en daarna naar alles samen.</p>
+  </section>
+  <section class="stats">
+    <div class="sechead"><h2>Per bastoon</h2><p>Hoe vaak je elke trap in de bas goed had (de eerste, gegeven bastoon telt niet mee).</p><button id="blReset">Wis statistieken</button></div>
+    <div id="blStats" class="statgrid"></div>
+  </section>
+</div>
+
+<div id="prView" class="view">
+  <section class="rpanel" id="prPanel">
+    <div class="sechead pnlrow"><h2>🧩 Akkoordprogressies</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Je hoort een reeks akkoorden in een toonsoort. Schrijf ze op als trappen (Romeinse cijfers): hoofdletters = majeur (I, IV, V), kleine letters = mineur (ii, iii, vi), ° = verminderd. Het eerste akkoord is standaard gegeven. Luister vooral naar de <b>bas</b>: zing hem zachtjes mee en vraag je af op welke trap hij staat. Het ii–V–I uit de jazz zit in niveau 5 en bij de bekende progressies. <kbd data-key="luister"></kbd> = nog eens, <kbd>1</kbd>–<kbd>7</kbd> = drieklank op die trap, Shift + <kbd>1</kbd>–<kbd>7</kbd> = het septiemakkoord, geleende en secundaire akkoorden klik je aan. <kbd data-key="wis"></kbd> = terug, <kbd data-key="cadens"></kbd> = cadens, <kbd data-key="volgende"></kbd> = volgende (na het antwoord).</p></details><div class="ropts pnlkey"><label>Niveau <select id="prLevel"></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Akkoordprogressies">
+      <div class="ropts">
+        <label>Soort <select id="prSrc"><option value="vrij">willekeurig (volgens de functieharmonie)</option><option value="bekend">bekende progressies</option></select></label>
+        <label>Toonaard <select id="prMode"><option value="maj">majeur</option><option value="min">mineur</option><option value="beide">majeur en mineur</option></select></label>
+        <label class="prvrij">Lengte <select id="prLen"></select></label>
+        <label>Toonsoort <select id="prKey"></select></label>
+        <label>Wissel <select id="prKeyEvery"><option value="1">elke vraag</option><option value="5">na 5 vragen</option><option value="10">na 10 vragen</option><option value="25">na 25 vragen</option></select></label>
+        <label title="♩ = één akkoord">Tempo <select id="prBpm"></select></label>
+        <label>Klank <select id="prInst"></select></label>
+      </div>
+      <div class="prvrij">
+        <div class="rlabel">Akkoorden in majeur</div>
+        <div class="chips" id="prChipsMaj"></div>
+        <div class="rlabel">Akkoorden in mineur</div>
+        <div class="chips" id="prChipsMin"></div>
+      </div>
+      <p class="muted ptnote prbek">Bij <i>bekende progressies</i> hoor je onder andere de pop-progressie (I–V–vi–IV), de jaren-50-progressie, Pachelbel, het ii–V–I, de Andalusische cadens en de epische mineur. Na je antwoord staat de naam erbij.</p>
+      <div class="rlabel">Opties</div>
+      <div class="ropts">
+        <label><input type="checkbox" id="prFirst"> Eerste akkoord gegeven</label>
+        <label class="prvrij"><input type="checkbox" id="prEndI"> Eindigt op I</label>
+        <label><input type="checkbox" id="prCadQ"> Cadens vóór elke vraag</label>
+        <label><input type="checkbox" id="prAuto"> Automatisch door als het goed is</label>
+      </div>
+    </aside>
+    <div class="qbar">
+      <button id="prPlay" class="primary big">▶ Luister</button>
+      <button id="prCad">🎹 Cadens</button>
+      <button id="prWis">⌫ Terug</button>
+      <button id="prNext">Volgende →</button>
+      <div class="qscore"><span id="prRight">0</span> / <span id="prTotal">0</span> goed · reeks <span id="prStreak">0</span> · vandaag <span id="prToday">0</span></div>
+    </div>
+    <div class="gkeyline"><span id="prKeyName" class="gkey"></span></div>
+    <div id="prSlots" class="hrslots"></div>
+    <div id="prMsg" class="qmsg"></div>
+    <div id="prPad" class="prpad"></div>
+    <p class="gtip">Tip: de bas vertelt het meeste. I en vi delen twee tonen, net als IV en ii: die klinken dus verwant, het verschil zit in de bas. V wil terug naar I; vi na V is het bedrieglijke slot. Na je antwoord kun je op elk vakje en elke knop klikken om het akkoord te horen.</p>
+  </section>
+  <section class="stats">
+    <div class="sechead"><h2>Per akkoord</h2><p>Hoe vaak je elk akkoord goed had (het eerste, gegeven akkoord telt niet mee). De zwakste staat bovenaan en komt vaker terug.</p><button id="prReset">Wis statistieken</button></div>
+    <div id="prStats" class="statgrid"></div>
+  </section>
+</div>
+
+<div id="gehoorView" class="view">
+  <section class="rpanel" id="gPanel">
+    <div class="sechead pnlrow"><h2>🎶 Relatief gehoor</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Eerst zet een cadens de toonsoort neer, daarna hoor je een toon of een kort melodietje. Welke trap van de toonladder is het? Zing de toon zachtjes mee en loop in gedachten naar do, klik pas daarna. <kbd data-key="luister"></kbd> = opnieuw, <kbd data-key="cadens"></kbd> = cadens, <kbd data-key="grondtoon"></kbd> = do, 1–7 = antwoord, <kbd data-key="volgende"></kbd> = volgende.</p></details><div class="ropts pnlkey"><label>Niveau <select id="gLevel"></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Relatief gehoor">
+    <div class="ropts">
+      
+      <label>Toonaard <select id="gMode"><option value="maj">majeur</option><option value="min">mineur</option></select></label>
+      <label>Toonsoort <select id="gKey"></select></label>
+      <label>Wissel <select id="gKeyEvery"><option value="1">elke vraag</option><option value="5">na 5 vragen</option><option value="10">na 10 vragen</option><option value="25">na 25 vragen</option></select></label>
+      <label>Lengte <select id="gLen"></select></label>
+      <label title="Hoe snel de tonen van een melodietje na elkaar klinken (♩ = één toon)">Tempo <select id="gBpm"></select></label>
+      <label>Bereik <select id="gRange"><option value="oct">do tot do'</option><option value="rond">rond do (sol, tot sol)</option><option value="twee">twee octaven</option></select></label>
+      <label>Hoogte <select id="gHoogte"><option value="midden">midden (zoals altijd)</option><option value="balk">volgens sleutel en hulplijnen</option></select></label>
+      <label>Klank <select id="gTimbre"><option value="piano">piano</option><option value="strijker">strijker</option><option value="gitaar">gitaar</option><option value="orgel">orgel</option><option value="fluit">fluit</option><option value="koper">koper</option><option value="marimba">marimba</option><option value="sinus">sinus (zuiver)</option></select></label>
+    </div>
+    <div class="nbbox hbox" id="gBereik"></div>
+    <div class="rlabel">Opties</div>
+    <div class="ropts">
+      <label><input type="checkbox" id="gCadQ"> Cadens bij elke vraag</label>
+      <label><input type="checkbox" id="gResolve"> Oplossen naar do</label>
+      <label><input type="checkbox" id="gAuto"> Automatisch door als het goed is</label>
+      <label><input type="checkbox" id="gDroneChk"> Drone op do</label>
+    </div>
+    <div class="rlabel">Tonen in deze oefening</div>
+    <div class="chips" id="gChips"></div>
+    </aside>
+    <div class="qbar">
+      <button id="gPlay" class="primary big">▶ Luister</button>
+      <button id="gCad">🎹 Cadens</button>
+      <button id="gDo">Do</button>
+      <button id="gNext">Volgende →</button>
+      <div class="qscore"><span id="gRight">0</span> / <span id="gTotal">0</span> goed · reeks <span id="gStreak">0</span> · vandaag <span id="gToday">0</span></div>
+    </div>
+    <div class="gkeyline"><span id="gKeyName" class="gkey"></span></div>
+    <div id="gMsg" class="qmsg"></div>
+    <div id="gSlots" class="gslots"></div>
+    <div class="gpad">
+      <div class="grow top" id="gTop"></div>
+      <div class="grow" id="gBot"></div>
+    </div>
+    <p class="gtip">Zo werkt het: elke trap heeft een eigen “kleur” ten opzichte van do. Mi klinkt rustig en helder, ti wil omhoog naar do, fa wil omlaag naar mi. Met <b>Oplossen naar do</b> hoor je na elk antwoord de weg terug naar do, zo leer je die kleuren het snelst. Begin op niveau 1 en ga pas verder als je ongeveer 90% goed hebt.</p>
+  </section>
+  <section class="stats">
+    <div class="sechead"><h2>Per trap</h2><p>Je score per trap, bewaard in deze browser. De zwakste staat bovenaan en komt ook vaker terug als vraag.</p><button id="gReset">Wis statistieken</button></div>
+    <div id="gStats" class="statgrid"></div>
+  </section>
+</div>
+
+<div id="mdView" class="view">
+  <section class="rpanel" id="mdPanel">
+    <div class="sechead pnlrow"><h2>✍️ Melodisch dictee</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Eerst zet een cadens de toonsoort neer, dan hoor je een korte melodie. Schrijf hem op met het klavier, de trap-knoppen of je toetsenbord. <kbd data-key="luister"></kbd> = luisteren, 1–7 = trap (dichtst bij de vorige noot), ↑ ↓ = octaaf, + − = halve toon, <kbd data-key="wis"></kbd> = terug, <kbd data-key="controleer"></kbd> = controleren, daarna <kbd data-key="volgende"></kbd> = volgende, <kbd data-key="cadens"></kbd> = cadens, <kbd data-key="grondtoon"></kbd> = do. Met ritme: H = halve, K = kwart, A = achtste, P of . = punt.</p></details><div class="ropts pnlkey"><label>Niveau <select id="mdLevel"></select></label><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Melodisch dictee">
+    <div class="ropts">
+      
+      <label>Toonaard <select id="mdMode"><option value="maj">majeur</option><option value="min">mineur</option></select></label>
+      <label>Toonsoort <select id="mdKeySel"></select></label>
+      <label id="mdLenBox">Lengte <select id="mdLen"></select></label>
+      <label>Ritme <select id="mdRhythm"><option value="geen">geen (alleen tonen)</option><option value="een">eenvoudig</option><option value="gev">met punteringen</option></select></label>
+      <label id="mdBarsBox">Maten <select id="mdBars"><option value="1">1 maat</option><option value="2">2 maten</option></select></label>
+      <label>Sprongen <select id="mdMoves"><option value="stap">alleen stappen</option><option value="drie">+ do-mi-sol</option><option value="vrij">vrij</option></select></label>
+      <label>Bereik <select id="mdRange"><option value="kwint">do tot sol</option><option value="oct">do tot do'</option><option value="rond">sol, tot sol</option></select></label>
+      <label>Hoogte <select id="mdHoogte"><option value="midden">midden (zoals altijd)</option><option value="balk">volgens sleutel en hulplijnen</option></select></label>
+      <label title="Hoe snel de melodie klinkt (♩ = één toon zonder ritme)">Tempo <select id="mdTempo"></select></label>
+      <label>Klank <select id="mdTimbre"><option value="piano">piano</option><option value="strijker">strijker</option><option value="gitaar">gitaar</option><option value="orgel">orgel</option><option value="fluit">fluit</option><option value="koper">koper</option><option value="marimba">marimba</option><option value="sinus">sinus (zuiver)</option></select></label>
+    </div>
+    <div class="nbbox hbox" id="mdBereik"></div>
+    <div class="rlabel">Opties</div>
+    <div class="ropts">
+      <label><input type="checkbox" id="mdCadQ"> Cadens bij elke keer luisteren</label>
+      <label><input type="checkbox" id="mdFirst"> Eerste noot gegeven</label>
+      <label><input type="checkbox" id="mdHear"> Noot horen bij invoeren</label>
+      <label><input type="checkbox" id="mdAuto"> Automatisch door als het foutloos is</label>
+    </div>
+    </aside>
+    <div class="qbar">
+      <button id="mdPlay" class="primary big">▶ Luister</button>
+      <button id="mdCad">🎹 Cadens</button>
+      <button id="mdDo">Do</button>
+      <button id="mdCheck">✓ Controleer</button>
+      <button id="mdNext">Nieuwe melodie →</button>
+      <div class="qscore"><span id="mdRight">0</span> / <span id="mdTotal">0</span> noten goed · <span id="mdPerfect">0</span> foutloos · reeks <span id="mdStreak">0</span> · vandaag <span id="mdToday">0</span></div>
+    </div>
+    <div class="gkeyline"><span id="mdKey" class="gkey"></span></div>
+    <div id="mdMsg" class="qmsg"></div>
+    <div class="mdlab"><span>Jouw antwoord</span><span id="mdProg"></span></div>
+    <div id="mdStaff" class="mdstaff"></div>
+    <div id="mdSolWrap" style="display:none">
+      <div class="mdlab"><span>Juiste melodie</span><span>oranje = hier zat je fout</span></div>
+      <div id="mdSol" class="mdstaff"></div>
+    </div>
+    <div class="ivafter" id="mdAfter" style="display:none;margin-top:10px">
+      <button id="mdAgain">▶ Juiste melodie</button>
+      <button id="mdMine">▶ Mijn versie</button>
+    </div>
+    <div class="mdtools">
+      <span id="mdDurs">
+        <button data-dur="4" title="Halve noot (H)">halve<small>H</small></button>
+        <button data-dur="2" title="Kwartnoot (K)">kwart<small>K</small></button>
+        <button data-dur="1" title="Achtste noot (A)">achtste<small>A</small></button>
+        <button data-dur="3" title="Gepunteerde kwart (P)">kwart.<small>P</small></button>
+        <button data-dur="6" title="Gepunteerde halve">halve.</button>
+      </span>
+      <button id="mdUndo">⌫ Laatste noot weg</button>
+      <button id="mdClear">Alles wissen</button>
+    </div>
+    <div class="mddegs" id="mdDegs"></div>
+    <div class="mdpiano" id="mdPiano"></div>
+    <p class="gtip">Zo pak je een dictee aan: luister twee keer zonder iets te doen en zing de melodie zachtjes na. Vraag je dan af: gaat hij omhoog of omlaag, met stappen of sprongen? Zoek do (de laatste noot is bijna altijd do) en schrijf pas daarna op. Bij ritme: tel mee en schrijf eerst per tel, de tonen kun je daarna invullen. Zet <b>Noot horen bij invoeren</b> uit als je het echt uit je hoofd wilt doen, en speel de melodie na afloop op viool of piano na. Ga een niveau omhoog als je de meeste melodieën foutloos hebt.</p>
+  </section>
+  <section class="stats">
+    <div class="sechead"><h2>Per trap</h2><p>Hoe vaak je elke trap goed opschrijft, bewaard in deze browser. De zwakste staat bovenaan; oefen die ook in Relatief gehoor.</p><button id="mdReset">Wis statistieken</button></div>
+    <div id="mdStats" class="statgrid"></div>
+  </section>
+</div>
+
+<div id="quizView" class="view board">
+  <div class="subback"><button class="backbtn" data-back="luisteren">← Ritme luisteren-overzicht</button></div>
+  <div class="subtabs">
+    <button data-sub="mc" class="on"><span class="mi">🔘</span><strong>Meerkeuze</strong><span>Luister naar een ritme en kies de juiste notatie.</span></button>
+    <button data-sub="dict"><span class="mi">✍️</span><strong>Dictee</strong><span>Luister naar een hele maat en schrijf hem per tel op.</span></button>
+  </div>
+  <aside class="pnl" data-title="Ritme luisteren">
+    <div class="forsub-mc">
+    <div class="rlabel">Categorieën</div>
+    <div class="chips" id="qChips"></div>
+    <div class="ropts">
+      <label>Opties <select id="qN"><option>3</option><option selected>4</option><option>6</option></select></label>
+      <label><input id="qSame" type="checkbox" checked> Opties uit dezelfde categorie (moeilijker)</label>
+      <label><input id="qVary" type="checkbox"> Wisselend tempo</label>
+      <label class="vamt" id="qVaryBox">± <input id="qVaryAmt" type="number" min="1" max="100" value="20"> bpm rond het tempo</label>
+    </div>
+    </div>
+    <div class="forsub-dict">
+    <div class="rlabel">Categorieën</div>
+    <div class="chips" id="dChips"></div>
+    <div class="ropts">
+      <label>Lengte <select id="dLen"><option value="2">2 tellen</option><option value="4" selected>1 maat (4 tellen)</option><option value="8">2 maten (8 tellen)</option></select></label>
+      <label><input id="dVary" type="checkbox"> Wisselend tempo</label>
+      <label class="vamt" id="dVaryBox">± <input id="dVaryAmt" type="number" min="1" max="100" value="20"> bpm rond het tempo</label>
+      <label><input id="dPreview" type="checkbox" checked> Ritme laten horen bij aanklikken</label>
+    </div>
+    </div>
+    <div class="rlabel">Afspelen</div>
+    <div class="pnlplay"></div>
+  </aside>
+  <section class="rpanel dict" id="dictPanel">
+    <div class="sechead pnlrow"><h2>✍️ Ritmedictee</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Luister naar de maat en schrijf hem op: kies per tel welk ritme je hoort. Klik op een tel om hem te kiezen en daarna onderaan op een ritme. <kbd data-key="luister"></kbd> = luisteren, <kbd data-key="vorige"></kbd> / <kbd data-key="volgende"></kbd> = tel kiezen, <kbd data-key="wis"></kbd> = tel leegmaken, <kbd data-key="controleer"></kbd> = controleren, daarna <kbd data-key="volgende"></kbd> = volgende.</p></details><div class="ropts pnlkey"><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <div class="qbar">
+      <button id="dPlay" class="primary big">▶ Luister</button>
+      <button id="dCheck">✓ Controleer</button>
+      <button id="dMine">▶ Mijn antwoord</button>
+      <button id="dNext">Nieuw dictee →</button>
+      <div class="qscore"><span id="dRight">0</span> / <span id="dTotal">0</span> tellen goed · <span id="dPerfect">0</span> foutloos</div>
+    </div>
+    <div id="dMsg" class="qmsg"></div>
+    <div id="dSlots" class="slots"></div>
+    <div id="dPalette" class="palette"></div>
+  </section>
+  <section class="rpanel quiz" id="mcPanel">
+    <div class="sechead pnlrow"><h2>👂 Welk ritme hoor je?</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Luister (zo vaak als je wilt) en kies de juiste notatie. <kbd data-key="luister"></kbd> = opnieuw luisteren, 1–6 = antwoord kiezen, <kbd data-key="volgende"></kbd> = volgende.</p></details><div class="ropts pnlkey"><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <div class="qbar">
+      <button id="qPlay" class="primary big">▶ Luister</button>
+      <button id="qNext">Volgende →</button>
+      <div class="qscore"><span id="qRight">0</span> / <span id="qTotal">0</span> goed · reeks <span id="qStreak">0</span></div>
+    </div>
+    <div id="qMsg" class="qmsg"></div>
+    <div class="grid qgrid" id="qGrid"></div>
+  </section>
+  <section class="stats">
+    <div class="sechead"><h2 id="statTitle">Per categorie</h2><p>Je score per categorie, bewaard in deze browser. De zwakste staat bovenaan.</p><button id="qReset">Wis statistieken</button></div>
+    <div id="qStats" class="statgrid"></div>
+  </section>
+</div>
+
+<div id="tikView" class="view">
+  <section id="random" class="rpanel">
+    <div class="sechead pnlrow"><h2>🥁 Tikken</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Kies welke categorieën mee mogen doen; de generator maakt er willekeurige maten in 4/4 van. Zet <b>Doorlopend</b> aan om eindeloos nieuwe variaties te krijgen: onder de huidige maten zie je al wat er hierna komt, zodat je vooruit kunt lezen. Bij <b>Eerst luisteren</b> hoor je het ritme eerst zonder notatie.</p></details><div class="ropts pnlkey"><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+    <aside class="pnl" data-title="Tikken">
+    <div class="rlabel">Categorieën</div>
+    <div class="chips"></div>
+    <div class="rlabel">Maten en tempo</div>
+    <div class="ropts">
+      <label>Maten <select id="rBars"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></label>
+      <label><input id="rCont" type="checkbox" checked> Doorlopend</label>
+      <label>Rondes <select id="rRounds"><option value="0">∞ oneindig</option><option>1</option><option>2</option><option selected>4</option><option>8</option><option>16</option><option>32</option></select></label>
+      <label>Tempo <select id="rTempo"><option value="vast">vast</option><option value="wissel">wisselend</option><option value="op">oplopend (+4 per ronde)</option></select></label>
+      <label class="rvary">± <input id="rVaryAmt" type="number" min="1" max="100" value="20"> bpm rond het tempo</label>
+      <span class="rrange"><label>van <input id="rMin" type="number" min="30" max="240" value="60"></label><label>tot <input id="rMax" type="number" min="30" max="240" value="100"></label></span>
+      <label>Metronoom <select id="rGap"><option value="">altijd aan</option><option value="2,2">2 maten aan, 2 stil</option><option value="1,1">1 aan, 1 stil</option><option value="3,1">3 aan, 1 stil</option><option value="1,3">1 aan, 3 stil</option><option value="r25">willekeurige maten stil (± 1 op 4)</option><option value="r40">willekeurige maten stil (± 2 op 5)</option></select></label>
+      <label><input id="rListen" type="checkbox"> Eerst luisteren</label>
+    </div>
+    <div class="rlabel">Afspelen</div>
+    <div class="pnlplay"></div>
+    </aside>
+    <div class="ropts tikbar">
+      <button id="rNew" class="primary">🎲 Nieuw ritme</button>
+      <button id="rPlay">▶ Speel</button>
+      <button id="rShow">Toon notatie</button>
+      <span id="rProg" class="rbpm"></span>
+      <span id="rBpm" class="rbpm"></span>
+    </div>
+    <div id="doneBox" class="donebox"></div>
+    <p class="keys">Toetsen: <kbd>spatie</kbd> tik · <kbd>P</kbd> pauze / verder · <kbd>Esc</kbd> stop · <kbd>→</kbd> nieuw ritme</p>
+    <div class="tapbar">
+      <button id="tapPad" class="tappad" type="button">Tik hier<br><small>of druk op de spatiebalk</small></button>
+      <div class="tapinfo">
+        <div id="tapLive" class="taplive">–</div>
+        <div id="tapSum" class="tapsum"></div>
+        <div class="tapopts">
+          <label><input id="tapOn" type="checkbox" checked> Tik-score</label>
+          <button id="tapCal" type="button">Kalibreer vertraging</button>
+          <span id="calVal" class="muted"></span>
+        </div>
+      </div>
+    </div>
+    <div class="rlabel">Nu</div>
+    <div class="grid rgrid" id="rNow"></div>
+    <div class="rnext">
+      <div class="rlabel">Hierna</div>
+      <div class="grid rgrid" id="rNext"></div>
+    </div>
+  </section>
+</div>
+
+<div id="ptView" class="view pt-lib">
+  <section class="rpanel">
+    <div class="sechead"><h2>🗂️ Repertoire</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Voeg je eigen stukken toe als MusicXML-bestand (.musicxml, .xml of .mxl): van MuseScore.com (gratis account, stukken met het PD-label), van IMSLP (soms een MusicXML-bijlage) of zelf omgezet uit een pdf met Audiveris of MuseScore. De app speelt het stuk af met je eigen klank en de noten die klinken lichten op. Kies een <b>oefenblok</b> (maat … t/m …). Klik op een noot of ergens op de balk: de cursor gaat daarheen en ▶ speelt vanaf daar; dubbelklik speelt precies die maat; met ⬚ Selecteer passage klik je de eerste en de laatste maat aan en zet <b>Lus</b> aan om het steeds te herhalen. Met <b>Focus</b> zie je alleen je blok, groot in beeld. Bewaar een blok als <b>passage</b> met een naam: per passage houdt de app de status (🆕 nieuw, 🔨 bezig, ✅ zit erin), je doeltempo en je schone tempo bij. <b>✓ Gelukt</b> legt het tempo vast en gaat een stap sneller, <b>✗ Te snel</b> een stap terug. <b>💬 Vraag aan Claude</b> opent een chat over het stuk: Claude krijgt de noten van je oefenblok, je tempo en je aantekeningen mee en geeft oefenadvies. <b>⛶ Volledig scherm</b> toont bladzijden (liggend 2 naast elkaar), met ⟳ draai je 90° om de laptop op zijn kant te zetten als een boek; bladeren met ◀ ▶ of de pijltjes, inzoomen met − en ＋. 🌓 wisselt de partituur tussen licht, donker en zoals de app. Alles staat in één balk bovenin: afspelen, tempo, oefenblok (maat … – …), Hele stuk, Focus, Lus, ⬚ selecteren, ＋ bewaren als passage, zoom, 💬, 🎬, ⇣ meescrollen, ⛶ volledig scherm en 🕹️ Instellingen (passages, metronoom en tempo-opbouw, zelf spelen, wat je hoort, cursor, licht/donker). Beweeg de muis over een knop om te zien wat hij doet. <b>Tijdens het spelen schuift de balk weg</b>, zodat de partituur het hele scherm heeft. Hij komt terug bij pauze, als je met de muis naar de bovenrand gaat of met ⌄ rechtsonder; daar staat ook ⏸. Uitzetten kan in 🕹️ → Weergave. Je stukken en hun instellingen worden op dit apparaat bewaard. Toetsen: <kbd data-key="luister"></kbd> of <kbd data-key="pauze"></kbd> = afspelen/pauze, <kbd data-key="begin"></kbd> = terug naar het begin van het blok, <kbd data-key="metronoom"></kbd> = metronoom aan/uit, <kbd data-key="sneller"></kbd> / <kbd data-key="langzamer"></kbd> = tempo ±1 (Shift ±5), <kbd data-key="volgende"></kbd> = ✓ Gelukt, <kbd data-key="vorige"></kbd> = ✗ Te snel (in volledig scherm bladeren de pijltjes), <kbd data-key="volscherm"></kbd> = volledig scherm aan/uit, <kbd data-key="claude"></kbd> = 💬 Vraag aan Claude openen/sluiten (meteen typen), <kbd data-key="stop"></kbd> = stop (in volledig scherm: sluiten).</p></details></div>
+
+    <div class="ptlibbox" id="ptLibBox">
+      <div class="ptlibhead">
+        <label class="ptadd"><input type="file" id="ptFile" accept=".musicxml,.xml,.mxl">＋ Stuk toevoegen</label>
+        <button id="ptSample">Voorbeeld proberen</button>
+      </div>
+      <div id="ptLibMsg" class="ptmsg"></div>
+      <div id="ptToday" class="pttoday"></div>
+      <div id="ptFilter" class="ptfilter"></div>
+      <div id="ptList" class="ptlist"></div>
+      <p class="muted ptwhere">Sleep een bestand hierheen of kies het met de knop. Waar vind je MusicXML? <b>MuseScore.com</b> (gratis account: stukken met het PD-label), <b>IMSLP</b> (kijk of er een MusicXML-bijlage is) of zet een pdf zelf om met <b>Audiveris</b> of MuseScore. Een pdf zelf kan niet worden afgespeeld.</p>
+    </div>
+
+    <div class="ptplayer">
+      <div id="ptHead" class="pthead">
+      <div class="ptctrl ptone">
+        <button id="ptBack" class="ptsmall ptic" title="Terug naar je stukken">←</button>
+        <div class="pttitle"><b id="ptTitle"></b><small id="ptSub"></small></div>
+        <span class="ptsep"></span>
+        <button id="ptPlay" class="primary ptplaybtn" data-ktitle="Afspelen / pauze ({luister})">▶ Afspelen</button>
+        <button id="ptBegin" class="ptsmall ptic" data-ktitle="Terug naar het begin van het blok ({begin})">⏮</button>
+        <span class="pttempo"><button data-d="-5">−5</button><button data-d="-1">−1</button><span class="ptbpm"><span class="ptUnitSym">♩</span> = <b class="ptBpmVal">72</b></span><button data-d="1">+1</button><button data-d="5">+5</button></span>
+        <span id="ptRound" class="ptround"></span>
+        <span class="ptsep"></span>
+        <span class="ptblk" title="Oefenblok: van maat … tot en met maat …">Maat <input type="number" id="ptFrom" min="1"> – <input type="number" id="ptTo" min="1"></span>
+        <button id="ptAll" class="ptsmall">Hele stuk</button>
+        <label class="ptchk" title="Alleen het blok tekenen, groot in beeld"><input type="checkbox" id="ptFocus"> Focus</label>
+        <label class="ptchk"><input type="checkbox" id="ptLoop"> Lus</label>
+        <button id="ptSelBtn" class="ptsmall ptic" title="Selecteer passage: klik daarna op de eerste en de laatste maat">⬚</button>
+        <span id="ptSelHint" class="ptselhint" hidden></span>
+        <button id="ptPasNew" class="ptsmall ptic" title="Bewaar het oefenblok als passage">＋</button>
+        <span id="ptPasName" class="ptpasname" hidden><input type="text" id="ptPasNameIn" maxlength="60" placeholder="Naam, bv. Thema m. 1–8"><button id="ptPasSave" class="ptsmall primary">Opslaan</button><button id="ptPasCancel" class="ptsmall">Annuleren</button></span>
+        <span class="ptgap"></span>
+        <span class="ptzoom" title="Zoom (de partituur vult altijd de hele breedte)"><button id="ptZoomOut" class="ptsmall ptic" title="Kleiner">−</button><span id="ptZoomVal"></span><button id="ptZoomIn" class="ptsmall ptic" title="Groter">＋</button></span>
+        <span class="ptright"><button id="ptFollowBtn" class="ptsmall ptic" title="Automatisch meescrollen en omslaan tijdens het afspelen">⇣</button><button id="ptFsBtn" class="ptsmall ptic" data-ktitle="Volledig scherm: bladzijden, draaien en zoomen ({volscherm})">⛶</button><button id="ptInfoBtn" class="ptsmall ptic" title="Uitleg en sneltoetsen">?</button><button class="pnlbtn ptic" title="Instellingen van de speler">🕹️</button></span>
+      </div>
+      <div id="ptStrip" class="ptstrip" hidden>
+        <div class="ptsrow">
+          <span id="ptStripName" class="ptsname"></span>
+          <span class="ptseg ptsstatus" id="ptStripStatus"><button data-st="nieuw">🆕 Nieuw</button><button data-st="bezig">🔨 Bezig</button><button data-st="zit">✅ Zit erin</button></span>
+          <span class="ptstempo">
+            <span class="ptsk"><small>Nu</small><b id="ptStripNow">–</b></span>
+            <span class="ptsk" title="Schoon tempo: het hoogste tempo waarbij je op ✓ Gelukt drukte"><small>Schoon</small><b id="ptStripOk">–</b></span>
+            <label class="ptsk" title="Doeltempo voor deze passage"><small>Doel</small><input type="number" id="ptStripDoel" min="20" max="300" placeholder="–"></label>
+            <span class="ptsbar" title="Schoon tempo ten opzichte van je doel"><i id="ptStripBar"></i></span>
+          </span>
+          <span class="ptsgap"></span>
+          <button id="ptPasUpd" class="ptsbtn ptsupd" hidden title="Huidige maten en tempo in deze passage bewaren">↻ Bijwerken</button>
+          <button id="ptOk" class="ptsbtn" data-ktitle="Ging goed: bewaren en sneller ({volgende})">✓ Gelukt</button>
+          <button id="ptTooFast" class="ptsbtn" data-ktitle="Te snel: langzamer ({vorige})">✗ Te snel</button>
+          <button id="ptNotesBtn" class="ptsbtn ptsicon" title="Aantekeningen en doelen">📝</button>
+        </div>
+        <div id="ptNotesPrev" class="ptnotesprev" hidden></div>
+        <div id="ptNotesBox" class="ptnotes" hidden><textarea id="ptNotes" rows="3" placeholder="Aantekeningen en doelen, bv. &quot;m. 3: 4e positie&quot;, &quot;niet versnellen in m. 5&quot;, &quot;doel: strak op 80&quot;"></textarea></div>
+      </div>
+      </div>
+      <div id="ptMsg" class="ptmsg"></div>
+      <div id="ptSheetHome"><div id="ptSheet" class="ptsheet"><div id="ptCacheView" class="ptlayer" hidden></div><div id="ptOsmdHost" class="ptlayer"></div><div id="ptLine" class="ptline" hidden></div></div></div>
+      <div id="ptFab" class="ptfab" hidden><button id="ptFabBar" title="Balk tonen">⌄</button><button id="ptFabPlay" title="Pauze (spatie)">⏸</button></div>
+      <p class="muted pttip">Klik op een noot of op de balk (of versleep de cursor): de cursor gaat daarheen en ▶ speelt vanaf daar. Dubbelklik: precies die maat spelen. ⬚ Selecteer passage: klik op de eerste en de laatste maat.</p>
+    </div>
+
+    <aside class="pnl ptpnl" data-title="Partituur">
+      <!-- Indeling 18-11-2026: inklapbare blokken (.ptsec, open/dicht onthouden in 'pt-pnl-open'), rijen met vaste labelkolom (.ptrow) -->
+      <details class="ptsec" data-sec="pas" open><summary>Passages</summary>
+        <div class="ptpas"><div id="ptPasList" class="ptpaslist"></div></div>
+      </details>
+
+      <details class="ptsec" data-sec="tempo" open><summary>Tempo en metronoom</summary>
+        <div class="ropts ptrows">
+          <label class="ptchk" data-ktitle="Metronoom aan/uit ({metronoom})"><input type="checkbox" id="ptMetro"> Metronoom</label>
+          <label class="ptrow"><span>Aftellen</span><select id="ptCi"><option value="0">geen</option><option value="1">1 maat</option><option value="2">2 maten</option></select></label>
+          <label class="ptrow"><span>Tel in</span><select id="ptUnit"><option value="h">𝅗𝅥 halve noten</option><option value="q">♩ kwartnoten</option><option value="qd">♩. gepunteerde kwarten</option><option value="e">♪ achtsten</option></select></label>
+          <label class="ptchk" title="Largo, Moderato, metronoomgetallen in de noten volgen. Jouw tempo geldt voor het begin van het oefenblok; de rest gaat in dezelfde verhouding mee, of op het tempo dat je hieronder per deel instelt."><input type="checkbox" id="ptTempi"> Tempowisselingen in de noten volgen</label>
+          <details class="pttempibox"><summary>Tempo per deel zelf instellen</summary>
+            <p class="muted ptnote">Het deel waar je oefenblok begint volgt de tempoknop bovenin. Latere delen gaan in verhouding mee, tenzij je hier zelf een tempo invult (leeg = in verhouding). Wordt per stuk bewaard.</p>
+            <div id="ptTempiList"></div>
+          </details>
+        </div>
+      </details>
+
+      <details class="ptsec" data-sec="oefen" open><summary>Oefenen</summary>
+        <div class="ropts ptrows">
+          <label class="ptrow"><span>Zelf spelen</span><select id="ptSolo"><option value="0">nee, de app speelt mee</option><option value="1">om de ronde (app zwijgt elke 2e)</option><option value="2">altijd (alleen de metronoom)</option></select></label>
+          <label class="ptrow" id="ptHandsRow"><span>Te horen</span><select id="ptHands"><option value="beide">alles</option><option value="boven">alleen bovenste balk</option><option value="onder">alleen onderste balk(en)</option></select></label>
+          <div class="ptrow"><span>Lus sneller</span><span class="ptpair"><label>+<input type="number" id="ptInc" min="0" max="20" step="1"></label><label>tot <input type="number" id="ptMax" min="20" max="300" step="1" placeholder="—"></label></span></div>
+          <p class="pthint">Per ronde in de lus zoveel sneller (0 = gelijk), tot het tempo bij "tot" (leeg = geen grens).</p>
+          <label class="ptrow"><span>Stap ✓ / ✗</span><span class="ptpair"><input type="number" id="ptStap" min="1" max="20" step="1"><small class="muted">tellen per minuut bij Gelukt / Te snel</small></span></label>
+        </div>
+      </details>
+
+      <details class="ptsec" data-sec="klank" open><summary>Klank</summary>
+        <div class="ropts ptrows">
+          <label class="ptrow"><span>Volume</span><input type="range" id="ptVol" min="0" max="100"></label>
+          <label class="ptrow"><span>Klank</span><select id="ptInst" title="Klank voor alle partijen van dit stuk"></select></label>
+          <div id="ptMix" class="ptmix"></div>
+        </div>
+      </details>
+
+      <details class="ptsec" data-sec="weerg"><summary>Weergave</summary>
+        <div class="ropts ptrows">
+          <label class="ptrow"><span>Zoom</span><input type="range" id="ptZoom" min="40" max="200" step="5"></label>
+          <label class="ptrow" id="ptShowRow" hidden title="Alleen de vioolpartij of alleen de pianopartij als bladmuziek tonen. Afspelen blijft alles (zet een partij stil bij Klank)."><span>Bladmuziek</span><select id="ptShow"></select></label>
+          <label class="ptrow"><span>Partituur</span><select id="ptPaperSel"><option value="app">zoals de app</option><option value="licht">licht</option><option value="donker">donker</option></select></label>
+          <label class="ptrow"><span>Cursor</span><select id="ptCursor"><option value="lijn">glijdende lijn</option><option value="noten">oplichtende noten</option><option value="beide">lijn + noten</option></select></label>
+          <div class="ptrow" title="Loopt de cursor achter op het geluid? Schuif naar rechts. Loopt hij voor? Naar links."><span>Cursor-timing</span><span class="ptrange3"><small>later</small><input type="range" id="ptLineOfs" min="-200" max="200" step="10"><small>eerder</small></span></div>
+          <p class="pthint" id="ptLineOfsVal"></p>
+          <label class="ptchk" title="Titel, componist en instrumentnaam bovenaan de partituur (kost wat ruimte)"><input type="checkbox" id="ptTitles"> Titel en instrumentnamen tonen</label>
+          <label class="ptchk" title="Tijdens het afspelen schuift de bovenbalk weg, zodat de partituur het hele scherm heeft. Bij pauze, met de muis naar de bovenrand of met de knop rechtsonder komt hij terug."><input type="checkbox" id="ptHideBar"> Balk verbergen tijdens het spelen</label>
+        </div>
+      </details>
+
+      <details class="ptsec" data-sec="fs"><summary>Volledig scherm</summary>
+        <div class="ropts ptrows">
+          <label class="ptrow"><span>Weergave</span><select id="ptFsModeSel"><option value="blad">bladzijden (als een boek)</option><option value="door">doorlopend (meteen klaar)</option></select></label>
+          <label class="ptrow"><span>Naast elkaar</span><select id="ptFsPagesSel"><option value="">automatisch</option><option value="1">1 bladzijde</option><option value="2">2 bladzijden</option></select></label>
+        </div>
+      </details>
+
+      <details class="ptsec" data-sec="stuk"><summary>Dit stuk</summary>
+        <div class="ropts ptrows">
+          <label class="ptrow"><span>Instrument</span><select id="ptInstr"><option value="">—</option><option value="viool">🎻 Viool</option><option value="piano">🎹 Piano</option><option value="overig">🎼 Overig</option></select></label>
+          <p class="pthint">Voor het filter in je bibliotheek, en bij een vioolstuk zonder partijnaam speelt de bovenste balk viool.</p>
+        </div>
+      </details>
+    </aside>
+  </section>
+  <div id="ptFs" class="ptfs" hidden>
+    <div id="ptFsRot" class="ptfsrot">
+      <div class="ptfsbar">
+        <span class="ptfsg">
+          <button id="ptFsPlay" class="ptfsplay" data-ktitle="Afspelen / pauze ({luister})">▶</button>
+          <span class="pttempo"><button data-d="-5">−5</button><button data-d="-1">−1</button><span class="ptbpm"><span class="ptUnitSym">♩</span> = <b class="ptBpmVal">72</b></span><button data-d="1">+1</button><button data-d="5">+5</button></span>
+        </span>
+        <span id="ptFsInfo" class="ptfsinfo"></span>
+        <span class="ptfsgap"></span>
+        <span class="ptfsg"><button id="ptFsPrev" title="Vorige bladzijde (←)">‹</button><span id="ptFsPg" class="ptfspg"></span><button id="ptFsNext" title="Volgende bladzijde (→)">›</button></span>
+        <span class="ptseg" id="ptFsPagesSeg" title="Eén of twee bladzijden naast elkaar"><button data-n="1">1 blz</button><button data-n="2">2 blz</button></span>
+        <span class="ptseg" id="ptFsModeSeg" title="Bladzijden: als een boek. Doorlopend: meteen klaar, de partituur scrolt mee."><button data-m="blad">Bladzijden</button><button data-m="door">Doorlopend</button></span>
+        <span class="ptfsg"><button id="ptFsOut" title="Uitzoomen (Ctrl −, of knijpen op het touchpad)">−</button><button id="ptFsIn" title="Inzoomen (Ctrl +, of spreiden op het touchpad)">＋</button></span>
+        <span class="ptfsg"><button id="ptFsRotBtn" title="90° draaien (laptop op zijn kant, als een boek)">⟳</button><button id="ptFsFollow" title="Automatisch omslaan aan/uit">⇣</button><button id="ptFsPaper" title="Licht / donker">🌓</button></span>
+        <button id="ptFsClose" class="ptfsclose" data-ktitle="Volledig scherm sluiten (Esc of {volscherm})">✕</button>
+      </div>
+      <div id="ptFsPage" class="ptfspage"><div id="ptFsLoad" class="ptfsload" hidden></div><div id="ptFsBox" class="ptfsbox"></div></div>
+    </div>
+  </div>
+</div>
+
+<main id="main" class="view">
+  <div class="atlasbar"><p class="note">Klik op een ritme om het te horen. Op de tijdlijn staan de aanslagen; de grijze streepjes zijn de metronoomtikken. Het tempo geldt voor de kwartnoot, behalve in 6/8, 9/8 en 12/8: daar is de tel de gepunteerde kwart. Bij polyritmes is de bovenste laag <span class="legend"><span class="dot"></span> zwart/oranje</span> en de onderste laag <span class="legend"><span class="dot low"></span> blauw</span>.</p><button class="pnlbtn">🕹️ Instellingen</button></div>
+  <aside class="pnl" data-title="Atlas">
+    <div class="rlabel">Afspelen</div>
+    <div class="pnlplay"></div>
+    <p class="note">Het tempo staat bovenin, naast Pauze en Stop.</p>
+  </aside>
+</main>
+
+<script src="js/samples.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/score.js"></script>
+<script src="js/toetsen.js"></script>
+<script src="js/helpers.js"></script>
+<script src="js/paneel.js"></script>
+<script src="js/notatie.js"></script>
+<script src="js/theorie.js"></script>
+<script src="js/ritme-catalogus.js"></script>
+<script src="js/ritme.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/ritme-tikken.js"></script>
+<script src="js/instellingen.js"></script>
+<script src="js/handleiding.js"></script>
+<script src="js/router.js"></script>
+<script src="js/luisteren.js"></script>
+<script src="js/relatief.js"></script>
+<script src="js/absoluut.js"></script>
+<script src="js/dictee.js"></script>
+<script src="js/notenleer.js"></script>
+<script src="js/toonsoorten.js"></script>
+<script src="js/toonladders.js"></script>
+<script src="js/akkoorden.js"></script>
+<script src="js/intervallen.js"></script>
+<script src="js/kwintcirkel.js"></script>
+<script src="js/drone.js"></script>
+<script src="js/drone-trappen.js"></script>
+<script src="js/drone-melodie.js"></script>
+<script src="js/intonatie.js"></script>
+<script src="js/harmonie.js"></script>
+<script src="js/ritmetrainer.js"></script>
+<script src="js/termen.js"></script>
+<script src="js/akkoordsymbolen.js"></script>
+<script src="js/presets.js"></script>
+<script src="js/metronoom.js"></script>
+<script src="js/partituren.js"></script>
+<script src="js/vraag.js"></script>
+<script src="js/vraag-app.js"></script>
+<script src="js/opnames.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/main.js"></script>
+<script>if ('serviceWorker' in navigator && location.protocol === 'https:') addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
+<nav id="tabbar" class="tabbar" aria-label="Hoofdmenu">
+  <a href="#" data-t="home"><span class="tbi">🏠</span><span>Home</span></a>
+  <a href="#stats" data-t="stats"><span class="tbi">📊</span><span>Statistieken</span></a>
+  <a href="#handleiding" data-t="handleiding"><span class="tbi">📖</span><span>Handleiding</span></a>
+  <a href="#instellingen" data-t="instellingen"><span class="tbi">⚙️</span><span>Instellingen</span></a>
+</nav>
+</body>
+</html>

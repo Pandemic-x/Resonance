@@ -1,0 +1,23 @@
+RESONANCE ALS WEBSITE / APP (GitHub Pages)
+
+Online zetten:
+1. Pak deze zip uit.
+2. Maak op github.com een nieuwe PUBLIC repository, bv. "resonance".
+3. Add file > Upload files. Sleep de INHOUD van de map "resonance" erin
+   (index.html, manifest.json, sw.js, css, js, sounds, icons),
+   niet de map zelf: index.html moet bovenaan staan. Klik Commit changes.
+4. Settings > Pages > Source: "Deploy from a branch" > main > /(root) > Save.
+5. Na 1-2 minuten staat hij op https://JOUWNAAM.github.io/resonance/
+
+Op je telefoon installeren:
+- Android (Chrome): open de link > menu > "App installeren" / "Toevoegen aan startscherm".
+- iPhone (Safari): open de link > deelknop > "Zet op beginscherm".
+
+Bijwerken: upload het aangepaste bestand opnieuw (zelfde naam, zelfde map)
+en verhoog in sw.js het getal bij VERSION (resonance-v1 -> resonance-v2),
+zodat telefoons de update ophalen.
+
+Let op:
+- Je gegevens (voortgang, stukken) staan per browser. Zet ze over met
+  Instellingen > Je gegevens > Back-up opslaan in het artifact, en Terugzetten op de website.
+- De knoppen om Claude iets te vragen werken alleen binnen Claude en zijn op de website verborgen.

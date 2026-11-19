@@ -1,0 +1,142 @@
+body.drone nav, body.drone .controls{display:none}
+#droneView{max-width:1180px;margin:0 auto;padding:20px 20px 80px}
+.drstep{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:6px auto 10px;max-width:680px}
+.drnow{display:flex;align-items:center;gap:16px;flex-wrap:wrap;min-height:58px}
+.drbig{font-family:Fraunces,serif;font-size:44px;font-weight:700;line-height:1;min-width:84px}
+.drbig small{font-size:20px;font-weight:600;margin-left:2px;opacity:.8}
+#drInfo{font-size:14px}
+#drHint{font-size:13px;color:var(--muted);margin-top:4px;min-height:18px}
+.drslots{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
+.drslot{font-size:12px;font-weight:600;min-width:30px;text-align:center;padding:3px 5px;border-radius:7px;border:1px solid var(--line);border-bottom:3px solid var(--c);background:var(--paper);cursor:pointer;color:var(--muted)}
+.drslot.top{border-color:var(--c)}
+.drslot.on{background:var(--c);border-color:var(--c);color:#111}
+.drbtns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.drsub{text-transform:none;letter-spacing:0;font-weight:400}
+.drtone{display:flex;flex-direction:column;align-items:center;gap:0;padding:4px 2px;border-radius:9px;border:1px solid var(--line);border-bottom:3px solid var(--c);background:var(--paper);color:var(--muted);font-size:13px}
+.drtone b{font-family:Fraunces,serif;font-size:15px;color:var(--ink)}
+.drtone small{font-size:11px}
+.drtone.on{background:var(--c);border-color:var(--c);color:#111}
+.drtone.on b{color:#111}
+.drtone:disabled{cursor:default;opacity:1}
+.drtone:hover:not(:disabled){border-color:var(--c);color:var(--ink)}
+.drtone.on:hover{color:#111}
+.drpresets{display:inline-flex;flex-wrap:wrap;gap:6px}
+.drpresets button{font-size:13px;padding:3px 10px}
+.drpresets button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.drpause{margin-left:auto}
+.drpause.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.drpause:disabled{opacity:.45;cursor:default}
+.drpause:disabled:hover{border-color:var(--line);color:var(--ink)}
+
+/* ---- standen: Vrij spelen / Trappen (drone-trappen.js) ---- */
+.drsubtabs{margin-bottom:12px}
+#droneView:not(.trap) .drtrap{display:none!important}
+#droneView.trap .drfree{display:none!important}
+#droneView:not(.melo) .drmelo{display:none!important}
+#droneView.melo .drfree{display:none!important}
+.dtown{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:-4px 0 12px}
+.dtstep .drbtns{align-items:center}
+.dtpad{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.dtbtn{display:flex;flex-direction:column;align-items:center;min-width:58px;padding:8px 10px 6px;border-radius:12px;border:2px solid var(--c);background:var(--paper);color:var(--ink);line-height:1.15}
+.dtbtn b{font-size:20px}
+.dtbtn small{font-size:12px;color:var(--muted)}
+.dtbtn:hover{border-color:var(--c);background:color-mix(in srgb, var(--c) 14%, var(--paper));color:var(--ink)}
+.dtbtn.right{background:var(--c);color:#111}
+.dtbtn.right small{color:#222}
+.dtbtn.wrong{opacity:.55;border-style:dashed}
+.dtfeel{margin-top:4px;font-size:14px}
+.dtok{color:#15803d} .dtno{color:#b91c1c}
+html.dark .dtok{color:#4ade80} html.dark .dtno{color:#f87171}
+.dtstathead{display:flex;align-items:center;gap:8px;margin-top:14px}
+.dtreset{margin-left:auto;font-size:12px;padding:2px 10px}
+.dtstats{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 18px}
+.dtown .drtone{min-width:44px;padding:4px 6px}
+
+.dtfb{text-align:center;margin-top:8px;font-size:14px;min-height:70px}
+.dtfb .dtfeel{margin-top:4px}
+.dtbar{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:10px}
+.dtbar .dtcount{margin-left:0}
+.ropts input[type=number]#dtIntro, .ropts input[type=number]#dtLimit, .ropts input[type=number]#dtKeyEvery{width:58px}
+.dtmix{font-size:12.5px;color:var(--muted);margin-top:3px}
+
+
+/* ---- Degrees: statistieken ingeklapt ---- */
+.dtstatbox{margin-top:14px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+.dtstatbox > summary{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;padding:8px 12px;cursor:pointer;list-style:none;font-size:13px}
+.dtstatbox > summary::-webkit-details-marker{display:none}
+.dtstatbox > summary:hover .dtmore{color:var(--accent)}
+.dtsumtitle{font-weight:600}
+.dtstatsum{display:inline-flex;flex-wrap:wrap;gap:5px;align-items:center}
+.dtmore{margin-left:auto;color:var(--muted);font-size:12px}
+.dtstatbox[open] .dtmore{font-size:0}
+.dtstatbox[open] .dtmore::after{content:'inklappen ▴';font-size:12px}
+.dtstatbox[open] > summary{border-bottom:1px solid var(--line)}
+.dtstatbox .dtstathead{margin:10px 12px 6px}
+.dtstatbox .dtstats{padding:0 12px 10px}
+
+
+/* ================= Kwintencirkel (gedeeld: js/kwintcirkel.js) ================= */
+.kc{width:100%;height:auto;display:block;overflow:visible;user-select:none;-webkit-tap-highlight-color:transparent}
+.kcarc{fill:none;stroke-width:3;opacity:.4}
+.kcdot{outline:none;transition:opacity .2s}
+.kcdot.click{cursor:pointer}
+.kcbody{transform-box:fill-box;transform-origin:center;transition:transform .15s ease, fill .2s, filter .2s;stroke:var(--c);stroke-width:5}
+.kcdot.ring .kcbody{fill:var(--paper)}
+.kcdot.fill .kcbody{fill:var(--c);filter:drop-shadow(0 0 10px color-mix(in srgb, var(--c) 60%, transparent))}
+.kcdot.click:hover .kcbody, .kcdot.click:focus-visible .kcbody{transform:scale(1.09)}
+.kcdot.click:active .kcbody{transform:scale(.96)}
+.kcdg{font:700 27px Inter,system-ui,sans-serif;fill:var(--ink);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.kcdot.root .kcdg{font-size:30px}
+.kcsl{font:600 13px Inter,system-ui,sans-serif;fill:var(--ink);opacity:.72;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.kcdot.fill .kcdg, .kcdot.fill .kcsl{fill:#111}
+.kcnm{font:500 18px Inter,system-ui,sans-serif;fill:var(--muted);text-anchor:middle;dominant-baseline:central}
+.kcdot.root .kcnm{font-weight:700;fill:var(--ink);font-size:20px}
+.kcdot.faint .kcbody{stroke:color-mix(in srgb, var(--c) 38%, var(--paper));filter:none}   /* gedimd maar dekkend: de ring schemert niet door */
+.kcdot.faint.fill .kcbody{fill:color-mix(in srgb, var(--c) 38%, var(--paper))}
+.kcdot.faint .kcdg, .kcdot.faint .kcsl{fill:var(--muted);opacity:.6}
+.kcdot.faint .kcnm{opacity:.45}
+.kcdot.faint.click:hover .kcbody, .kcdot.faint.click:focus-visible .kcbody{stroke:color-mix(in srgb, var(--c) 75%, var(--paper))}
+.kcdot.wrong{opacity:.75}
+.kcmiss{fill:none;stroke:var(--ink);stroke-width:3;stroke-dasharray:6 5;opacity:.6}   /* foute keuze: ook rond een gevulde bol (Degrees) goed te zien */
+.kchalo{fill:none;stroke:var(--c);stroke-width:2.5;opacity:.85}
+.kcpulse{fill:none;stroke:var(--c);stroke-width:3;transform-box:fill-box;transform-origin:center;animation:kcpulse 1.4s ease-out infinite;pointer-events:none}
+@keyframes kcpulse{from{transform:scale(1);opacity:.9}to{transform:scale(1.55);opacity:0}}
+.kcmid{cursor:pointer;outline:none}
+.kcmid > circle{fill:var(--ink);transform-box:fill-box;transform-origin:center;transition:fill .15s, transform .12s;filter:drop-shadow(0 8px 22px rgba(0,0,0,.28))}
+.kcmid:hover > circle, .kcmid:focus-visible > circle{fill:var(--accent)}
+.kcmid:active > circle{transform:scale(.97)}
+.kcico{fill:var(--bg);pointer-events:none}
+.kcq{font:700 50px Fraunces,serif;fill:var(--bg);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.kcans{font:700 42px Fraunces,serif;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.kcansl{font:600 10.5px Inter,system-ui,sans-serif;fill:var(--bg);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.kcclock{fill:none;stroke:var(--accent);stroke-width:6;stroke-linecap:round;stroke-dasharray:100 100;stroke-dashoffset:0;animation-name:kcclock;animation-timing-function:linear;animation-fill-mode:forwards;pointer-events:none}
+.kcclock.warm{stroke:var(--muted)}
+@keyframes kcclock{from{stroke-dashoffset:0}to{stroke-dashoffset:100}}
+
+/* ================= Drone-indeling: cirkel vult het scherm, instellingen in een uitschuifpaneel ================= */
+.drhead{align-items:center}
+.drstage{max-width:960px;margin:0 auto}
+.drtop{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;margin-bottom:4px}
+.drtop.ropts{margin-bottom:4px}
+.drkey{font-size:14px}
+#drState{flex:1;text-align:center;font-size:13px;color:var(--muted)}
+#drCircle{width:min(100%, 860px, max(380px, calc(100vh - 215px)));margin:6px auto 0}   /* zo groot mogelijk: ~schermhoogte */
+.dtstatwrap{max-width:560px;margin:0 auto}
+.dtstatwrap .dtstatbox{margin-top:8px}
+
+
+/* ================= Drone → Melodieën (drone-melodie.js) ================= */
+#droneView.melo #drCircle{width:min(100%, 780px, max(340px, calc(100vh - 330px)))}   /* iets kleiner: de vakjes eronder moeten in beeld blijven */
+.dmfb{text-align:center;margin-top:6px;font-size:14px;min-height:110px}
+.dmslots{display:flex;justify-content:center;flex-wrap:wrap;gap:7px;margin:2px 0 10px;min-height:46px}
+.dmslot{min-width:48px;height:46px;padding:0 6px;border-radius:11px;border:2px dashed var(--line);display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+  font:700 18px Fraunces,serif;line-height:1.05;color:var(--muted);background:var(--paper)}
+.dmslot small{font:500 10.5px Inter,system-ui,sans-serif;opacity:.8}
+.dmslot.cur{border-style:solid;border-color:var(--accent);color:var(--accent)}
+.dmslot.ok{border:2px solid var(--c);background:var(--c);color:#111;box-shadow:0 0 10px color-mix(in srgb, var(--c) 45%, transparent)}
+.dmslot.miss{border:2px solid var(--c);color:var(--ink);outline:2.5px dashed var(--muted);outline-offset:2px}   /* fout = stippelrand, net als in de cirkel */
+.dmslot.shake{animation:dmshake .32s}
+@keyframes dmshake{20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
+#dmMsg{min-height:22px}
+.dmslot.in{border:2px solid var(--c);color:var(--ink)}                                     /* ingevuld, nog niet nagekeken */
+.dmintmsg{margin:-4px 0 10px;font-size:12.5px;line-height:1.4}

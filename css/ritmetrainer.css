@@ -1,0 +1,90 @@
+/* Rudiments, Polyritme, Tempo-ladder, Swing (ritmetrainer.js) — alleen variabelen, werkt in licht en donker */
+#rdView, #pyView, #tpView, #swView{max-width:1180px;margin:0 auto;padding:20px 20px 80px}
+body.rudiments nav, body.rudiments .controls, body.polyritme nav, body.polyritme .controls,
+body.tempoladder nav, body.tempoladder .controls, body.swing nav, body.swing .controls{display:none}
+.rtbig{font-family:Fraunces,serif;font-size:20px;font-weight:600;color:var(--ink)}
+.rdhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:6px 0 10px}
+.rdtip{max-width:760px;line-height:1.5;margin:10px 0}
+.dim{opacity:.45}
+
+/* Rudiments: één cel per onderverdeling, gegroepeerd per tel */
+.rdgrid{display:flex;flex-wrap:wrap;gap:14px;margin:8px 0}
+.rdbeat{display:flex;gap:4px;padding:6px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+.rdcell{display:flex;flex-direction:column;align-items:center;min-width:54px;padding:2px 2px 4px;border-radius:8px;transition:background .05s}
+.rdacc{height:16px;font-weight:700;color:var(--accent);font-size:15px;line-height:16px}
+.rdh{font-family:Fraunces,serif;font-size:36px;font-weight:600;line-height:1.1}
+.rdh sup{font-size:16px;font-family:Inter,system-ui,sans-serif;font-weight:500;color:var(--muted);margin-right:1px}
+.rdcell.R .rdh{color:var(--accent)}
+.rdcell.L .rdh{color:var(--low)}
+.rdcell.rest .rdh{color:var(--muted)}
+.rdcell:not(.acc) .rdh{font-weight:500;opacity:.8}
+.rdcnt{font-size:12px;color:var(--muted)}
+.rdcell.on{background:var(--accent-soft)}
+.rdcell.on .rdh{transform:scale(1.12)}
+
+/* Polyritme */
+.pyquick{display:flex;flex-wrap:wrap;gap:6px}
+.pyquick button{padding:5px 10px;font-size:13px}
+.pyquick button.on{border-color:var(--accent);background:var(--accent-soft)}
+.pygrid{display:flex;flex-direction:column;gap:6px;margin:8px 0;max-width:900px;overflow-x:auto}
+.pyrow{display:flex;align-items:center;gap:10px}
+.pylab{flex:0 0 92px;font-size:13px;color:var(--muted)}
+.pycells{flex:1;display:grid;grid-template-columns:repeat(var(--n), minmax(26px, 1fr));gap:3px}
+.pyc{height:34px;border-radius:7px;background:var(--bg);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--muted)}
+.pyc.hit.R{color:var(--accent)}
+.pyc.hit.L{color:var(--low)}
+.pyc.both{color:var(--ink);background:var(--paper)}
+.pyrow.samen .pyc.hit{background:var(--paper);border-color:var(--edge, var(--line))}
+.pyc.num{height:24px;border:0;background:transparent;font-weight:400;font-size:12px}
+.pyc.num.say{font-weight:700;color:var(--ink);font-size:14px}
+.pyc.on{outline:2px solid var(--accent);outline-offset:-1px}
+.pyc.on.hit{background:var(--accent-soft)}
+.pytap{display:none;flex-direction:column;gap:8px;margin-top:10px}
+#pyView.tapon .pytap{display:flex}
+.pypads{display:flex;gap:12px}
+
+/* Tempo-ladder */
+.tptap{display:flex;align-items:center;gap:16px;margin:8px 0}
+#tpView.zelf .tpmeet{display:none!important}
+.tpjudge{display:flex;gap:10px;margin:8px 0}
+.tpjudge button{padding:12px 20px;font-size:16px}
+.tpladder{max-width:760px;margin-top:10px}
+.tpsvg{width:100%;height:auto;display:block}
+.tpgoal{stroke:var(--line);stroke-dasharray:4 4}
+.tpline{fill:none;stroke:var(--muted);stroke-width:1.5}
+.tpdot{stroke:var(--paper);stroke-width:2}
+.tpdot.ok{fill:#16a34a} .tpdot.bad{fill:#dc2626} .tpdot.cur{fill:var(--accent)}
+.tplbl{font-size:11px;fill:var(--muted);font-family:Inter,system-ui,sans-serif}
+.tptab{border-collapse:collapse;font-size:13px;margin-top:8px}
+.tptab th, .tptab td{padding:4px 10px;border-bottom:1px solid var(--line);text-align:left}
+.tptab th{color:var(--muted);font-weight:500}
+.tprecs{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--muted)}
+.tprec b{color:var(--ink)}
+
+/* Swing */
+#swView:not(.meten) .swmeten, #swView.meten .swluister{display:none}
+.swpad{display:grid;grid-template-columns:repeat(auto-fill, minmax(170px, 1fr));gap:10px;max-width:800px;margin-top:8px}
+.swbtn{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:14px;border-radius:12px;background:var(--paper);text-align:left}
+.swbtn strong{font-family:Fraunces,serif;font-size:18px;font-weight:600}
+.swbtn small{color:var(--muted);font-size:13px}
+.swbtn kbd{position:absolute;top:6px;right:8px;font-size:11px;opacity:.6}
+.swbtn.right{background:#16a34a!important;border-color:#16a34a!important;color:#fff!important}
+.swbtn.wrong{background:#dc2626!important;border-color:#dc2626!important;color:#fff!important}
+.swbtn.right small, .swbtn.wrong small{color:#fff}
+.swbar{display:flex;width:100%;height:8px;gap:3px}
+.swbar i{display:block;height:100%;border-radius:4px;background:var(--accent)}
+.swbar i + i{background:var(--low)}
+.swmeas{max-width:760px;margin-top:12px}
+.swgauge{padding:26px 8px 8px}
+.swscale{position:relative;height:10px;border-radius:5px;background:var(--line)}
+.swtick{position:absolute;top:-4px;width:2px;height:18px;background:var(--muted);transform:translateX(-1px)}
+.swtick small{position:absolute;top:-20px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:11px;color:var(--muted)}
+.swtgt{position:absolute;top:-6px;width:14px;height:22px;border:2px solid var(--accent);border-radius:6px;transform:translateX(-7px)}
+.swme{position:absolute;top:-3px;width:16px;height:16px;border-radius:50%;background:var(--accent);transform:translateX(-8px);box-shadow:0 0 0 3px var(--accent-soft);transition:left .3s}
+.swnums{display:flex;flex-direction:column;gap:4px;margin-top:14px;font-size:14px}
+#swPadTap{margin-top:8px;width:min(100%, 360px)}
+@media (max-width:640px){ .rdcell{min-width:32px} .rdh{font-size:22px} .pylab{flex-basis:64px;font-size:12px} .pycells{grid-template-columns:repeat(var(--n), minmax(18px, 1fr))} }
+.tpjudge[hidden], .hrafter[hidden]{display:none!important}
+#swView.meten .pnlkey label{display:none}
+#swLevel, #rdSel, #tpMode{max-width:min(62vw, 360px)}
+#rdView.paused #rdPause{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}

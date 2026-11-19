@@ -1,0 +1,90 @@
+/* ================= Donkere modus (html.dark, zie js/thema.js) ================= */
+.bar{padding-right:100px}
+
+html.dark{
+  color-scheme:dark;
+  --bg:#15130f; --paper:#1f1c17; --ink:#ede7dc; --muted:#a59a8b; --line:#38322a;
+  --accent:#f0712c; --accent-soft:#3d2416; --beat:#4d463c; --low:#60a5fa;
+  --edge:#5a5146; --soft:#29251f; --soft2:#332e26;
+}
+html.dark header{background:rgba(21,19,15,.93)}
+html.dark .tabs{background:var(--soft2)}
+html.dark .tabs button.on{background:var(--paper);box-shadow:0 1px 3px rgba(0,0,0,.5)}
+html.dark #stop{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+html.dark #stop:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+html.dark button.primary:hover{background:#c2410c}
+html.dark #mdDurs button.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+html.dark #mdDurs button.on small{color:var(--muted)}
+
+/* randen en vlakken die vast licht waren */
+html.dark .card:hover{border-color:var(--edge)}
+html.dark .ropts select, html.dark .controls select, html.dark .playopts select, html.dark .ropts input[type=number], html.dark kbd, html.dark .tappad{border-color:var(--edge)}
+html.dark .tl, html.dark .scday, html.dark .stat .barbg, html.dark .scpanel .barbg{background:var(--soft2)}
+html.dark .scday.ok{background:var(--accent);color:#fff}
+html.dark .scday.miss{background:repeating-linear-gradient(135deg,var(--soft2),var(--soft2) 4px,#463f35 4px,#463f35 8px)}
+html.dark .card.silent{background:repeating-linear-gradient(135deg,var(--bg),var(--bg) 8px,var(--soft) 8px,var(--soft) 16px)}
+html.dark .syl{color:#6f665a}
+html.dark .slot .q{color:var(--edge)}
+html.dark .ivsong input::placeholder{color:#756b5e}
+html.dark .gbtn.chrom{background:#3b342b;border-color:#3b342b}
+html.dark .gbtn.chrom:hover{background:var(--accent);border-color:var(--accent)}
+
+/* goed / fout-vlakken */
+html.dark .donebox{background:#14261a;border-color:#1f5131}
+html.dark .slot.right, html.dark .gslot.right{background:#14261a}
+html.dark .slot.wrong, html.dark .gslot.wrong{background:#2c1515}
+html.dark .gslot small, html.dark .slot .fix .sl{color:#4ade80}
+html.dark .qmsg.good, html.dark .taplive.tg{color:#4ade80}
+html.dark .qmsg.bad, html.dark .taplive.tb{color:#f87171}
+html.dark .taplive.to{color:#fb923c}
+html.dark .qgrid .card.right{box-shadow:0 0 0 3px #14532d}
+html.dark .qgrid .card.wrong{box-shadow:0 0 0 3px #7f1d1d}
+html.dark .err{background:#2c1515;border-color:#7f1d1d}
+
+/* pianoklavier (dictee) */
+html.dark .pk.w{background:#d8d1c5;border-color:#8b8174}
+html.dark .pk.w span{color:#5b5247}
+html.dark .pk.w.do{background:#ecc9a6}
+html.dark .pk.w.out{background:#8d857a}
+html.dark .pk.bl{background:#0b0a08;border-color:#0b0a08}
+html.dark .pk.w:hover{background:#f6b38a}
+
+/* notenschrift (VexFlow tekent zwart): omkeren, kleuren blijven ongeveer gelijk */
+html.dark .mdstaff, html.dark #mdSolWrap .mdstaff{background:var(--paper)}
+html.dark .score svg, html.dark .mini svg, html.dark .mdstaff svg{filter:invert(.92) hue-rotate(180deg)}
+/* notatie-kern (Notatie, notatie.css): geen invert, alleen kleuren */
+html.dark{--nt-ok:#4ade80; --nt-bad:#f87171; --ntk-w:#d8d1c5; --ntk-wl:#8b8174; --ntk-b:#0b0a08; --ntk-txt:#5b5247}
+html.dark .ntk.w:hover{background:#f6b38a}
+
+/* themakleur (js/thema.js zet --accent, --accent-soft, --accent-dark, --accent-shadow) */
+button.primary:hover, html.dark button.primary:hover{background:var(--accent-dark);border-color:var(--accent-dark)}
+.mode:hover{box-shadow:0 8px 24px var(--accent-shadow)}
+.swatches{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.swatch{display:inline-flex;align-items:center;gap:7px;font-size:13px;padding:4px 12px 4px 5px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+.swatch span{width:20px;height:20px;border-radius:50%;background:var(--sw)}
+html.dark .swatch span{background:var(--swd)}
+.swatch.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.swatch.own{position:relative}
+.swatch.own span{background:conic-gradient(#ef4444,#f59e0b,#22c55e,#06b6d4,#6366f1,#d946ef,#ef4444)}
+.swatch.own input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+html.dark button.primary, html.dark button.primary:hover{color:#15130f;font-weight:600}
+html.dark .scday.ok{color:#15130f}
+
+/* achtergrondlagen via variabelen (thema.js kan ze tinten met de themakleur) */
+:root{--soft:#efe8dc;--soft2:#efe7da;--tabs:#ece5d8;--edge:#cdbfa9;--header-bg:rgba(246,242,234,.95)}
+html.dark{--tabs:#332e26;--header-bg:rgba(21,19,15,.93)}
+header, html.dark header{background:var(--header-bg)}
+.tabs, html.dark .tabs{background:var(--tabs)}
+.tl, .scday, .stat .barbg, .scpanel .barbg{background:var(--soft2)}
+.scday.ok{background:var(--accent)}
+.card:hover{border-color:var(--edge)}
+.ropts select, .controls select, .playopts select, .ropts input[type=number], kbd, .tappad{border-color:var(--edge)}
+
+/* Instellingen niet tegen de rand */
+#setView{max-width:1180px;margin:0 auto;padding:20px 20px 80px}
+html.dark .swatch.own span{background:conic-gradient(#ef4444,#f59e0b,#22c55e,#06b6d4,#6366f1,#d946ef,#ef4444)}
+html.dark .kmsg.good{color:#4ade80}
+html.dark .kmsg.bad{color:#f87171}
+html.dark nav .navg{background:var(--soft2)}
+html.dark nav .navg button.on{background:var(--paper);box-shadow:0 1px 3px rgba(0,0,0,.5)}
+html.dark .ptadd{color:#15130f}
