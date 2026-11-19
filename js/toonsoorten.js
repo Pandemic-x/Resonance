@@ -9,15 +9,24 @@
    bv. 'maj:D' (D-groot), 'min:D' (b-klein), 'dor:D' (E-dorisch). Opslag 'toonsoorten-settings'.
    API voor notenleer.js / presets.js: tsStart() tsClear() tsKey(e) tsNew() tsFix() tsMatchLevel() tsSave() tsSyncUI() tsStats(). */
 
-var TS_MODES = [
-  { id:'ion', deg:0, nl:'ionisch',     en:'Ionian',     hint:'= majeur' },
-  { id:'dor', deg:1, nl:'dorisch',     en:'Dorian',     hint:'mineur met grote sext' },
-  { id:'fry', deg:2, nl:'frygisch',    en:'Phrygian',   hint:'mineur met kleine secunde' },
-  { id:'lyd', deg:3, nl:'lydisch',     en:'Lydian',     hint:'majeur met overmatige kwart' },
-  { id:'mix', deg:4, nl:'mixolydisch', en:'Mixolydian', hint:'majeur met kleine septiem' },
-  { id:'aeo', deg:5, nl:'aeolisch',    en:'Aeolian',    hint:'= natuurlijk mineur' },
-  { id:'loc', deg:6, nl:'locrisch',    en:'Locrian',    hint:'met verminderde kwint' }
-];
+// modi uit de gedeelde theoriebibliotheek (19-11-2026): elke toonladder in Theorie.SCALES die een draaiing van majeur is
+// (dus met een gewone voortekening) is hier een modus; deg = op welke trap van de majeurladder hij begint.
+// ids blijven ion … loc (zo blijven opgeslagen keuzes en statistieken kloppen); majeur = ionisch, natuurlijk mineur = aeolisch.
+var TS_MODES = (function(){
+  var MAJ = [0,2,4,5,7,9,11], NAMEN = { maj:['ion','ionisch','Ionian','= majeur'], nmin:['aeo','aeolisch','Aeolian','= natuurlijk mineur'] };
+  var out = [];
+  Theorie.SCALES.forEach(function(sc){
+    if (sc.semis.length !== 7) return;
+    for (var d = 0; d < 7; d++){
+      var rot = MAJ.map(function(_, k){ return (MAJ[(d + k) % 7] - MAJ[d] + 12) % 12; });
+      if (rot.join() !== sc.semis.join()) continue;
+      var n = NAMEN[sc.id];
+      out.push(n ? { id:n[0], deg:d, nl:n[1], en:n[2], hint:n[3] } : { id:sc.id, deg:d, nl:sc.nl, en:sc.en, hint:sc.kenmerk });
+      break;
+    }
+  });
+  return out.sort(function(a, b){ return a.deg - b.deg; });
+})();
 var TS_ALLMODES = TS_MODES.map(function(m){ return m.id; });
 var TS_LET = 'cdefgab', TS_SHARPS = 'fcgdaeb', TS_FLATS = 'beadgcf';
 function tsKeysUpTo(n){ return Notatie.KEYLIST.filter(function(k){ return Math.abs(k.n) <= n; }).map(function(k){ return k.id; }); }

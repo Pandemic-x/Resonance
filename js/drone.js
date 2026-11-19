@@ -17,12 +17,15 @@ const DR_SPELL_MAJ = {0:['C',0],7:['G',0],2:['D',0],9:['A',0],4:['E',0],11:['B',
 const DR_SPELL_MIN = Object.assign({}, DR_SPELL_MAJ, {1:['C',1], 8:['G',1]});
 const DR_LETTERS = 'CDEFGAB', DR_NAT = [0,2,4,5,7,9,11];
 const DR_ACC = {'-2':'𝄫','-1':'♭','0':'','1':'♯','2':'𝄪'};
-const DR_SCALES = {
-  maj:  { n:'Majeur',               up:[0,2,4,5,7,9,11], down:[0,2,4,5,7,9,11] },
-  nat:  { n:'Mineur (natuurlijk)',  up:[0,2,3,5,7,8,10], down:[0,2,3,5,7,8,10] },
-  harm: { n:'Mineur (harmonisch)',  up:[0,2,3,5,7,8,11], down:[0,2,3,5,7,8,11] },
-  mel:  { n:'Mineur (melodisch)',   up:[0,2,3,5,7,9,11], down:[0,2,3,5,7,8,10] }
-};
+// toonladders uit de gedeelde theoriebibliotheek (Theorie.SCALES, 19-11-2026): elke toonladder daar kan ook tegen de drone.
+// offs = letterstap per toon (voor de spelling), up/down = halve tonen; melodisch mineur daalt als natuurlijk mineur.
+const DR_SCALES = {};
+Theorie.SCALES.forEach(sc => {
+  const nat = Theorie.SCALES.find(x => x.id === 'nmin');
+  DR_SCALES[sc.id] = { n: sc.nl.charAt(0).toUpperCase() + sc.nl.slice(1), grp: sc.grp, offs: sc.offs, up: sc.semis,
+    down: sc.id === 'mmin' && nat ? nat.semis : sc.semis, downOffs: sc.id === 'mmin' && nat ? nat.offs : sc.offs };
+});
+const DR_OLD = { nat:'nmin', harm:'hmin', mel:'mmin' };   // oude namen in opgeslagen instellingen
 const DR_IV = ['grondtoon','kleine secunde','grote secunde','kleine terts','grote terts','reine kwart','overmatige kwart','reine kwint','kleine sext','grote sext','kleine septiem','grote septiem'];
 // zuivere stemming t.o.v. de piano (gelijkzwevend), alleen waar je het tegen een drone duidelijk hoort
 const DR_JUST = {
@@ -43,13 +46,15 @@ if (drS.inst === 'orgeldiep') drS.inst = 'orgel';
 if (!['strijker','orgel','cello','orgelsynth','fluit','sinus'].includes(drS.inst)) drS.inst = 'strijker';   // weggehaalde klanken (strijk2, tanpura)
 if (!Array.isArray(drS.add)) drS.add = drS.fifth === false ? [] : [7];   // oude instelling 'kwint aan/uit' omzetten
 delete drS.fifth;
+if (DR_OLD[drS.scale]) drS.scale = DR_OLD[drS.scale];
+if (!DR_SCALES[drS.scale]) drS.scale = 'maj';
 const DR_PRESETS = [['Alleen grondtoon', []], ['Kwint', [7]], ['Majeur drieklank', [4,7]], ['Mineur drieklank', [3,7]], ['Kwart + kwint', [5,7]]];
 let drSeq = [], drIdx = -1, drPaused = null;   // drPaused = {drone, metro} wat er klonk vóór de pauze
 
 // Klankvolume (schuif #drNoteVol, 0–100, standaard 50 = de oude vaste sterkte): voorbeeldtoon (drPlay) en vraagtoon (dtNote)
 const drNoteGain = base => base * (drS.noteVol == null ? 50 : drS.noteVol) / 50;
 const drSave = () => { try { localStorage.setItem(DR_KEY, JSON.stringify(drS)); } catch(e){} };
-const drMinor = () => drS.scale !== 'maj';
+const drMinor = () => !DR_SCALES[drS.scale].up.includes(4);   // spelling van de grondtoon: mineur-achtig als er geen grote terts in zit
 const drSpell = pc => (drMinor() ? DR_SPELL_MIN : DR_SPELL_MAJ)[pc];
 const drRootName = pc => { const [l, a] = drSpell(pc); return l + DR_ACC[a]; };
 const drDroneMidi = () => 12 * (drS.oct + 1) + drS.pc;
@@ -73,9 +78,9 @@ function drBuild(){
     const oct = Math.floor((m - acc) / 12) - 1;
     return { m, semi: s % 12, deg: i % 7, name: DR_LETTERS[letter] + DR_ACC[acc], oct };
   };
-  for (let o = 0; o < drS.octs; o++) sc.up.forEach((s, i) => seq.push(mk(o, i, s)));
+  for (let o = 0; o < drS.octs; o++) sc.up.forEach((s, i) => seq.push(mk(o, sc.offs[i], s)));
   seq.push(mk(drS.octs, 0, 0));
-  for (let o = drS.octs - 1; o >= 0; o--) for (let i = 6; i >= 0; i--) seq.push(mk(o, i, sc.down[i]));
+  for (let o = drS.octs - 1; o >= 0; o--) for (let i = sc.down.length - 1; i >= 0; i--) seq.push(mk(o, sc.downOffs[i], sc.down[i]));
   drSeq = seq; drIdx = -1;
 }
 
@@ -189,7 +194,8 @@ function drFill(){
   $('drRoot').innerHTML = DR_CIRCLE.map(pc => `<option value="${pc}"${pc === drS.pc ? ' selected' : ''}>${drRootName(pc)}</option>`).join('');
   $('drOct').innerHTML = [1,2,3,4,5].map(o => `<option value="${o}"${o === drS.oct ? ' selected' : ''}>${nm}${o}</option>`).join('');
   $('drStart').innerHTML = [3,4,5,6].map(o => `<option value="${o}"${o === drS.start ? ' selected' : ''}>${nm}${o}</option>`).join('');
-  $('drScale').innerHTML = Object.keys(DR_SCALES).map(k => `<option value="${k}"${k === drS.scale ? ' selected' : ''}>${DR_SCALES[k].n}</option>`).join('');
+  $('drScale').innerHTML = Theorie.SCALE_GROUPS.map(([g, gn]) => `<optgroup label="${gn}">` + Object.keys(DR_SCALES).filter(k => DR_SCALES[k].grp === g)
+    .map(k => `<option value="${k}"${k === drS.scale ? ' selected' : ''}>${DR_SCALES[k].n}</option>`).join('') + '</optgroup>').join('');
 }
 
 /* --- instellingenpaneel: het gedeelde Paneel (js/paneel.js), zodat de cirkel het scherm kan vullen --- */
