@@ -92,3 +92,32 @@ const Thema = (function(){
   });
   return { get, set, apply, isDark, setAccent, setTint, ACCENTS };
 })();
+
+/* ================= Zachte start (v1.9, wens gebruiker 19-11-2026) =================
+   Bij het openen verscheen alles abrupt terwijl de app nog opbouwde. Nu blijft de pagina even onzichtbaar
+   (achtergrond staat al goed door het thema) en faden de inhoud in zodra de opbouw klaar is en de letters er zijn
+   (hoogstens 0,7 s wachten op de lettertypes, en altijd zichtbaar na 2,5 s, ook als er iets misgaat). */
+(function(){
+  const root = document.documentElement;
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  root.classList.add('laden');
+  const st = document.createElement('style');
+  st.textContent = 'html.laden body{opacity:0}html.ingefade body{transition:opacity .45s ease}'
+    // rijen op Home komen bij de eerste start één voor één zacht omhoog (alleen de eerste keer, niet bij elk bezoek aan Home)
+    + '@keyframes rijin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}'
+    + 'html.eerste #homeView .navrow,html.eerste #homeView .homelogo,html.eerste #homeView .homefavs{animation:rijin .5s cubic-bezier(.2,.7,.3,1) both}'
+    + 'html.eerste #homeView .homelogo{animation-duration:.6s}'
+    + 'html.eerste #homeView #drHome{animation-delay:.08s}'
+    + 'html.eerste #homeList .navrow:nth-child(1){animation-delay:.14s}html.eerste #homeList .navrow:nth-child(2){animation-delay:.2s}'
+    + 'html.eerste #homeList .navrow:nth-child(3){animation-delay:.26s}html.eerste #homeList .navrow:nth-child(4){animation-delay:.32s}'
+    + 'html.eerste #homeList .navrow:nth-child(5){animation-delay:.38s}html.eerste #homeView .homefavs{animation-delay:.42s}';
+  document.head.appendChild(st);
+  let klaar = false;
+  const toon = () => { if (klaar) return; klaar = true; root.classList.add('ingefade', 'eerste'); requestAnimationFrame(() => root.classList.remove('laden'));
+    setTimeout(() => root.classList.remove('eerste'), 1400); };
+  setTimeout(toon, 2500);
+  // wachten tot de pagina helemaal is opgebouwd (de rijen op Home komen pas bij 'load') en de letters er zijn
+  const opgebouwd = new Promise(r => { if (document.readyState === 'complete') r(); else window.addEventListener('load', () => setTimeout(r, 30)); });
+  const letters = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 700))]) : Promise.resolve();
+  Promise.all([opgebouwd, letters]).then(() => requestAnimationFrame(() => requestAnimationFrame(toon)));
+})();
