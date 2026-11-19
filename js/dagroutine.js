@@ -340,7 +340,7 @@ const Dagroutine = (function(){
       + '<div id="drFocusBox"' + (S.stand === 'focus' ? '' : ' hidden') + '><label class="drlbl">Focus op <select id="drFocusCat">' + Nav.NAV.filter(c => c.id !== 'bladmuziek').map(c => '<option value="' + c.id + '"' + (S.focus.cat === c.id ? ' selected' : '') + '>' + esc(c.name) + '</option>').join('') + '</select></label>'
       + '<span class="muted drklein">' + (S.focus.lijst.length ? 'Eigen lijst: ' + S.focus.lijst.map(naam).join(', ') + ' (aanpassen bij Mijn routine)' : 'Of maak een eigen lijst bij Mijn routine.') + '</span></div>'
       + '<p class="muted drklein">' + { kern:'Elke dag de kern (relatief gehoor) + een wisselend accent; over 7 routines komt alles langs.', focus:'Elke dag de kern + oefeningen uit één onderdeel, voor een periode waarin je ergens extra op wilt letten.', programma:'De app kiest op basis van je statistieken: één zwakte per dag, aangevuld met wat je lang niet hebt geoefend.' }[S.stand] + '</p>'
-      + '<div class="rlabel">Duur</div>' + seg('drDuur', [[10, '10 min'], [20, '20 min'], [30, 'Half uur']], S.duur)
+      + '<div class="rlabel">Duur</div>' + seg('drDuur', [[10, '10 min'], [20, '20 min'], [30, '30 min']], S.duur)
       + '<div class="ropts drchk"><label><input type="checkbox" id="drExtra"' + (S.extra ? ' checked' : '') + '> Niveau extra</label>'
       + '<label><input type="checkbox" id="drOpbouw"' + (S.opbouw ? ' checked' : '') + '> Makkelijk → moeilijk</label>'
       + '<label><input type="checkbox" id="drTips"' + (S.tips ? ' checked' : '') + '> Uitleg en tips</label></div></section>'
