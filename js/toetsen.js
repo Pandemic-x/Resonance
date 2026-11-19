@@ -65,7 +65,7 @@ const Keys = (function(){
   const dig = s => s.split('');
   const RESERVED = {
     gehoor:      [{ keys:dig('1234567'), wat:'1–7 = trap' }],
-    absoluut:    [{ keys:dig('cdefgab'), wat:'C D E F G A B = noot (Shift = halve toon hoger)' }, { keys:dig('1234567890'), wat:'1–8 = octaaf (Noten benoemen), 1–9 en 0 = soort (Toonladders)' }],
+    absoluut:    [{ keys:dig('cdefgab'), wat:'C D E F G A B = noot (Shift = halve toon hoger)' }, { keys:['-','+','='], wat:'− + = ♭ / ♯ vóór de letter (Absoluut gehoor)' }, { keys:dig('1234567890'), wat:'1–8 = octaaf (Noten benoemen), 1–9 en 0 = soort (Toonladders)' }],
     intervallen: [{ keys:dig('1234567890'), wat:'1–9, 0 = interval' }],
     dictee:      [{ keys:dig('1234567'), wat:'1–7 = trap' }, { keys:['ArrowUp','ArrowDown'], wat:'↑ ↓ = octaaf' },
                   { keys:['+','=','-'], wat:'+ − = halve toon' }, { keys:['h','k','a','.','p'], wat:'H K A = halve/kwart/achtste, P of . = punt' }],

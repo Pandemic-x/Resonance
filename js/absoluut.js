@@ -226,6 +226,7 @@ function aInit(){
   aNew(false);
   aRenderStats();
 }
+var aAcc = 0;   // voorteken dat met − of + vóór de letter is gekozen
 document.addEventListener('keydown', function(e){
   if (typeof view === 'undefined' || view !== 'absoluut' || !aS) return;
   if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -233,7 +234,12 @@ document.addEventListener('keydown', function(e){
   var k = e.key.toLowerCase(), nat = { c:0, d:2, e:4, f:5, g:7, a:9, b:11 };
   if (Keys.is(e, 'luister')){ e.preventDefault(); if (!e.repeat) aPlay(); }
   else if (Keys.is(e, 'volgende')){ e.preventDefault(); aNew(true); }
-  else if (nat[k] != null){ var pc = nat[k] + (e.shiftKey ? 1 : 0); aAnswer(pc % 12); }
+  else if (e.key === '-' || e.key === '+' || e.key === '='){   // eerst − = ♭ of + = ♯, dan de letter (zoals bij Noten benoemen); nog eens = weer uit
+    e.preventDefault(); var d = e.key === '-' ? -1 : 1;
+    aAcc = aAcc === d ? 0 : d;
+    var m = $('aMsg'); m.className = 'qmsg'; m.textContent = aAcc ? (aAcc < 0 ? '♭' : '♯') + ' gekozen: druk nu de letter' : '';
+  }
+  else if (nat[k] != null){ var pc = nat[k] + (e.shiftKey ? 1 : 0) + aAcc; aAcc = 0; aAnswer((pc + 12) % 12); }
   else if (/^[1-8]$/.test(e.key) && aS.octave) aAnswerOct(+e.key);
 });
 document.addEventListener('keyup', function(e){
