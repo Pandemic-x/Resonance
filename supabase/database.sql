@@ -6,7 +6,7 @@
 create table if not exists public.sync_versies (
   id          bigint generated always as identity primary key,
   user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade,
-  data        jsonb not null,
+  data        text not null,   -- gzip+base64 ("gz:…") of gewone JSON; jsonb weigert het nulteken
   grootte     integer not null,
   apparaat    text,
   gemaakt_op  timestamptz not null default now()

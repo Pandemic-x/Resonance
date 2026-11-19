@@ -54,6 +54,26 @@ const Sync = (function(){
   const wanneer = t => { const d = new Date(t); return d.toLocaleDateString('nl', { day:'numeric', month:'short' }) + ' ' + d.toLocaleTimeString('nl', { hour:'2-digit', minute:'2-digit' }); };
   const kb = n => n < 1024 * 1024 ? Math.max(1, Math.round(n / 1024)) + ' kB' : (n / 1024 / 1024).toFixed(1) + ' MB';
 
+  // pakket inpakken als tekst: gzip + base64 ('gz:…'), of gewone JSON als de browser geen CompressionStream heeft
+  async function inpakken(txt){
+    try {
+      if (typeof CompressionStream === 'undefined') return txt;
+      const buf = await new Response(new Blob([txt]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+      const b = new Uint8Array(buf); let bin = '';
+      for (let i = 0; i < b.length; i += 0x8000) bin += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+      return 'gz:' + btoa(bin);
+    } catch(e){ return txt; }
+  }
+  async function uitpakken(v){
+    if (v && typeof v === 'object') return v;                       // oude jsonb-rij
+    if (typeof v === 'string' && v.startsWith('gz:')){
+      const bin = atob(v.slice(3)), b = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+      return JSON.parse(await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
+    }
+    return JSON.parse(v);
+  }
+
   /* ---------- keuzevenster ---------- */
   function vraag(titel, tekst, knoppen){
     return new Promise(res => {
@@ -93,7 +113,7 @@ const Sync = (function(){
           [['Niet opslaan', false], ['Toch opslaan', true, 'primary']]);
         if (!ok){ status('Niet opgeslagen. Kijk bij Versies of zet een eerdere versie terug.', true); return; }
       }
-      const { data, error } = await client.from(T).insert({ data:o, grootte:txt.length, apparaat:apparaat() }).select('id').single();
+      const { data, error } = await client.from(T).insert({ data:await inpakken(txt), grootte:txt.length, apparaat:apparaat() }).select('id').single();
       if (error) throw error;
       setMeta({ id:data.id, ls:lsHash(), h, size:txt.length });
       oRem.call(ls, PTD); dirty = false; dirtyAtStart = false;
@@ -130,7 +150,7 @@ const Sync = (function(){
     try {
       const { data:row, error } = await client.from(T).select('id,data,grootte').eq('id', id).single();
       if (error) throw error;
-      await toepassen(row.data, row);
+      await toepassen(await uitpakken(row.data), row);
       if (herlaad){ status('Bijgewerkt. De app laadt opnieuw…'); setTimeout(() => location.reload(), 600); }
     } catch(e){ status('Ophalen lukte niet (' + (e.message || 'fout') + ').', true); }
     finally { busy = false; }
