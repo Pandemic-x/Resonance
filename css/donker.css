@@ -3,16 +3,16 @@
 
 html.dark{
   color-scheme:dark;
-  --bg:#15130f; --paper:#1f1c17; --ink:#ede7dc; --muted:#a59a8b; --line:#38322a;
-  --accent:#f0712c; --accent-soft:#3d2416; --beat:#4d463c; --low:#60a5fa;
-  --edge:#5a5146; --soft:#29251f; --soft2:#332e26;
+  --bg:#0c0b10; --paper:#16141c; --ink:#ece8f2; --muted:#a39cb0; --line:#2c2836;
+  --accent:#b57bf7; --accent-soft:#2e2140; --beat:#433d4f; --low:#60a5fa;
+  --edge:#4a4458; --soft:#1e1b26; --soft2:#25212f;
 }
-html.dark header{background:rgba(21,19,15,.93)}
+html.dark header{background:var(--header-bg)}
 html.dark .tabs{background:var(--soft2)}
 html.dark .tabs button.on{background:var(--paper);box-shadow:0 1px 3px rgba(0,0,0,.5)}
 html.dark #stop{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 html.dark #stop:hover{background:var(--accent);border-color:var(--accent);color:#fff}
-html.dark button.primary:hover{background:#c2410c}
+html.dark button.primary:hover{background:var(--accent-dark)}
 html.dark #mdDurs button.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 html.dark #mdDurs button.on small{color:var(--muted)}
 
@@ -72,7 +72,7 @@ html.dark .scday.ok{color:#15130f}
 
 /* achtergrondlagen via variabelen (thema.js kan ze tinten met de themakleur) */
 :root{--soft:#efe8dc;--soft2:#efe7da;--tabs:#ece5d8;--edge:#cdbfa9;--header-bg:rgba(246,242,234,.95)}
-html.dark{--tabs:#332e26;--header-bg:rgba(21,19,15,.93)}
+html.dark{--tabs:#25212f;--header-bg:rgba(12,11,16,.93)}
 header, html.dark header{background:var(--header-bg)}
 .tabs, html.dark .tabs{background:var(--tabs)}
 .tl, .scday, .stat .barbg, .scpanel .barbg{background:var(--soft2)}
