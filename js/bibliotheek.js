@@ -33,7 +33,7 @@ const Bib = (function(){
     const r = load(RKEY).find(x => Nav.itemOf(x)), it = r && Nav.itemOf(r);
     a.hidden = !it; if (!it) return;
     a.href = '#' + r; a.title = 'Doorgaan: ' + it.name;
-    a.innerHTML = '<span class="tbi">' + it.icon + '</span><span>Doorgaan</span>';
+    a.innerHTML = '<span class="tbi">' + Icon.svg('playc') + '</span><span>Doorgaan</span>';   // rondje met pijltje (wens gebruiker)
   }
   function renderBack(){
     const b = document.getElementById('tabBack'); if (!b) return;
