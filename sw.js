@@ -1,6 +1,6 @@
 // Resonance service worker: app werkt offline na het eerste bezoek.
 // Verhoog VERSION bij elke nieuwe versie, dan halen telefoons de update op.
-const VERSION = 'resonance-v3';
+const VERSION = 'resonance-v4';
 const CORE = [
  "./",
  "index.html",
@@ -17,6 +17,7 @@ const CORE = [
  "css/partituren.css",
  "css/ritmetrainer.css",
  "css/style.css",
+ "css/sync.css",
  "icons/apple-touch-icon.png",
  "icons/favicon-32.png",
  "icons/icon-192.png",
@@ -64,7 +65,9 @@ const CORE = [
  "js/toonladders.js",
  "js/toonsoorten.js",
  "js/vraag-app.js",
- "js/vraag.js"
+ "js/vraag.js",
+ "js/sync.js",
+ "js/vendor/supabase.js"
 ];
 
 self.addEventListener('install', e => {

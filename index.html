@@ -26,6 +26,9 @@
 <link rel="stylesheet" href="css/ritmetrainer.css">
 <link rel="stylesheet" href="css/lezen.css">
 <link rel="stylesheet" href="css/donker.css">
+<script src="js/vendor/supabase.js" defer></script>
+<script src="js/sync.js"></script>
+<link rel="stylesheet" href="css/sync.css">
 <script src="js/thema.js"></script>
 <script src="js/iconen.js"></script>
 </head>
@@ -76,6 +79,30 @@
 </div>
 
 <div id="setView" class="view">
+  <section class="rpanel" id="sySec" hidden>
+    <div class="sechead"><h2>☁️ Synchroniseren</h2><p>Log in om je voortgang, instellingen en Repertoire op al je apparaten te hebben. Wijzigingen worden vanzelf online opgeslagen; de laatste 10 versies blijven bewaard.</p></div>
+    <div id="syUit">
+      <div class="ropts">
+        <label>E-mail <input type="email" id="syEmail" autocomplete="email" placeholder="jij@voorbeeld.nl" style="min-width:220px"></label>
+        <button id="sySend" class="primary">Stuur inlogcode</button>
+      </div>
+      <div class="ropts" id="syCodeRow" hidden>
+        <label>Code uit de mail <input type="text" id="syCode" inputmode="numeric" autocomplete="one-time-code" maxlength="12" style="width:120px"></label>
+        <button id="syLogin" class="primary">Inloggen</button>
+      </div>
+      <p id="syMsg" class="muted"></p>
+    </div>
+    <div id="syAan" hidden>
+      <div class="ropts">
+        <span>Ingelogd als <b id="syWie"></b></span>
+        <button id="syNow">↻ Nu synchroniseren</button>
+        <button id="syVerBtn">🕘 Versies</button>
+        <button id="syOut">Uitloggen</button>
+      </div>
+      <p id="syStatus" class="muted"></p>
+      <div id="syVersies" class="syversies" hidden></div>
+    </div>
+  </section>
   <section class="rpanel">
     <div class="sechead"><h2>🌓 Weergave</h2><p>Licht of donker en je eigen themakleur. Automatisch volgt de instelling van je apparaat. </p></div>
     <div class="ropts">
