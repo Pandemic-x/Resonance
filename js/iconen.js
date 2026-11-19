@@ -62,6 +62,7 @@ const Icon = (() => {
     ruler:'<rect x="2" y="8" width="20" height="8" rx="1.5"/><path d="M6 8v3M10 8v4M14 8v3M18 8v4"/>',
     up:'<path d="M12 19V5M6 11l6-6 6 6"/>',
     down:'<path d="M12 5v14M6 13l6 6 6-6"/>',
+    star:'<path d="M12 3.2l2.7 5.5 6 .9-4.35 4.25 1.03 6-5.38-2.83-5.38 2.83 1.03-6L3.3 9.6l6-.9z"/>',
     sparkle:'<path d="M12 2.5c.5 5.2 4.3 9 9.5 9.5-5.2.5-9 4.3-9.5 9.5-.5-5.2-4.3-9-9.5-9.5 5.2-.5 9-4.3 9.5-9.5z" fill="currentColor" stroke="none"/>'
   };
   // emoji → icoon (variatieteken U+FE0F mag erachter staan)
@@ -72,7 +73,7 @@ const Icon = (() => {
     '🎻':'wave', '🔨':'busy', '🆕':'newc', '⛶':'full', '📝':'pen', '✍':'pen', '✎':'pen', '💡':'bulb',
     '🗑':'trash', '⏱':'timer', '⏰':'timer', '🔑':'key', '🏠':'home', '📋':'clip', '🔁':'repeat',
     '👂':'ear', '🏁':'flag', '☀':'sun', '🌙':'moon', '👆':'tap', '🔘':'dot', '🎲':'shuffle', '⏮':'back',
-    '🔎':'search', '⚠':'warn', '🎉':'award', '⏸':'pause', '💬':'ai', '🧩':'puzzle', '🥢':'sticks', '🌀':'poly', '📈':'trend', '🎷':'swing', '🎸':'bass', '🔤':'letters', '🔣':'symbol', '🎚':'fader', '📏':'ruler', '⬆':'up', '⬇':'down'
+    '🔎':'search', '⭐':'star', '⚠':'warn', '🎉':'award', '⏸':'pause', '💬':'ai', '🧩':'puzzle', '🥢':'sticks', '🌀':'poly', '📈':'trend', '🎷':'swing', '🎸':'bass', '🔤':'letters', '🔣':'symbol', '🎚':'fader', '📏':'ruler', '⬆':'up', '⬇':'down'
   };
   const RE = new RegExp('(' + Object.keys(MAP).join('|') + ')\\uFE0F?', 'gu');
   const TEST = new RegExp(RE.source, 'u');
