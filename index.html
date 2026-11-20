@@ -1598,6 +1598,8 @@
           <label class="ptrow"><span>Volume</span><input type="range" id="ptVol" min="0" max="100"></label>
           <label class="ptrow"><span>Klank</span><select id="ptInst" title="Klank voor alle partijen van dit stuk"></select></label>
           <div id="ptMix" class="ptmix"></div>
+          <label class="ptrow" title="Barok en klassiek (Bach, Mozart, Seitz…): triller begint op de noot erboven. Romantiek en later (Chopin…): op de geschreven noot. Automatisch kijkt naar de componist."><span>Triller begint op</span><select id="ptTr"><option value="auto">automatisch (naar componist)</option><option value="boven">de noot erboven (barok/klassiek)</option><option value="hoofd">de geschreven noot (romantiek)</option><option value="uit">trillers niet spelen</option></select></label>
+          <p class="muted" id="ptTrInfo" style="margin:.2em 0 0;font-size:.85em"></p>
         </div>
       </details>
 

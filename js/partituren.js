@@ -499,6 +499,139 @@ function ptTempoParse(xml){   // [[mi, off, q]] in documentvolgorde; [] = geen t
   });
   return Object.values(found).filter(x => x.q != null).sort((x, y) => x.mi - y.mi || x.off - y.off).map(x => [x.mi, +x.off.toFixed(4), Math.round(x.q * 100) / 100, x.lab || '']);
 }
+/* ---------- versieringen: triller (tr), mordent, pralltriller (21-11-2026) ----------
+   OSMD geeft alleen de hoofdnoot door, dus we lezen de versieringen zelf uit de MusicXML (zoals de tempo's).
+   Hulpnoot = de volgende toon van de toonladder erboven (bij een mordent eronder), met de voortekening, de toevallige
+   voortekens eerder in dezelfde maat op dezelfde balk en hoogte, en een voorteken bij het tr-teken (<accidental-mark>)
+   gaat daar altijd boven. ptOrn = [[mi, off, balk, midi, soort 'tr'|'mor'|'imor', halve tonen naar de hulpnoot, begin 'u'|'m'|'']] */
+let ptOrn = null;
+const PT_STEP = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 }, PT_LET = 'CDEFGAB';
+const PT_AMARK = { sharp:1, natural:0, flat:-1, 'double-sharp':2, 'sharp-sharp':2, 'flat-flat':-2, 'double-flat':-2 };
+function ptKeyAlter(fifths, step){   // voortekening: welke letters krijgen ♯ of ♭
+  const sh = 'FCGDAEB', fl = 'BEADGCF';
+  if (fifths > 0) return sh.indexOf(step) < fifths ? 1 : 0;
+  if (fifths < 0) return fl.indexOf(step) < -fifths ? -1 : 0;
+  return 0;
+}
+function ptOrnParse(xml){
+  if (!xml) return null;
+  let doc; try { doc = new DOMParser().parseFromString(xml, 'application/xml'); } catch(e){ return null; }
+  if (!doc || doc.getElementsByTagName('parsererror').length) return null;
+  const out = [], kid = (el, t) => el && Array.from(el.children).find(x => x.tagName === t);
+  let staff0 = 0;
+  Array.from(doc.getElementsByTagName('part')).forEach(part => {
+    let div = 1, fifths = 0, nStaves = 1;
+    Array.from(part.children).filter(m => m.tagName === 'measure').forEach((m, mi) => {
+      let pos = 0, last = 0;
+      const acc = {};   // 'balk|letter|octaaf' → [[pos, alter]] (toevallige voortekens in deze maat)
+      for (const el of Array.from(m.children)){
+        const t = el.tagName;
+        if (t === 'attributes'){
+          const d = kid(el, 'divisions'); if (d && +d.textContent > 0) div = +d.textContent;
+          const k = kid(el, 'key'), f = k && kid(k, 'fifths'); if (f) fifths = parseInt(f.textContent, 10) || 0;
+          const s = kid(el, 'staves'); if (s) nStaves = Math.max(1, parseInt(s.textContent, 10) || 1);
+        }
+        else if (t === 'backup'){ const d = kid(el, 'duration'); if (d) pos -= +d.textContent || 0; }
+        else if (t === 'forward'){ const d = kid(el, 'duration'); if (d) pos += +d.textContent || 0; }
+        else if (t === 'note'){
+          const dur = kid(el, 'duration'), isChord = !!kid(el, 'chord'), isGrace = !!kid(el, 'grace');
+          const at = isChord ? last : pos;
+          if (!isChord){ last = pos; if (!isGrace && dur) pos += +dur.textContent || 0; }
+          const p = kid(el, 'pitch'); if (!p) continue;
+          const step = (kid(p, 'step') || {}).textContent, oct = parseInt((kid(p, 'octave') || {}).textContent, 10), alt = parseFloat((kid(p, 'alter') || {}).textContent) || 0;
+          if (!(step in PT_STEP) || !Number.isFinite(oct)) continue;
+          const sEl = kid(el, 'staff'), stf = sEl ? Math.max(1, parseInt(sEl.textContent, 10) || 1) : 1;
+          const tieStop = Array.from(el.children).some(x => x.tagName === 'tie' && x.getAttribute('type') === 'stop');
+          const key = stf + '|' + step + '|' + oct;
+          // vóór het vastleggen van deze noot de hulpnoot bepalen (zijn eigen voorteken telt wel mee: dat staat ervoor)
+          if (!tieStop || kid(el, 'accidental')) (acc[key] = acc[key] || []).push([at, alt]);
+          if (isGrace) continue;
+          const notations = kid(el, 'notations'), orn = notations && kid(notations, 'ornaments'); if (!orn) continue;
+          const tm = kid(orn, 'trill-mark'), mo = kid(orn, 'mordent'), im = kid(orn, 'inverted-mordent');
+          const kind = tm ? 'tr' : im ? 'imor' : mo ? 'mor' : null; if (!kind) continue;
+          const up = kind !== 'mor';
+          const li = PT_LET.indexOf(step), ni = up ? (li + 1) % 7 : (li + 6) % 7, nOct = oct + (up && li === 6 ? 1 : !up && li === 0 ? -1 : 0), nStep = PT_LET[ni];
+          // voorteken bij het teken: boven hoort bij de bovenste hulpnoot, onder bij de onderste
+          const marks = Array.from(orn.children).filter(x => x.tagName === 'accidental-mark');
+          const mk = marks.find(x => { const pl = x.getAttribute('placement'); return up ? pl !== 'below' : pl !== 'above'; });
+          let nAlt;
+          if (mk && mk.textContent.trim() in PT_AMARK) nAlt = PT_AMARK[mk.textContent.trim()];
+          else {
+            const hist = (acc[stf + '|' + nStep + '|' + nOct] || []).filter(x => x[0] <= at + 1e-9);
+            nAlt = hist.length ? hist[hist.length - 1][1] : ptKeyAlter(fifths, nStep);
+          }
+          const main = 12 * (oct + 1) + PT_STEP[step] + alt;
+          let delta = 12 * (nOct + 1) + PT_STEP[nStep] + nAlt - main;
+          if (tm && !mk && tm.hasAttribute('trill-step')){ const ts = tm.getAttribute('trill-step'); delta = ts === 'half' ? 1 : ts === 'unison' ? 0 : 2; }
+          const sn = tm && tm.getAttribute('start-note'), start = sn === 'upper' ? 'u' : sn === 'main' ? 'm' : sn === 'below' ? 'l' : '';
+          out.push([mi, +(at / div / 4).toFixed(4), staff0 + stf - 1, Math.round(main), kind, Math.round(delta), start]);
+        }
+      }
+    });
+    staff0 += nStaves;
+  });
+  return out;
+}
+function ptOrnSteps(){   // versieringen aan de noten van de tijdlijn hangen (x.o)
+  ptSteps.forEach(st => st.notes.forEach(x => { delete x.o; }));
+  if (!ptOrn || !ptOrn.length) return;
+  const byM = {}; ptOrn.forEach(e => { (byM[e[0]] = byM[e[0]] || []).push(e); });
+  let prevMi = -1, m0 = 0;
+  ptSteps.forEach((st, i) => {
+    const prev = ptSteps[i - 1];
+    if (i === 0 || st.mi !== prevMi || (prev && st.w < prev.w)){ prevMi = st.mi; m0 = st.w; }
+    const ev = byM[st.mi]; if (!ev) return;
+    const off = st.w - m0;
+    ev.forEach(e => {
+      if (Math.abs(e[1] - off) > 1e-3) return;
+      // dezelfde toonhoogte (en liefst dezelfde balk); anders de dichtstbijzijnde noot (transponerende partij)
+      let best = null, bs = 1e9;
+      st.notes.forEach(x => { const s = Math.abs(x.m - e[3]) * 10 + (x.st === e[2] ? 0 : 5); if (s < bs){ bs = s; best = x; } });
+      if (best && bs <= 35) best.o = { t:e[4], d:e[5], s:e[6] };
+    });
+  });
+}
+/* Beginnen op de bovenste noot of op de hoofdnoot. Barok en klassiek (tot ± 1800): bovenste noot; later: hoofdnoot.
+   it.s.tr = 'auto' | 'boven' | 'hoofd'. Automatisch kijkt naar de componist; staat het in de MusicXML (start-note), dan wint dat. */
+const PT_OLD = /\b(bach|h(a|ä)ndel|vivaldi|telemann|corelli|scarlatti|tartini|couperin|rameau|purcell|leclair|locatelli|geminiani|pachelbel|biber|buxtehude|albinoni|veracini|pergolesi|quantz|mozart|haydn|boccherini|gluck|clementi|stamitz|viotti|seitz|sammartini|torelli|marcello|zelenka|muffat|lully|frescobaldi)\b/i;
+function ptTrUp(){
+  const v = ptCur && ptCur.s && ptCur.s.tr || 'auto';
+  if (v === 'boven') return true; if (v === 'hoofd') return false;
+  return PT_OLD.test((ptCur && ptCur.comp) || '');
+}
+function ptTrUI(){
+  if (!$('ptTr') || !ptCur) return;
+  $('ptTr').value = ptCur.s.tr || 'auto';
+  const n = { tr:0, mor:0, imor:0 }; (ptOrn || []).forEach(e => { n[e[4]]++; });
+  const tot = n.tr + n.mor + n.imor;
+  $('ptTrInfo').textContent = !tot ? 'Geen trillers of mordenten in dit stuk gevonden.' :
+    [n.tr ? n.tr + ' triller' + (n.tr > 1 ? 's' : '') : '', n.mor + n.imor ? (n.mor + n.imor) + ' mordent' + (n.mor + n.imor > 1 ? 'en' : '') : ''].filter(Boolean).join(' en ') + ' in dit stuk'
+    + (n.tr && (ptCur.s.tr || 'auto') === 'auto' ? ' · nu: beginnen op ' + (ptTrUp() ? 'de noot erboven' : 'de geschreven noot') : '') + '.';
+}
+function ptOrnPlay(t, x, dur, opts){   // de noten van een versiering inplannen; dur = hoe lang de noot klinkt (s)
+  const o = x.o, aux = x.m + o.d;
+  if (o.d === 0 || aux < 1 || aux > 127){ Engine.note(t, x.m, dur, opts); return; }
+  const seq = [];   // [toonhoogte, lengte]
+  if (o.t === 'tr'){
+    const up = o.s === 'u' || o.s === 'l' ? true : o.s === 'm' ? false : ptTrUp();
+    const R = .095;   // ± 10,5 noten per seconde, het tempo van een normale triller
+    if (dur < 4 * R){   // korte noot: snel 4 (of 3) noten en de hoofdnoot aanhouden
+      const pat = up ? [aux, x.m, aux, x.m] : [x.m, aux, x.m];
+      const l = Math.min(.075, dur / (pat.length + 1));
+      pat.forEach((m, k) => seq.push([m, k === pat.length - 1 ? dur - l * (pat.length - 1) : l]));
+    } else {
+      let n = Math.max(4, Math.round(dur / R));
+      if (up && n % 2) n++; if (!up && n % 2 === 0) n++;   // altijd eindigen op de hoofdnoot
+      const l = dur / n;
+      for (let k = 0; k < n; k++) seq.push([(k % 2 === 0) === up ? aux : x.m, l]);
+    }
+  } else {   // mordent (hoofd-onder-hoofd) en pralltriller / inverted mordent (hoofd-boven-hoofd)
+    const l = Math.min(.07, dur / 4);
+    seq.push([x.m, l], [aux, l], [x.m, dur - 2 * l]);
+  }
+  let tt = t;
+  seq.forEach(([m, l]) => { Engine.note(tt, m, Math.max(.05, l * 1.02), opts); tt += l; });
+}
 /* Delen: een tempo-aanduiding met een woord (Largo, Moderato cantabile…) of de eerste is een 'deel' waarvan je het tempo
    zelf kunt bepalen (it.s.tempi[key] = kwartnoten/min). Kale getallen vlak na een ander tempo (zoals een riten. in stapjes
    144 → 80) horen bij het deel ervoor en gaan in verhouding mee. a tempo / Tempo I gaan terug naar dat deel. */
@@ -547,13 +680,14 @@ function ptReadMeta(it){   // maten, balken, maatsoorten, titel uit OSMD
   try { ptStaves = sh.Staves ? sh.Staves.length : 1; } catch(e){ ptStaves = 1; }
   try { if (!it.titel && sh.TitleString) it.titel = sh.TitleString; if (!it.comp && sh.ComposerString) it.comp = sh.ComposerString; } catch(e){}
 }
-const ptTlPack = () => ({ steps:ptSteps.map(s => ({ w:s.w, dt:s.dt, mi:s.mi, mn:s.mn, notes:s.notes.map(x => ({ m:x.m, d:x.d, st:x.st })) })), measures:ptMeasures, beats:ptBeats, staves:ptStaves, tempo3:ptTempo || [] });
+const ptTlPack = () => ({ steps:ptSteps.map(s => ({ w:s.w, dt:s.dt, mi:s.mi, mn:s.mn, notes:s.notes.map(x => ({ m:x.m, d:x.d, st:x.st })) })), measures:ptMeasures, beats:ptBeats, staves:ptStaves, tempo3:ptTempo || [], orn:ptOrn || [] });
 function ptTlApply(tl){
   ptSteps = tl.steps.map((s, i) => Object.assign({ i, els:[], an:null }, s));
   ptMeasures = tl.measures || []; ptBeats = tl.beats || []; ptStaves = tl.staves || 1;
   ptMakeMStarts();
   ptTempo = Array.isArray(tl.tempo3) ? tl.tempo3 : null;
   ptTempoSteps();
+  ptOrn = Array.isArray(tl.orn) ? tl.orn : null; ptOrnSteps();
 }
 function ptBeatInfo(mi){
   const b = ptBeats[mi] || [4, 4], num = b[0], den = b[1];
@@ -718,10 +852,12 @@ async function ptEnsureOsmd(){   // OSMD laden en dit stuk erin inlezen (alleen 
   return true;
 }
 async function ptTempoLoad(it){   // tempo-aanduidingen uit de MusicXML (ook .mxl) en per stap invullen
-  let T = null;
-  try { T = ptTempoParse(await ptWithin(ptXmlText(it.data), 15000, 'tempo lezen')); } catch(e){ console.warn('Repertoire: tempo lezen mislukt', e); }
+  let T = null, O = null, xml = null;
+  try { xml = await ptWithin(ptXmlText(it.data), 15000, 'tempo lezen'); T = ptTempoParse(xml); } catch(e){ console.warn('Repertoire: tempo lezen mislukt', e); }
+  try { O = ptOrnParse(xml); } catch(e){ console.warn('Repertoire: versieringen lezen mislukt', e); }
   if (ptCur !== it) return;
   ptTempo = T || []; ptTempoSteps(); ptTempiList();
+  ptOrn = O || []; ptOrnSteps(); ptTrUI();
 }
 async function ptShowSheet(){
   if (!ptCur) return;
@@ -996,7 +1132,10 @@ function ptSchedule(ev, t){
   const quiet = solo === 2 || (solo === 1 && r.round % 2 === 0);
   const play = quiet ? [] : st.notes.filter(x => (hands === 'beide' || (hands === 'boven' ? x.st === ptTopStaff() : x.st !== ptTopStaff())) && ptGain(x.st) > 0);
   const vol = .5 * ptG.vol / 100 / Math.sqrt(Math.max(1, play.length / 2));
-  play.forEach(x => Engine.note(t, x.m, Math.max(.08, (ptU(r.B, ev.w + x.d) - ev.u) * spw * .97), { inst:ptKlank(x.st), vol:vol * ptGain(x.st) }));
+  play.forEach(x => {
+    const dur = Math.max(.08, (ptU(r.B, ev.w + x.d) - ev.u) * spw * .97), o = { inst:ptKlank(x.st), vol:vol * ptGain(x.st) };
+    if (x.o && ptCur.s.tr !== 'uit') ptOrnPlay(t, x, dur, o); else Engine.note(t, x.m, dur, o);
+  });
   ptLater(() => {
     r.lastStep = st.i;
     const txt = (ptCur.s.loop ? 'ronde ' + r.round + ' · ' : '') + 'maat ' + st.mn + ' · ' + ptTempoTxt(r, st) + (quiet ? ' · jij speelt' : '');
@@ -1198,7 +1337,7 @@ async function ptOpen(id, pasId){
   if (ptCur !== it) return;
   if (tl && Array.isArray(tl.steps) && tl.steps.length){
     ptTlApply(tl); if (ptOsmdFor !== it.id) ptOsmdFor = null;
-    if (!Array.isArray(tl.tempo3)){ await ptTempoLoad(it); if (ptCur !== it) return; PtDB.cput(ptCK(it.id, 'tl'), ptTlPack()); }
+    if (!Array.isArray(tl.tempo3) || !Array.isArray(tl.orn)){ await ptTempoLoad(it); if (ptCur !== it) return; PtDB.cput(ptCK(it.id, 'tl'), ptTlPack()); }
   }
   else {
     ptOsmdFor = null;
@@ -1675,7 +1814,7 @@ function ptSyncUI(){
   $('ptMetro').checked = ptG.metro; if ($('ptTempi')) $('ptTempi').checked = ptG.tempi !== false;
   $('ptUnit').value = s.unit; $('ptInc').value = s.inc; $('ptMax').value = s.max || '';
   $('ptHands').value = s.hands; $('ptHandsRow').hidden = ptStaves < 2;
-  $('ptCi').value = ptG.ci; $('ptInst').value = s.klank || 'auto'; ptMixUI(); $('ptVol').value = ptG.vol;
+  $('ptCi').value = ptG.ci; $('ptInst').value = s.klank || 'auto'; ptMixUI(); ptTrUI(); $('ptVol').value = ptG.vol;
   $('ptCursor').value = ptG.cursor; $('ptZoom').value = ptG.zoom; $('ptZoomVal').textContent = ptG.zoom + '%';
   ptFollowUI();
   $('ptLineOfs').value = ptG.lineOfs || 0; ptLineOfsUI();
@@ -1730,6 +1869,7 @@ function ptInit(){
   $('ptMax').onchange = () => { const v = Math.round(+$('ptMax').value || 0); ptCur.s.max = v >= 20 ? Math.min(300, v) : 0; $('ptMax').value = ptCur.s.max || ''; ptSaveCur(); };
   $('ptHands').onchange = () => { ptCur.s.hands = $('ptHands').value; ptSaveCur(); };
   $('ptCi').onchange = () => { ptG.ci = +$('ptCi').value; ptSaveG(); };
+  $('ptTr').onchange = () => { if (!ptCur) return; ptCur.s.tr = $('ptTr').value; ptSaveCur(); ptTrUI(); };
   $('ptInst').onchange = () => { if (!ptCur) return; ptCur.s.klank = $('ptInst').value; ptSaveCur(); ptKlankPreload(); ptMixUI(); };
   ptMixInit();
   $('ptVol').oninput = () => { ptG.vol = +$('ptVol').value; ptSaveG(); };
