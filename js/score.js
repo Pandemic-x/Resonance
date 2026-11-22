@@ -22,7 +22,7 @@
 
 const Score = (function(){
   const LOG_KEY = 'score-log', TIME_KEY = 'score-tijd', MAX = 15000, GOAL = 600, TICK = 5;
-  const VIEWS = ['atlas','tikken','luisteren','metronoom','gehoor','absoluut','intervallen','dictee','drone','intonatie','notenleer','toonladders','akkoorden','noten','toonsoorten','toonladders-blad','intervallen-blad','akkoorden-blad','partituren','cadensen','progressies','baslijn','termen','akkoordsymbolen','rudiments','polyritme','tempoladder','swing'];
+  const VIEWS = ['atlas','tikken','luisteren','metronoom','gehoor','absoluut','intervallen','dictee','drone','intonatie','notenleer','toonladders','akkoorden','noten','toonsoorten','toonladders-blad','intervallen-blad','akkoorden-blad','partituren','cadensen','progressies','baslijn','termen','akkoordsymbolen','rudiments','polyritme','tempoladder','swing','transcriberen'];
   const OLD = ['gehoor-stats','gehoor-dag','absoluut-stats','absoluut-dag','iv-stats','iv-dag','dictee-stats','dictee-dag','ritme-atlas-stats','ritme-atlas-dictee'];
   const defs = {}, clock = {};
   let log = [], time = {}, lastAct = 0;
@@ -150,7 +150,7 @@ const Score = (function(){
   /* --- paneel --- */
   const mmss = s => s >= 3600 ? Math.floor(s / 3600) + ' u ' + Math.round(s % 3600 / 60) + ' min' : Math.round(s / 60) + ' min';
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  const VNAME = { atlas:'Atlas', tikken:'Tikken', luisteren:'Ritme luisteren', metronoom:'Metronoom', gehoor:'Relatief', absoluut:'Absoluut', intervallen:'Intervallen', dictee:'Dictee', drone:'Drone', intonatie:'Intonatie', notenleer:'Notenleer', toonladders:'Toonladders', akkoorden:'Akkoorden', noten:'Noten benoemen', toonsoorten:'Toonsoorten', 'toonladders-blad':'Toonladders (blad)', 'intervallen-blad':'Intervallen (blad)', 'akkoorden-blad':'Akkoorden (blad)', partituren:'Repertoire', cadensen:'Cadensen', progressies:'Progressies', baslijn:'Baslijn', termen:'Termen', akkoordsymbolen:'Akkoordsymbolen', rudiments:'Rudiments', polyritme:'Polyritme', tempoladder:'Tempo-ladder', swing:'Swing' };
+  const VNAME = { atlas:'Atlas', tikken:'Tikken', luisteren:'Ritme luisteren', metronoom:'Metronoom', gehoor:'Relatief', absoluut:'Absoluut', intervallen:'Intervallen', dictee:'Dictee', drone:'Drone', intonatie:'Intonatie', notenleer:'Notenleer', toonladders:'Toonladders', akkoorden:'Akkoorden', noten:'Noten benoemen', toonsoorten:'Toonsoorten', 'toonladders-blad':'Toonladders (blad)', 'intervallen-blad':'Intervallen (blad)', 'akkoorden-blad':'Akkoorden (blad)', partituren:'Repertoire', cadensen:'Cadensen', progressies:'Progressies', baslijn:'Baslijn', termen:'Termen', akkoordsymbolen:'Akkoordsymbolen', rudiments:'Rudiments', polyritme:'Polyritme', tempoladder:'Tempo-ladder', swing:'Swing', transcriberen:'Transcriberen' };
   function render(){
     const box = document.getElementById('scorePanel'); if (!box) return;
     const st = streak(), now = secs(dayKey()), pct = Math.min(1, now / GOAL);

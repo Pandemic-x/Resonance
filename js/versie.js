@@ -5,8 +5,9 @@
    (wens gebruiker: gewoon doortellen 1.7 → 1.8 → 1.9 → 1.10 …; het eerste getal alleen omhoog bij een
    echt grote update, zoals het gedeelde notensysteem). Zelfde nummer in artifact én website. */
 const Versie = (function(){
-  const VERSIE = '1.24';
+  const VERSIE = '1.25';
   const NIEUW = [
+    ['1.25', '22-11', 'Nieuw onder Bladmuziek: ✍️ Transcriberen, je eigen noteneditor (zoals MuseScore) met akkoordsymbolen, afspelen en ➜ naar Repertoire'],
     ['1.24', '22-11', 'Nieuw blok: kies meteen een emoji (☺ naast het naamveld); die komt direct bij het begin van het blok in de partituur'],
     ['1.23', '22-11', 'Blokken: met ✎ de naam en de maten van een blok aanpassen, ook een maat erbij of eraf aan begin of eind'],
     ['1.22', '22-11', 'Repertoire: ▦ Blokken-lijst per stuk met ‹ ›; emoji in de partituur = nieuw blok, emoji bij een blok = ook in de partituur'],

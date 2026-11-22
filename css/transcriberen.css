@@ -1,0 +1,109 @@
+/* ================= Bladmuziek → Transcriberen (#trView) — alleen variabelen, zodat licht/donker en themakleur werken ================= */
+body.transcriberen nav, body.transcriberen .controls{display:none}
+#trView{max-width:1280px;margin:0 auto;padding:16px 16px 40px}
+#trView [hidden]{display:none !important}
+#trView.tr-lib .tred, #trView.tr-ed .trlib{display:none}
+#trView.tr-ed .trhead{display:none}
+#trView.tr-ed{padding-top:8px;padding-bottom:8px}
+#trView.tr-ed > .rpanel{padding:10px 12px 10px;margin-top:0}
+/* editor vult het scherm: partituur scrolt binnenin, palet en klavier blijven onderaan zichtbaar */
+#trView.tr-ed .tred{display:flex;flex-direction:column;height:calc(100vh - 92px);height:calc(100dvh - 92px);min-height:420px}
+.trpnote{font-size:13px;margin:0 0 10px}
+
+/* bibliotheek */
+.trnew{border:1px solid var(--line);border-radius:12px;padding:10px 14px 2px;margin:4px 0 16px;background:var(--soft, var(--bg))}
+.trnew input[type=text]{font:inherit;border:1px solid var(--line);border-radius:8px;padding:5px 9px;background:var(--paper);color:var(--ink);min-width:180px}
+.trnew input[type=number]{font:inherit;width:64px;border:1px solid var(--line);border-radius:8px;padding:4px 6px;background:var(--paper);color:var(--ink)}
+.trnew .trwide input{min-width:260px}
+.trlist{display:flex;flex-direction:column;gap:8px}
+.tritem{display:flex;gap:8px;align-items:stretch}
+.tritem .tropen{flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border-radius:12px;padding:9px 14px;white-space:normal}
+.tritem .tropen b{font-size:15px;color:var(--ink)}
+.tritem .tropen small{color:var(--muted);font-size:12.5px}
+.tritem .trdel{align-self:center}
+.tritem .trdel.arm, #trMeasMinus.arm{border-color:var(--nt-bad);color:var(--nt-bad)}
+
+/* bovenbalk editor */
+.trtop{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.trtitles{display:flex;flex-direction:column;min-width:160px;flex:0 1 280px}
+.trtitles input{font:inherit;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--ink);padding:1px 6px}
+.trtitles input:hover, .trtitles input:focus{border-color:var(--line);background:var(--paper);outline:none}
+#trTitle{font-family:Fraunces,serif;font-size:18px;font-weight:500}
+#trComp{font-size:12.5px;color:var(--muted)}
+.trsm{padding:5px 11px;font-size:13.5px}
+.tric{min-width:36px;padding:5px 9px}
+.trgap{flex:1}
+.trtempo{display:inline-flex;align-items:center;gap:3px}
+.trtempo button{padding:3px 8px;font-size:12.5px}
+.trbpm{padding:0 6px;font-variant-numeric:tabular-nums;white-space:nowrap}
+#trPlayBtn.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+#trRepBtn.hot{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+button:disabled{opacity:.4;cursor:default}
+.trmsg{min-height:0;font-size:13.5px;margin:6px 2px 0}
+.trmsg:empty{display:none}
+.trmsg.ok{color:var(--nt-ok)} .trmsg.bad{color:var(--nt-bad)} .trmsg.muted{color:var(--muted)}
+.trmsg a{color:var(--accent);font-weight:600}
+
+/* partituur */
+.trsheetwrap{position:relative;overflow:auto;flex:1 1 auto;min-height:120px;margin-top:6px;padding:6px 2px 10px;border-radius:12px;background:var(--paper)}
+.trsheet{cursor:pointer;-webkit-user-select:none;user-select:none}
+#trView.trinput .trsheet{cursor:crosshair}
+.ntscore svg{margin:0}
+.ntscore .ntnum{font:italic 11px Inter, system-ui, sans-serif;fill:var(--muted)}
+.ntscore .ntchord{font:600 15px Inter, system-ui, 'Segoe UI Symbol', 'Apple Symbols', 'Noto Sans Symbols 2', 'DejaVu Sans', sans-serif;cursor:pointer}
+.ntscore .ntchord:hover{fill:var(--accent)}
+.ntscore .ntchord.bad{font-style:italic;text-decoration:underline dotted}
+.ntscore .nt-sel{color:var(--accent)}
+.ntscore .nt-sel2{color:var(--accent);opacity:.75}
+.ntscore .nt-cur{color:var(--accent)}
+.ntscore .trcurbox{fill:var(--accent);opacity:.16;stroke:var(--accent);stroke-width:1.2;stroke-opacity:.7}
+.ntscore .trchmark{fill:var(--accent)}
+.trchin{position:absolute;z-index:3;width:110px;font:600 15px Inter, system-ui, sans-serif;padding:2px 6px;border:1.5px solid var(--accent);border-radius:6px;background:var(--paper);color:var(--ink);outline:none;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.trchin.bad{border-style:dashed}
+
+/* palet onderaan */
+.trdock{flex:none;background:var(--paper);border-top:1px solid var(--line);margin-top:6px;padding-top:8px}
+.trpal{display:flex;gap:5px;align-items:center;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:4px}
+.trpal button{flex:none}
+.trin{font-weight:600}
+.trin.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.trin small{font-weight:500;opacity:.85}
+.trdurs{display:inline-flex;gap:3px;background:var(--soft, var(--bg));border-radius:999px;padding:2px}
+.trdurs button{display:inline-flex;align-items:center;gap:2px;border:1px solid transparent;background:transparent;padding:2px 8px 2px 6px;border-radius:999px}
+.trdurs button small{font-size:10px;color:var(--muted)}
+.trdurs button.on, .trtool.on{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.trdi{width:16px;height:21px;display:block}
+.trtool{min-width:34px;padding:4px 9px;font-size:16px;line-height:1.2}
+.trtool.trtext{font-size:13px;font-weight:600}
+.trpsep{width:1px;align-self:stretch;background:var(--line);margin:2px 3px}
+.trmeas{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--muted);white-space:nowrap}
+.trmeas b{color:var(--ink);min-width:1.6em;text-align:center;font-variant-numeric:tabular-nums}
+.trstatus{font-size:13px;color:var(--muted);margin:4px 2px 2px;min-height:1.3em}
+.trstatus b{color:var(--ink)}
+.trklavrow{display:flex;margin-top:4px;overflow:hidden}
+.trklav{flex:1 1 auto;min-width:0;width:100%;height:110px}
+.trklav.ntklav{height:110px}
+
+@media (max-width:640px){
+  #trView{padding:8px 6px 30px}
+  #trView.tr-ed{padding:4px 4px 4px}
+  #trView.tr-ed > .rpanel{padding:6px 6px 6px;border-radius:12px}
+  #trView.tr-ed .tred{height:calc(100vh - 66px);height:calc(100dvh - 66px);min-height:0}
+  .trtop{gap:5px;padding-bottom:5px}
+  .trtitles{flex:1 1 120px;min-width:0}
+  #trTitle{font-size:16px}
+  #trComp{display:none}
+  .trtempo button[data-d="-5"], .trtempo button[data-d="5"]{display:none}
+  .trgap{display:none}
+  #trXmlBtn, #trRedoBtn{display:none}
+  .trsm{padding:4px 9px;font-size:13px}
+  .trpal{flex-wrap:wrap;overflow:visible;gap:4px}
+  .trpsep{display:none}
+  .trtool{min-width:30px;padding:3px 7px;font-size:15px}
+  .trdurs button{padding:2px 5px 2px 4px}
+  .trdurs button small{display:none}
+  .trin{padding:4px 10px}
+  .trstatus{font-size:12px;max-height:2.7em;overflow:hidden}
+  .trklav, .trklav.ntklav{height:84px;margin:2px 0}
+  .trmsg{font-size:12.5px}
+}

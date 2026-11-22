@@ -6,12 +6,12 @@ function route(){
   let h = location.hash.replace('#', '');
   if (h === 'notenleer' || h === 'sheetmusic'){ h = 'notenlezen'; try { history.replaceState(null, '', '#notenlezen'); } catch(e){} }   // oude route: Notenleer heet nu Bladmuziek
   view = ['atlas','tikken','luisteren','metronoom','gehoor','absoluut','intervallen','dictee','drone','intonatie','toonladders','akkoorden','cadensen','progressies','baslijn','termen','akkoordsymbolen','rudiments','polyritme','tempoladder','swing',
-          'ritme','gehoortraining','bladmuziek','notenlezen','noten','toonsoorten','toonladders-blad','intervallen-blad','akkoorden-blad','partituren',
+          'ritme','gehoortraining','bladmuziek','notenlezen','noten','toonsoorten','toonladders-blad','intervallen-blad','akkoorden-blad','partituren','transcriberen',
           'instellingen','handleiding','stats','dagroutine'].includes(h) ? h : 'home';
   const prevEl = viewEl, prevRect = prevEl ? prevEl.getBoundingClientRect() : null;
   document.body.className = view + (TAB_VIEWS.includes(view) ? ' tabpage' : '') + (!TAB_VIEWS.includes(view) && !['ritme','gehoortraining','bladmuziek','notenlezen'].includes(view) ? ' oefening' : '');   // oefening: geen ⚙️ in de kop (alleen 🕹️, wens gebruiker 15-11)
-  ['homeView','catView','quizView','main','tikView','metroView','gehoorView','absView','inView','mdView','droneView','ntView','ptView','cdView','prView','blView','tmView','asView','rdView','pyView','tpView','swView','setView','helpView','statsView','routineView'].forEach(id => { const e = $(id); if (e) e.classList.remove('on'); });
-  viewEl = $({ home:'homeView', stats:'statsView', atlas:'main', tikken:'tikView', luisteren:'quizView', metronoom:'metroView', gehoor:'gehoorView', absoluut:'absView', intonatie:'inView', intervallen:'ntView', dictee:'mdView', drone:'droneView', toonladders:'ntView', akkoorden:'ntView', cadensen:'cdView', progressies:'prView', baslijn:'blView', termen:'tmView', akkoordsymbolen:'asView', rudiments:'rdView', polyritme:'pyView', tempoladder:'tpView', swing:'swView', ritme:'catView', gehoortraining:'catView', bladmuziek:'catView', notenlezen:'catView', noten:'ntView', toonsoorten:'ntView', 'toonladders-blad':'ntView', 'intervallen-blad':'ntView', 'akkoorden-blad':'ntView', partituren:'ptView', instellingen:'setView', handleiding:'helpView', dagroutine:'routineView' }[view]);
+  ['homeView','catView','quizView','main','tikView','metroView','gehoorView','absView','inView','mdView','droneView','ntView','ptView','trView','cdView','prView','blView','tmView','asView','rdView','pyView','tpView','swView','setView','helpView','statsView','routineView'].forEach(id => { const e = $(id); if (e) e.classList.remove('on'); });
+  viewEl = $({ home:'homeView', stats:'statsView', atlas:'main', tikken:'tikView', luisteren:'quizView', metronoom:'metroView', gehoor:'gehoorView', absoluut:'absView', intonatie:'inView', intervallen:'ntView', dictee:'mdView', drone:'droneView', toonladders:'ntView', akkoorden:'ntView', cadensen:'cdView', progressies:'prView', baslijn:'blView', termen:'tmView', akkoordsymbolen:'asView', rudiments:'rdView', polyritme:'pyView', tempoladder:'tpView', swing:'swView', ritme:'catView', gehoortraining:'catView', bladmuziek:'catView', notenlezen:'catView', noten:'ntView', toonsoorten:'ntView', 'toonladders-blad':'ntView', 'intervallen-blad':'ntView', 'akkoorden-blad':'ntView', partituren:'ptView', transcriberen:'trView', instellingen:'setView', handleiding:'helpView', dagroutine:'routineView' }[view]);
   viewEl.classList.add('on');
   if (typeof Nav !== 'undefined') Nav.slide(prevView, view, prevEl, viewEl, prevRect);
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.view === view));
@@ -34,6 +34,7 @@ function route(){
   if (typeof mtOnRoute === 'function') mtOnRoute();
   if (typeof nlOnRoute === 'function') nlOnRoute();
   if (typeof ptOnRoute === 'function') ptOnRoute();
+  if (typeof trOnRoute === 'function') trOnRoute();
   if (typeof hrOnRoute === 'function') hrOnRoute();
   if (typeof rtOnRoute === 'function') rtOnRoute();
   if (typeof tmOnRoute === 'function') tmOnRoute();

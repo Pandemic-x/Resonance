@@ -32,14 +32,14 @@
    ACTIONS (met 'waar') en aan de tabel in het architectuurdocument. */
 const Keys = (function(){
   const STORE = 'sneltoetsen';
-  const ALL = ['atlas','tikken','luisteren','metronoom','gehoor','absoluut','intervallen','dictee','drone','intonatie','notenleer','partituren','cadensen','progressies','baslijn','termen','akkoordsymbolen','rudiments','polyritme','tempoladder','swing'];
+  const ALL = ['atlas','tikken','luisteren','metronoom','gehoor','absoluut','intervallen','dictee','drone','intonatie','notenleer','partituren','cadensen','progressies','baslijn','termen','akkoordsymbolen','rudiments','polyritme','tempoladder','swing','transcriberen'];
   const WHERE = { atlas:'Atlas', tikken:'Tikken', luisteren:'Ritme luisteren', metronoom:'Metronoom', gehoor:'Relatief', absoluut:'Absoluut',
                   intervallen:'Intervallen', dictee:'Dictee', drone:'Drone', intonatie:'Intonatie', notenleer:'Notenleer', partituren:'Repertoire',
-                  cadensen:'Cadensen', progressies:'Progressies', baslijn:'Baslijn', termen:'Termen', akkoordsymbolen:'Akkoordsymbolen', rudiments:'Rudiments', polyritme:'Polyritme', tempoladder:'Tempo-ladder', swing:'Swing' };
+                  cadensen:'Cadensen', progressies:'Progressies', baslijn:'Baslijn', termen:'Termen', akkoordsymbolen:'Akkoordsymbolen', rudiments:'Rudiments', polyritme:'Polyritme', tempoladder:'Tempo-ladder', swing:'Swing', transcriberen:'Transcriberen' };
   // volgorde = volgorde in de editor
   const ACTIONS = [
     { id:'luister',    naam:'Luisteren',   uitleg:'(opnieuw) luisteren / huidige toon nog eens', keys:[' '],
-      waar:['luisteren','gehoor','absoluut','intervallen','dictee','drone','intonatie','notenleer','partituren','cadensen','progressies','baslijn','akkoordsymbolen','rudiments','polyritme','swing'], deelt:['tik'] },
+      waar:['luisteren','gehoor','absoluut','intervallen','dictee','drone','intonatie','notenleer','partituren','cadensen','progressies','baslijn','akkoordsymbolen','rudiments','polyritme','swing','transcriberen'], deelt:['tik'] },
     { id:'volgende',   naam:'Volgende',    uitleg:'volgende vraag / volgende toon / volgend vakje', keys:['Enter','ArrowRight'],
       waar:['tikken','luisteren','metronoom','gehoor','absoluut','intervallen','dictee','drone','intonatie','notenleer','partituren','cadensen','progressies','baslijn','termen','akkoordsymbolen','rudiments','tempoladder','swing'], deelt:['controleer'] },
     { id:'vorige',     naam:'Vorige',      uitleg:'vorige toon / vorig vakje', keys:['ArrowLeft'], waar:['luisteren','metronoom','drone','partituren','rudiments','tempoladder'] },
@@ -50,7 +50,7 @@ const Keys = (function(){
     { id:'grondtoon',  naam:'Grondtoon',   uitleg:'do / grondtoon horen (in Drone: drone aan/uit)', keys:['d'], waar:['gehoor','dictee','drone','intonatie'] },
     { id:'tik',        naam:'Tikken',      uitleg:'meetikken met het ritme (Metronoom: tempo intikken)', keys:[' '], waar:['tikken','metronoom','tempoladder','swing'], deelt:['luister'] },
     { id:'pauze',      naam:'Pauze',       uitleg:'pauze / verder', keys:['p'], waar:['atlas','tikken','luisteren','metronoom','drone','intonatie','partituren','rudiments'] },
-    { id:'metronoom',  naam:'Metronoom',   uitleg:'metronoom aan/uit', keys:['m'], waar:['metronoom','drone','partituren','rudiments','polyritme','tempoladder','swing'] },
+    { id:'metronoom',  naam:'Metronoom',   uitleg:'metronoom aan/uit', keys:['m'], waar:['metronoom','drone','partituren','rudiments','polyritme','tempoladder','swing','transcriberen'] },
     { id:'sneller',    naam:'Sneller',     uitleg:'tempo +1 (met Shift +5)', keys:['ArrowUp'], waar:['metronoom','partituren','rudiments','polyritme'] },
     { id:'langzamer',  naam:'Langzamer',   uitleg:'tempo −1 (met Shift −5)', keys:['ArrowDown'], waar:['metronoom','partituren','rudiments','polyritme'] },
     { id:'begin',      naam:'Begin',       uitleg:'terug naar het begin', keys:['Home'], waar:['drone','partituren'] },
@@ -78,6 +78,9 @@ const Keys = (function(){
     progressies: [{ keys:dig('1234567'), wat:'1–7 = drieklank op die trap (Shift = septiemakkoord)' }],
     polyritme:   [{ keys:['f','j'], wat:'F = links, J = rechts (meetikken)' }],
     swing:       [{ keys:dig('1234'), wat:'1–4 = soort swing (luisteren)' }],
+    transcriberen:[{ keys:dig('cdefgab'), wat:'A–G = noot (Shift = toon erbij)' }, { keys:dig('0234567'), wat:'2–7 = nootwaarde (zoals MuseScore), 0 = rust' },
+                  { keys:['.','+','-','=','t','r','n'], wat:'. = punt, + − = = ♯ ♭ ♮, T = overbinden, R = herhalen, N = invoerstand' },
+                  { keys:['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Delete','Backspace','Home'], wat:'↑ ↓ = halve toon, ← → = vorige/volgende, Delete = rust, Backspace = terug' }],
     drone:       [{ keys:dig('1234567'), wat:'1–7 = trap bij Degrees en Melodieën (Shift+2/3/6/7 = ♭2/♭3/♭6/♭7)' }, { keys:['t'], wat:'T = tritonus (♯4)' }]
   };
   // toetsen die je niet kunt instellen

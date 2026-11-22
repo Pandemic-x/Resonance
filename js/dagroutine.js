@@ -34,7 +34,7 @@ const Dagroutine = (function(){
   function items(){                      // alle routes uit het menu + onderdelen (Drone → Degrees …)
     const out = [];
     Nav.NAV.forEach(c => c.items.forEach(i => {
-      if (i.route === 'partituren') return;                       // Repertoire hoort bij de instrumentroutine
+      if (i.route === 'partituren' || i.route === 'transcriberen') return;   // Repertoire hoort bij de instrumentroutine, Transcriberen is een werkplek                       // Repertoire hoort bij de instrumentroutine
       out.push({ id:i.route, route:i.route, name:i.name, icon:i.icon, cat:c.id, catName:c.name });
       if (i.subs) i.subs.list.forEach(s => out.push({ id:i.route + ':' + s.id, route:i.route, sub:s.id, name:i.name + ' → ' + s.name, icon:i.icon, cat:c.id, catName:c.name }));
     }));

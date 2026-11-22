@@ -33,7 +33,8 @@
    Invoer
      k = Notatie.klavier(el, {lo, hi, onKey(midi), names:'all'|'c'|'none', key})  pianoklavier
        k.mark(midi, 'right'|'wrong'|'picked') · k.clear() · k.set({lo, hi, names, key})
-   Later (API is erop voorbereid): klikken op de balk (pos → p via atPos). */
+   Partituur (meerdere maten, regels, waardestrepen, overbindingen, akkoordsymbolen, klikken op de balk): Notatie.score,
+     zie het blok bij renderScore hieronder. Gebruikt door Transcriberen (22-11-2026). */
 
 const Notatie = (function(){
   const LET = ['c','d','e','f','g','a','b'];
@@ -304,6 +305,218 @@ const Notatie = (function(){
   // toonsoorten (majeur, kwintenvolgorde) voor keuzelijstjes: [{id:'D', n:2, naam:'D'}] (n = ♯ positief, ♭ negatief)
   const KEYLIST = ['C','G','D','A','E','B','F#','C#','F','Bb','Eb','Ab','Db','Gb','Cb'].map(id => ({ id, n:MAJ[id], p:parse(id + '4') }));
 
-  return { ready, _loaded, parse, pool, KEYLIST, midi, code, spell, name, keySig, fifths, pos, atPos, draw, play, klavier, beats,
+
+  /* --- partituur over meerdere maten en regels (22-11-2026, voor Transcriberen; later ook sight-read factory) ---
+     Tijd in ticks: kwartnoot = 48 (LEN), zodat 32ste, punten en later triolen gehele getallen blijven.
+     h = Notatie.score(el, {clef, key, time:[n, d], measures:[{num, cap, evs:[{id, off, len, rest, full, ps:[p], tie}]}],
+                           chords:[{m, off, text, bad, id}], width (px), zoom (1 = lijnafstand 10 px), end:true})
+       ev.len moet een gewone nootwaarde zijn (LEN_DUR); ev.tie = overgebonden naar het volgende event (ook over de maatstreep).
+       full = rust van een hele maat (gecentreerde hele rust, ook in 3/4 of 6/8).
+     Terug: h.meas[i] = {x, w, top, sys, nx (begin noten), evs:[{id, x, off, len}]}, h.sys[j] = {y0, y1, top}, h.svg, h.scale
+       h.at(clientX, clientY) → {m, i (event-index), off, pos (plaats op de balk, 0 = onderste lijn)} of null
+       h.xAt(m, off) → x van die tijd in die maat · h.noteEl(id) · h.mark(id, cls) / h.unmark(id, cls) (CSS nt-<cls>)
+       h.layer = <g> bovenop (voor cursor/selectie, zonder fill-attribuut, kleuren via CSS) · h.chordEls = [{id, el, x, y}]
+     Notatie.beamGroups(evs, time) → [[index, …]] (zelfde groepen als getekend; gebruikt door de MusicXML-export). */
+  const Q = 48;
+  const LEN_DUR = { 288:'wd', 192:'w', 144:'hd', 96:'h', 72:'qd', 48:'q', 36:'8d', 24:'8', 18:'16d', 12:'16', 9:'32d', 6:'32' };
+  function meter(time){
+    const n = time[0], d = time[1], unit = 4 * Q / d, comp = d >= 8 && n % 3 === 0 && n > 3;
+    return { n, d, unit, comp, beat:comp ? unit * 3 : unit, cap:n * unit,
+             group:comp ? unit * 3 : d === 2 ? 2 * Q : d === 8 ? Q : d === 16 ? Q / 2 : Q };
+  }
+  function beamGroups(evs, time){
+    const g = meter(time).group, out = []; let cur = [];
+    const flush = () => { if (cur.length > 1) out.push(cur); cur = []; };
+    evs.forEach((e, i) => {
+      const beamable = !e.rest && e.len < Q && LEN_DUR[e.len] && !/^q|^h|^w/.test(LEN_DUR[e.len]);
+      if (!beamable){ flush(); return; }
+      const win = Math.floor(e.off / g);
+      if (cur.length && (Math.floor(evs[cur[0]].off / g) !== win || Math.floor((e.off + e.len - 1) / g) !== win)) flush();
+      if (Math.floor((e.off + e.len - 1) / g) !== win){ flush(); return; }
+      cur.push(i);
+    });
+    flush();
+    return out;
+  }
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  function svgEl(tag, attrs, parent){ const e = document.createElementNS(SVGNS, tag); Object.keys(attrs || {}).forEach(k => e.setAttribute(k, attrs[k])); if (parent) parent.appendChild(e); return e; }
+
+  function score(el, o){
+    const h = { el, o, meas:[], sys:[], chordEls:[], byId:{}, svg:null, layer:null, scale:1 };
+    h.noteEl = id => { const sn = h.byId[id]; if (!sn) return null; try { return (sn.getSVGElement && sn.getSVGElement()) || document.getElementById('vf-' + sn.getAttribute('id')); } catch(e){ return null; } };
+    h.mark = (id, cls) => { const e = h.noteEl(id); if (e) e.classList.add('nt-' + cls); };
+    h.unmark = (id, cls) => { const e = h.noteEl(id); if (e) e.classList.remove('nt-' + cls); };
+    h.xAt = (m, off) => {
+      const M = h.meas[m]; if (!M) return 0;
+      for (let i = 0; i < M.evs.length; i++){
+        const e = M.evs[i], nx = i + 1 < M.evs.length ? M.evs[i + 1].x : M.x + M.w - 10;
+        if (off >= e.off && off < e.off + e.len) return e.x + (nx - e.x) * (off - e.off) / e.len;
+      }
+      return M.evs.length ? M.x + M.w - 10 : M.nx;
+    };
+    h.at = (cx, cy) => {
+      if (!h.svg) return null;
+      let pt;
+      try { const p = h.svg.createSVGPoint(); p.x = cx; p.y = cy; pt = p.matrixTransform(h.svg.getScreenCTM().inverse()); }
+      catch(e){ const r = h.svg.getBoundingClientRect(); pt = { x:(cx - r.left) / h.scale, y:(cy - r.top) / h.scale }; }
+      const s = h.sys.findIndex(S => pt.y >= S.y0 && pt.y < S.y1);
+      if (s < 0) return null;
+      const ms = h.meas.map((M, i) => ({ M, i })).filter(x => x.M.sys === s);
+      let hit = ms.find(x => pt.x >= x.M.x && pt.x < x.M.x + x.M.w) || (pt.x < ms[0].M.x ? ms[0] : ms[ms.length - 1]);
+      const M = hit.M; let i = 0;
+      M.evs.forEach((e, j) => { if (pt.x >= e.x - 9) i = j; });
+      const pos = Math.round((h.sys[s].top + 40 - pt.y) / 5);
+      return { m:hit.i, i, off:M.evs[i] ? M.evs[i].off : 0, pos, x:pt.x, y:pt.y };
+    };
+    h.redraw = () => renderScore(h);
+    renderScore(h);
+    return h;
+  }
+
+  function renderScore(h){
+    const el = h.el, o = h.o, VF = vf();
+    el.classList.add('ntstaff', 'ntscore');
+    el.innerHTML = ''; h.meas = []; h.sys = []; h.chordEls = []; h.byId = {};
+    if (!VF){ el.innerHTML = '<p class="note">Notenschrift laden…</p>'; ready(() => { if (h.el.isConnected) renderScore(h); }); return; }
+    const clef = CLEFS[o.clef] ? o.clef : 'g', key = o.key || 'C', nKey = Math.abs(fifths(key));
+    const time = o.time || [4, 4], M = meter(time), sig = keySig(key);
+    const zoom = o.zoom || 1, W = Math.max(260, (o.width || el.clientWidth || 700) / zoom);
+    const measures = o.measures || [], chords = o.chords || [];
+    // ---- 1. breedtes schatten ----
+    const chordAt = {}; chords.forEach(c => { (chordAt[c.m] = chordAt[c.m] || []).push(c); });
+    const nat = measures.map((ms, mi) => {
+      if (!ms.evs.length || (ms.evs.length === 1 && ms.evs[0].full)) return Math.max(64, (chordAt[mi] || []).reduce((a, c) => a + c.text.length * 8 + 10, 0) + 24);
+      let w = 22; const acc = {};
+      ms.evs.forEach(e => {
+        let ew = 14 + 30 * Math.sqrt(e.len / Q);
+        if (/d$/.test(LEN_DUR[e.len] || '')) ew += 6;
+        if (!e.rest) e.ps.forEach(p => { const k = p.l + p.o, cur = acc[k] != null ? acc[k] : sig[p.l]; if (p.a !== cur){ ew += 9; acc[k] = p.a; } });
+        (chordAt[mi] || []).forEach(c => { if (c.off >= e.off && c.off < e.off + e.len) ew = Math.max(ew, c.text.length * 8 + 10); });
+        w += ew;
+      });
+      return w;
+    });
+    const headW = first => 38 + (nKey ? nKey * 10 + 8 : 0) + (first ? 30 : 0);
+    // ---- 2. regels vullen ----
+    const x0 = 2, avail = W - x0 - 2, systems = [];
+    let cur = null;
+    measures.forEach((ms, i) => {
+      const hw = !cur ? headW(i === 0) : 0;
+      if (cur && cur.sum + nat[i] > avail){ systems.push(cur); cur = null; }
+      if (!cur) cur = { ms:[], sum:headW(i === 0), head:headW(i === 0) };
+      cur.ms.push(i); cur.sum += nat[i];
+      void hw;
+    });
+    if (cur) systems.push(cur);
+    // ---- 3. hoogte per regel ----
+    let y = 0;
+    const sysOf = [];
+    systems.forEach((S, si) => {
+      let lo = 0, hi = 8;
+      S.ms.forEach(i => { sysOf[i] = si; measures[i].evs.forEach(e => { if (!e.rest) e.ps.forEach(p => { const q = pos(p, clef); lo = Math.min(lo, q); hi = Math.max(hi, q); }); }); });
+      const hasCh = S.ms.some(i => chordAt[i]);
+      const chordLift = Math.max(16, (hi - 8) * 5 + 20);
+      const above = Math.max(26, (hi - 8) * 5 + 18) + (hasCh ? 26 : 0) + (si ? 8 : 0);
+      const below = Math.max(24, -lo * 5 + 20);
+      const top = y + above;
+      h.sys.push({ y0:y, y1:top + 40 + below, top, chordY:top - chordLift - 4 });
+      y = top + 40 + below + 4;
+    });
+    const H = Math.max(80, Math.round(y + 4));
+    const renderer = new VF.Renderer(el, VF.Renderer.Backends.SVG);
+    renderer.resize(W, H);
+    const ctx = renderer.getContext();
+    try { ctx.setFillStyle('currentColor'); ctx.setStrokeStyle('currentColor'); } catch(e){}
+    const BT = VF.BarlineType || (VF.Barline && VF.Barline.type) || {};
+    const ties = []; let prev = null;   // prev = {sn, ev} van het vorige getekende event (voor overbindingen)
+    systems.forEach((S, si) => {
+      const last = si === systems.length - 1;
+      const content = S.sum - S.head, room = avail - S.head;
+      const fill = content / Math.max(1, room);
+      const f = !last || fill > .7 ? room / content : Math.min(1.25, room / content);
+      let x = x0;
+      S.ms.forEach((mi, k) => {
+        const ms = measures[mi], hw = k === 0 ? S.head : 0, w = Math.round(hw + nat[mi] * f);
+        const st = new VF.Stave(x, h.sys[si].top, w, { space_above_staff_ln:0 });
+        if (k === 0){ st.addClef(CLEFS[clef].vf); if (nKey){ try { st.addKeySignature(key); } catch(e){} } if (mi === 0) st.addTimeSignature(time[0] + '/' + time[1]); }
+        else if (BT.NONE != null) st.setBegBarType(BT.NONE);
+        if (mi === measures.length - 1 && o.end !== false && BT.END != null) st.setEndBarType(BT.END);
+        st.setContext(ctx).draw();
+        const geo = { x, w, top:h.sys[si].top, sys:si, nx:st.getNoteStartX(), evs:[] };
+        h.meas[mi] = geo;
+        // maatnummer aan het begin van een regel (behalve de eerste)
+        if (k === 0 && si > 0 && ms.num != null){ const t = svgEl('text', { x:x + 2, y:h.sys[si].top - 9, class:'ntnum' }); t.textContent = ms.num; geo.numEl = t; }
+        // noten
+        let barAcc = {};
+        const notes = ms.evs.map(e => {
+          let sn;
+          if (e.rest){
+            const full = e.full || (ms.evs.length === 1 && e.len >= ms.cap);
+            sn = new VF.StaveNote({ clef:CLEFS[clef].vf, keys:[vfKey(atPos(full ? 6 : 4, clef))], duration:(full ? 'w' : LEN_DUR[e.len] || 'q') + 'r', align_center:!!full });
+            if (!full && /d$/.test(LEN_DUR[e.len] || '')) VF.Dot.buildAndAttach([sn], { all:true });
+          } else {
+            const ps = e.ps.slice().sort((a, b) => midi(a) - midi(b));
+            e._ps = ps;
+            sn = new VF.StaveNote({ clef:CLEFS[clef].vf, keys:ps.map(vfKey), duration:LEN_DUR[e.len] || 'q', auto_stem:true });
+            if (/d$/.test(LEN_DUR[e.len] || '')) VF.Dot.buildAndAttach([sn], { all:true });
+            const tiedIn = prev && prev.ev.tie && !prev.ev.rest ? prev.ev._ps.map(midi) : [];
+            ps.forEach((p, j) => {
+              const bk = p.l + p.o, curA = barAcc[bk] != null ? barAcc[bk] : sig[p.l];
+              if (tiedIn.includes(midi(p))){ barAcc[bk] = p.a; return; }   // overgebonden: geen nieuw voorteken
+              if (p.a !== curA){ sn.addModifier(new VF.Accidental(accSym(p.a)), j); barAcc[bk] = p.a; }
+            });
+            if (prev && prev.ev.tie && !prev.ev.rest){
+              const a = [], b = [];
+              prev.ev._ps.forEach((p, j) => { const k2 = ps.findIndex(q => midi(q) === midi(p)); if (k2 >= 0){ a.push(j); b.push(k2); } });
+              if (a.length) ties.push({ from:prev.sn, to:sn, a, b, split:prev.sys !== si });
+            }
+          }
+          h.byId[e.id] = sn;
+          prev = { sn, ev:e, sys:si };
+          return sn;
+        });
+        if (notes.length){
+          const voice = new VF.Voice({ num_beats:time[0], beat_value:time[1] }).setMode(VF.Voice.Mode.SOFT);
+          voice.addTickables(notes);
+          const beams = [];
+          beamGroups(ms.evs, time).forEach(g => { try { beams.push(new VF.Beam(g.map(i => notes[i]), true)); } catch(e){} });
+          const fw = Math.max(20, x + w - st.getNoteStartX() - 14);
+          try { new VF.Formatter().joinVoices([voice]).format([voice], fw); } catch(e){ console.error(e); }
+          voice.draw(ctx, st);
+          beams.forEach(b => { try { b.setContext(ctx).draw(); } catch(e){} });
+          ms.evs.forEach((e, i) => { let ax = 0; try { ax = notes[i].getAbsoluteX(); } catch(er){} geo.evs.push({ id:e.id, x:ax, off:e.off, len:e.len }); });
+        }
+        x += w;
+      });
+    });
+    ties.forEach(t => {
+      try {
+        if (t.split){
+          new VF.StaveTie({ first_note:t.from, last_note:null, first_indices:t.a, last_indices:t.a }).setContext(ctx).draw();
+          new VF.StaveTie({ first_note:null, last_note:t.to, first_indices:t.b, last_indices:t.b }).setContext(ctx).draw();
+        } else new VF.StaveTie({ first_note:t.from, last_note:t.to, first_indices:t.a, last_indices:t.b }).setContext(ctx).draw();
+      } catch(e){}
+    });
+    const svg = el.querySelector('svg');
+    if (!svg) return;
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.removeAttribute('width'); svg.removeAttribute('height');
+    svg.style.width = Math.round(W * zoom) + 'px'; svg.style.height = Math.round(H * zoom) + 'px'; svg.style.maxWidth = 'none';
+    h.svg = svg; h.scale = zoom; h.size = { W, H };
+    // maatnummers (pas na het tekenen in de svg zetten)
+    h.meas.forEach(g => { if (g && g.numEl) svg.appendChild(g.numEl); });
+    // akkoordsymbolen boven de balk, op de juiste tijd in de maat
+    chords.forEach(c => {
+      const g = h.meas[c.m]; if (!g) return;
+      const cx = h.xAt(c.m, c.off), cy = h.sys[g.sys].chordY;
+      const t = svgEl('text', { x:cx, y:cy, class:'ntchord' + (c.bad ? ' bad' : '') }, svg);
+      t.textContent = c.text;
+      if (c.id != null) t.dataset.ch = c.id;
+      h.chordEls.push({ id:c.id, el:t, x:cx, y:cy });
+    });
+    h.layer = svgEl('g', { class:'ntlayer' }, svg);
+  }
+
+  return { ready, _loaded, parse, pool, KEYLIST, midi, code, spell, name, keySig, fifths, pos, atPos, draw, play, klavier, beats, score, beamGroups, meter, LEN_DUR, Q,
            CLEFS, LETTERS:LET, NAT, KEYS:Object.keys(MAJ) };
 })();

@@ -5,7 +5,7 @@
    Kruimelpad #crumbs:  ←  Home › Gehoor ▾ › Drone ▾ › Melodieën ▾
      ← = één niveau omhoog (onderdeel → overzicht van de oefening → categorie → home); elk stuk is klikbaar;
      ▾ opent een keuzelijst met de andere keuzes op dat niveau (de huidige gemarkeerd).
-   Routes: categorieën #bladmuziek (Repertoire = #partituren) #ritme #gehoortraining #notenlezen (view #catView); Notenlezen-oefeningen #noten #toonsoorten
+   Routes: categorieën #bladmuziek (Repertoire = #partituren, Transcriberen = #transcriberen) #ritme #gehoortraining #notenlezen (view #catView); Notenlezen-oefeningen #noten #toonsoorten
    #toonladders-blad #intervallen-blad #akkoorden-blad (alle in #ntView). #notenleer en #sheetmusic (oud) → #notenlezen.
    Nieuwe oefening: route in router.js + een regel in NAV hieronder. */
 
@@ -15,7 +15,8 @@ const Nav = (function(){
     // Bladmuziek staat bewust bovenaan (wens gebruiker 14-11): je echte stukken. Later komen hier meer onderdelen bij.
     // (Een categorie kan ook direct = route krijgen: dan opent de rij op het startscherm meteen die route.)
     { id:'bladmuziek', name:'Bladmuziek', icon:'🎼', desc:'Je eigen stukken: afspelen met meelopende cursor, passages oefenen op tempo, volledig scherm.', items:[
-      { route:'partituren', icon:'🗂️', name:'Repertoire', desc:'Je eigen stukken (MusicXML): afspelen met meelopende cursor, passages op tempo oefenen, volledig scherm.' }
+      { route:'partituren', icon:'🗂️', name:'Repertoire', desc:'Je eigen stukken (MusicXML): afspelen met meelopende cursor, passages op tempo oefenen, volledig scherm.' },
+      { route:'transcriberen', icon:'✍️', name:'Transcriberen', desc:'Je eigen noteneditor, zoals MuseScore: schrijf op wat je hoort, met akkoordsymbolen, hoor het terug en zet het in Repertoire.' }
     ]},
     { id:'ritme', name:'Ritme', icon:'🥁', desc:'Ritmes lezen, spelen en herkennen, van basis tot polyritmes.', items:[
       { route:'atlas', icon:'📖', name:'Atlas', desc:'Het naslagwerk: alle ritmes per categorie in notenschrift. Bekijk ze, luister ernaar en speel mee.' },

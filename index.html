@@ -21,6 +21,7 @@
 <link rel="stylesheet" href="css/metronoom.css">
 <link rel="stylesheet" href="css/notatie.css">
 <link rel="stylesheet" href="css/partituren.css">
+<link rel="stylesheet" href="css/transcriberen.css">
 <link rel="stylesheet" href="css/aantekeningen.css">
 <link rel="stylesheet" href="css/intonatie.css">
 <link rel="stylesheet" href="css/harmonie.css">
@@ -1500,6 +1501,99 @@
   </section>
 </div>
 
+<div id="trView" class="view tr-lib">
+  <section class="rpanel">
+    <div class="sechead pnlrow trhead"><h2>✍️ Transcriberen</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Je eigen noteneditor, zoals MuseScore: schrijf een melodie uit die je hoort of in je hoofd hebt, hoor hem meteen terug en zet hem met één klik in <b>Repertoire</b> om hem daar te oefenen (cursor, passages, metronoom). Druk op <b>N</b> (of ✎ Invoeren) en typ de noten met <b>A–G</b>; de voortekening telt vanzelf mee en de app kiest het octaaf het dichtst bij de vorige noot. De nootwaarde kies je met de cijfers zoals in MuseScore: <b>2</b> = 1/32, <b>3</b> = 1/16, <b>4</b> = 1/8, <b>5</b> = 1/4, <b>6</b> = 1/2, <b>7</b> = 1/1, <b>.</b> = punt, <b>0</b> = rust. Een noot die niet meer in de maat past, wordt vanzelf gesplitst en overgebonden; lege tellen worden rusten. <b>Shift+letter</b> zet een toon bij het akkoord, <b>Alt+2–8</b> een interval erboven. <b>↑ ↓</b> = halve toon, <b>Ctrl+↑ ↓</b> = octaaf, <b>+ − =</b> = ♯ ♭ ♮, <b>T</b> = overbinden, <b>R</b> = herhalen, <b>← →</b> = vorige/volgende (Ctrl = hele maat), <b>Delete</b> = rust, <b>Backspace</b> = in de invoerstand een stap terug. <b>Ctrl+K</b> = akkoordsymbool (zoals Am7, B♭maj7, F♯m7♭5, G7/B): <b>Spatie</b> = naar de volgende tel, <b>Tab</b> = volgende maat, <b>Enter</b> = klaar; klik op een akkoordsymbool om het te veranderen. Ook met de muis: klik in de invoerstand op de balk om daar een noot te zetten, of tik op het klavier. <b>Ctrl+Z</b> / <b>Ctrl+Y</b> = ongedaan maken / opnieuw, <kbd data-key="luister"></kbd> = afspelen/stop (vanaf de gekozen noot), <kbd data-key="metronoom"></kbd> = metronoom aan/uit, <b>Esc</b> = klaar met invoeren / stop. Alles wordt op dit apparaat bewaard en gaat mee in de back-up.</p></details><div class="ropts pnlkey"><button class="pnlbtn">🕹️ Instellingen</button></div></div>
+
+    <aside class="pnl" data-title="Transcriberen">
+      <div id="trDocNone" class="muted trpnote">Open of maak een stuk om sleutel, toonsoort en maatsoort te kiezen.</div>
+      <div id="trDocSet">
+        <div class="rlabel">Dit stuk</div>
+        <div class="ropts">
+          <label>Sleutel <select id="trClef"></select></label>
+          <label>Toonsoort <select id="trKey"></select></label>
+          <label>Maatsoort <select id="trTime"></select></label>
+          <label>Opmaat <select id="trPick"></select></label>
+          <label><span class="trUnit">♩</span> = <input type="number" id="trBpm" min="20" max="300" step="1"></label>
+        </div>
+        <p class="muted trpnote">Een andere maatsoort verdeelt de noten opnieuw over de maten (te lange noten worden overgebonden).</p>
+      </div>
+      <div class="rlabel">Afspelen</div>
+      <div class="ropts">
+        <label>Klank <select id="trInst"></select></label>
+        <label><input type="checkbox" id="trMetro"> Metronoom</label>
+        <label><input type="checkbox" id="trCi"> Eén maat aftellen</label>
+        <label><input type="checkbox" id="trChPlay"> Akkoordsymbolen meespelen</label>
+        <label><input type="checkbox" id="trHearChk"> Noot horen bij invoeren</label>
+      </div>
+      <div class="rlabel">Weergave</div>
+      <div class="ropts">
+        <label>Zoom <button id="trZoomOut" class="trsm">−</button><input type="range" id="trZoom" min="60" max="180" step="10"><button id="trZoomIn" class="trsm">＋</button> <span id="trZoomVal"></span></label>
+        <label><input type="checkbox" id="trKlavChk"> Klavier tonen</label>
+        <label>Namen op het klavier <select id="trNames"><option value="all">alle witte toetsen</option><option value="c">alleen C</option><option value="none">geen</option></select></label>
+      </div>
+    </aside>
+
+    <div class="trlib">
+      <div class="trnew">
+        <div class="rlabel">Nieuw stuk</div>
+        <div class="ropts">
+          <label class="trwide">Titel <input type="text" id="trNewTitle" maxlength="80" placeholder="bv. Thema uit … (op gehoor)"></label>
+          <label>Componist <input type="text" id="trNewComp" maxlength="60" placeholder="optioneel"></label>
+        </div>
+        <div class="ropts">
+          <label>Sleutel <select id="trNewClef"></select></label>
+          <label>Toonsoort <select id="trNewKey"></select></label>
+          <label>Maatsoort <select id="trNewTime"></select></label>
+          <label>Opmaat <select id="trNewPick"></select></label>
+          <label>Tempo <input type="number" id="trNewBpm" value="80" min="20" max="300"></label>
+          <label>Maten <input type="number" id="trNewN" value="8" min="1" max="400"></label>
+          <button id="trNewBtn" class="primary">＋ Maken</button>
+        </div>
+      </div>
+      <div class="rlabel">Je transcripties</div>
+      <div id="trList" class="trlist"></div>
+    </div>
+
+    <div class="tred">
+      <div class="trtop">
+        <button id="trBack" class="trsm tric" title="Terug naar je transcripties">←</button>
+        <div class="trtitles"><input type="text" id="trTitle" maxlength="80" aria-label="Titel"><input type="text" id="trComp" maxlength="60" placeholder="Componist" aria-label="Componist"></div>
+        <button id="trPlayBtn" class="primary" data-ktitle="Afspelen / stop vanaf de gekozen noot ({luister})">▶ Afspelen</button>
+        <span class="trtempo"><button data-d="-5">−5</button><button data-d="-1">−1</button><span class="trbpm"><span class="trUnit">♩</span> = <b id="trBpmVal">80</b></span><button data-d="1">+1</button><button data-d="5">+5</button></span>
+        <button id="trUndoBtn" class="trsm tric" title="Ongedaan maken (Ctrl+Z)">↶</button><button id="trRedoBtn" class="trsm tric" title="Opnieuw (Ctrl+Y)">↷</button>
+        <span class="trgap"></span>
+        <button id="trRepBtn" class="trsm">➜ Naar Repertoire</button>
+        <button id="trRepOpen" class="trsm" hidden title="Open dit stuk in Repertoire">Openen ›</button>
+        <button id="trXmlBtn" class="trsm" title="Opslaan als MusicXML-bestand (opent ook in MuseScore)">💾 MusicXML</button>
+        <button class="pnlbtn trsm tric" title="Instellingen">🕹️</button>
+      </div>
+      <div id="trMsg" class="trmsg"></div>
+      <div id="trSheetWrap" class="trsheetwrap"><div id="trSheet" class="trsheet"></div><input type="text" id="trChIn" class="trchin" hidden autocomplete="off" spellcheck="false" placeholder="Am7"></div>
+      <div class="trdock">
+        <div class="trpal">
+          <button id="trInBtn" class="trin" title="Invoerstand aan/uit (N)">✎ Invoeren</button>
+          <span id="trDurs" class="trdurs"></span>
+          <button id="trDot" class="trtool" title="Punt (.)"><b>·</b></button>
+          <button id="trRestBtn" class="trtool" title="Rust (0)">𝄽</button>
+          <span class="trpsep"></span>
+          <button data-acc="1" class="trtool" title="Kruis (+)">♯</button><button data-acc="-1" class="trtool" title="Mol (−)">♭</button><button data-acc="0" class="trtool" title="Herstellingsteken (=)">♮</button>
+          <button id="trUpBtn" class="trtool" title="Halve toon hoger (↑)">↑</button><button id="trDownBtn" class="trtool" title="Halve toon lager (↓)">↓</button>
+          <button id="trTieBtn" class="trtool" title="Overbinden (T)">⁀</button>
+          <span class="trpsep"></span>
+          <button id="trChBtn" class="trtool trtext" title="Akkoordsymbool (Ctrl+K)">C7</button>
+          <button id="trAddBtn" class="trtool trtext" title="Klavier: aan = tonen bij de gekozen noot zetten (akkoord), uit = nieuwe noot">＋ akkoord</button>
+          <button id="trDelBtn" class="trtool" title="Weghalen: wordt een rust (Delete)">⌫</button>
+          <span class="trpsep"></span>
+          <span class="trmeas" title="Aantal maten">Maten <button id="trMeasMinus" class="trtool">−</button><b id="trMeasN"></b><button id="trMeasPlus" class="trtool">＋</button></span>
+        </div>
+        <div id="trStatus" class="trstatus"></div>
+        <div id="trKlavRow" class="trklavrow"><div id="trKlav" class="trklav"></div></div>
+      </div>
+    </div>
+  </section>
+</div>
+
 <div id="ptView" class="view pt-lib">
   <section class="rpanel">
     <div class="sechead"><h2>🗂️ Repertoire</h2><details class="uitleg"><summary>Uitleg en toetsen</summary><p>Voeg je eigen stukken toe als MusicXML-bestand (.musicxml, .xml of .mxl): van MuseScore.com (gratis account, stukken met het PD-label), van IMSLP (soms een MusicXML-bijlage) of zelf omgezet uit een pdf met Audiveris of MuseScore. De app speelt het stuk af met je eigen klank en de noten die klinken lichten op. Kies een <b>oefenblok</b> (maat … t/m …). Klik op een noot of ergens op de balk: de cursor gaat daarheen en ▶ speelt vanaf daar; dubbelklik speelt precies die maat; met ⬚ Selecteer passage klik je de eerste en de laatste maat aan en zet <b>Lus</b> aan om het steeds te herhalen. Met <b>Focus</b> zie je alleen je blok, groot in beeld. Bewaar een blok als <b>passage</b> met een naam: per passage houdt de app de status (🆕 nieuw, 🔨 bezig, ✅ zit erin), je doeltempo en je schone tempo bij. <b>✓ Gelukt</b> legt het tempo vast en gaat een stap sneller, <b>✗ Te snel</b> een stap terug. <b>💬 Vraag aan Claude</b> opent een chat over het stuk: Claude krijgt de noten van je oefenblok, je tempo en je aantekeningen mee en geeft oefenadvies. <b>⛶ Volledig scherm</b> toont bladzijden (liggend 2 naast elkaar), met ⟳ draai je 90° om de laptop op zijn kant te zetten als een boek; bladeren met ◀ ▶ of de pijltjes, inzoomen met − en ＋. 🌓 wisselt de partituur tussen licht, donker en zoals de app. Alles staat in één balk bovenin: afspelen, tempo, oefenblok (maat … – …), Hele stuk, Focus, Lus, ⬚ selecteren, ＋ bewaren als passage, zoom, 💬, 🎬, ⇣ meescrollen, ⛶ volledig scherm en 🕹️ Instellingen (passages, metronoom en tempo-opbouw, zelf spelen, wat je hoort, cursor, licht/donker). Beweeg de muis over een knop om te zien wat hij doet. <b>Tijdens het spelen schuift de balk weg</b>, zodat de partituur het hele scherm heeft. Hij komt terug bij pauze, als je met de muis naar de bovenrand gaat of met ⌄ rechtsonder; daar staat ook ⏸. Uitzetten kan in 🕹️ → Weergave. Je stukken en hun instellingen worden op dit apparaat bewaard. Toetsen: <kbd data-key="luister"></kbd> of <kbd data-key="pauze"></kbd> = afspelen/pauze, <kbd data-key="begin"></kbd> = terug naar het begin van het blok, <kbd data-key="metronoom"></kbd> = metronoom aan/uit, <kbd data-key="sneller"></kbd> / <kbd data-key="langzamer"></kbd> = tempo ±1 (Shift ±5), <kbd data-key="volgende"></kbd> = ✓ Gelukt, <kbd data-key="vorige"></kbd> = ✗ Te snel (in volledig scherm bladeren de pijltjes), <kbd data-key="volscherm"></kbd> = volledig scherm aan/uit, <kbd data-key="claude"></kbd> = 💬 Vraag aan Claude openen/sluiten (meteen typen), <kbd data-key="stop"></kbd> = stop (in volledig scherm: sluiten).</p></details></div>
@@ -1725,6 +1819,7 @@
 <script src="js/vraag.js"></script>
 <script src="js/vraag-app.js"></script>
 <script src="js/opnames.js"></script>
+<script src="js/transcriberen.js"></script>
 <script src="js/nav.js"></script>
 <script src="js/bibliotheek.js"></script>
 <script src="js/versie.js"></script>
