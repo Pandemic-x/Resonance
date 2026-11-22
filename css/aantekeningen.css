@@ -49,11 +49,12 @@ html.dark .pabar button.primary{color:#15130f}
 
 .pastamps{flex-direction:column;align-items:stretch;gap:4px;overflow:visible;border-top:1px solid var(--line);padding-top:6px;width:min(720px, calc(100vw - 30px))}
 .patabs,.pagrid,.paopts{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;align-items:center}
-.patabs::-webkit-scrollbar,.pagrid::-webkit-scrollbar{display:none}
-.patabs button{height:28px;font-size:12.5px;font-weight:600;padding:0 10px;border-radius:14px;background:var(--soft)}
+.patabs::-webkit-scrollbar{display:none}
+.patabs button{height:28px;flex:0 0 auto;font-size:12.5px;font-weight:600;padding:0 10px;border-radius:14px;background:var(--soft)}
 .patabs button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 html.dark .patabs button.on{color:#15130f}
-.pagrid{min-height:42px;flex-wrap:nowrap}
+.patabs{flex-wrap:wrap;overflow:visible}            /* alle tabbladen altijd zichtbaar (scrollen opzij lukt niet met een muis) */
+.pagrid{min-height:42px;flex-wrap:wrap;overflow-x:hidden;overflow-y:auto;max-height:132px;scrollbar-width:thin}
 .pagrid button{height:40px;min-width:40px;border:1px solid var(--line);background:var(--paper)}
 .pagrid button span{white-space:nowrap}
 .pa-ital{font-family:"Times New Roman",Georgia,serif;font-style:italic;font-size:15px}
@@ -79,3 +80,4 @@ html.dark .patabs button.on{color:#15130f}
   .pabar button.primary{padding:0 9px}
   .pagrid button{height:38px;min-width:38px}
 }
+@media (max-width:560px){ .patabs button{height:26px;padding:0 8px;font-size:12px} .pagrid{max-height:126px} }

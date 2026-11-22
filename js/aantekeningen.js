@@ -651,6 +651,11 @@ const Ann = (function(){
     bar.innerHTML = barHTML();
     $('ptView').appendChild(bar);
     bar.addEventListener('pointerdown', e => e.stopPropagation());
+    // muiswiel/touchpad op een rij die opzij schuift (gereedschap op een smal scherm): omhoog/omlaag = opzij
+    bar.addEventListener('wheel', e => {
+      const r = e.target.closest('.patools'); if (!r || r.scrollWidth <= r.clientWidth || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      e.preventDefault(); r.scrollLeft += e.deltaY;
+    }, { passive:false });
     bar.addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
       const s = S();
