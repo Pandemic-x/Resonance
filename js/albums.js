@@ -8,7 +8,8 @@
      uit een album halen verwijdert niets. Verwijzingen naar weggehaalde stukken/passages worden opgeruimd (ptAlbClean).
    - Bibliotheek (ptLibRender, aangeroepen door ptRenderList): bovenaan de albums, daaronder de stukken die (nog) niet in
      een album staan (knop: ook de rest tonen). ▸ bij een stuk = zijn passages eronder; 📁 = in een album zetten
-     (bij een stuk: het hele stuk of al zijn passages als losse onderdelen). Album openen = lijst in jouw volgorde,
+     (bij een stuk: het hele stuk of al zijn passages als losse onderdelen). Album openen = lijst in jouw volgorde
+     (een heel stuk heeft daar ook ▸ met zijn blokken; die openen met het album als context),
      ↑ ↓ of slepen (laptop) om te sorteren, ✕ = uit het album.
    - Speler: geopend vanuit een album → ‹ › (#ptAlbNav) naar het vorige/volgende onderdeel, en "📁 naam · 3/24" onder de titel.
      ptOpen roept ptAlbOnOpen() aan; ptAlbPending wordt alleen gezet door ptAlbOpen, dus elke andere manier van openen
@@ -103,10 +104,13 @@ function ptLibRender(shown){
 function ptLibAlbum(a, el){
   const rows = a.items.map((r, k) => {
     const it = ptAlbPiece(r.id), p = ptAlbPas(it, r.p); if (!it) return '';
+    const ps = !p ? (it.pas || []) : [], open = ps.length && ptLibOpenSet.has('a:' + it.id);
+    const subs = open ? '<div class="ptsubs ptalbsubs">' + ps.map(x => `<div class="ptrow ptsub"><button class="ptopen" data-k="${k}" data-p="${x.id}">${ptLibItemHTML(it, x)}</button></div>`).join('') + '</div>' : '';
     return `<div class="ptrow ptalbit" draggable="true" data-k="${k}"><span class="ptnum">${k + 1}</span>
+      ${ps.length ? `<button class="ptexp" data-x="a:${it.id}" title="${open ? 'Blokken verbergen' : 'Blokken (passages) tonen'}">${open ? '▾' : '▸'}</button>` : ''}
       <button class="ptopen" data-k="${k}">${ptLibItemHTML(it, p, true)}</button>
       <span class="ptsort"><button class="ptup" data-k="${k}" title="Omhoog"${k ? '' : ' disabled'}>↑</button><button class="ptdn" data-k="${k}" title="Omlaag"${k < a.items.length - 1 ? '' : ' disabled'}>↓</button></span>
-      <button class="ptout" data-k="${k}" title="Uit dit album halen (het stuk en de passage blijven bestaan)">✕</button></div>`;
+      <button class="ptout" data-k="${k}" title="Uit dit album halen (het stuk en de passage blijven bestaan)">✕</button></div>` + subs;
   }).join('');
   el.innerHTML = `<div class="ptalbhead">
       <button class="ptsmall" id="ptAlbBack">← Alle stukken</button>
@@ -117,10 +121,10 @@ function ptLibAlbum(a, el){
       : '<p class="muted ptempty">Dit album is nog leeg. Ga naar <b>← Alle stukken</b> en tik op 📁 bij een stuk of een passage (▸ toont de passages van een stuk). Of voeg nu een stuk toe: dat komt meteen in dit album.</p>');
   if (ptLibRen){ const i = $('ptAlbRenIn'); i.focus(); i.select(); }
 }
-function ptAlbOpen(aid, k){
+function ptAlbOpen(aid, k, pas){   // pas = een blok van een heel stuk in het album (▸): album blijft de context voor ‹ ›
   const a = ptAlbGet(aid), r = a && a.items[k]; if (!r) return;
   ptAlbPending = { aid, k };
-  ptOpen(r.id, r.p || undefined);
+  ptOpen(r.id, r.p || pas || undefined);
 }
 function ptAlbOnOpen(){   // door ptOpen aangeroepen nadat de titel gezet is
   ptAlbCtx = ptAlbPending; ptAlbPending = null;
@@ -150,6 +154,7 @@ function ptLibInit(){
   el.addEventListener('click', async e => {
     const b = e.target.closest('button'); if (!b) return;
     const a = ptLibAlb && ptAlbGet(ptLibAlb);
+    if (b.dataset.x){ const id = b.dataset.x; if (ptLibOpenSet.has(id)) ptLibOpenSet.delete(id); else ptLibOpenSet.add(id); ptRenderList(); return; }
     // albumweergave
     if (b.id === 'ptAlbBack'){ ptLibAlb = null; ptLibRen = false; ptRenderList(); return; }
     if (b.id === 'ptAlbRen'){ ptLibRen = true; ptRenderList(); return; }
@@ -158,7 +163,7 @@ function ptLibInit(){
       if (!b.classList.contains('arm')){ b.classList.add('arm'); b.textContent = 'Zeker? (stukken blijven)'; setTimeout(() => { if (b.isConnected){ b.classList.remove('arm'); b.textContent = 'Album weghalen'; } }, 4000); return; }
       ptAlbs = ptAlbs.filter(x => x !== a); ptAlbSave(); ptLibAlb = null; ptRenderList(); return;
     }
-    if (a && b.classList.contains('ptopen') && b.dataset.k != null){ ptAlbOpen(a.id, +b.dataset.k); return; }
+    if (a && b.classList.contains('ptopen') && b.dataset.k != null){ ptAlbOpen(a.id, +b.dataset.k, b.dataset.p); return; }
     if (a && (b.classList.contains('ptup') || b.classList.contains('ptdn'))){
       const k = +b.dataset.k, j = k + (b.classList.contains('ptup') ? -1 : 1);
       if (j < 0 || j >= a.items.length) return;
@@ -171,7 +176,6 @@ function ptLibInit(){
     if (b.id === 'ptAlbNewNo'){ ptLibNewAlb = false; ptRenderList(); return; }
     if (b.id === 'ptAlbNewOk'){ const v = $('ptAlbNewIn').value.trim(); ptLibNewAlb = false; if (v){ const n = ptAlbNew(v); ptLibAlb = n.id; } ptRenderList(); return; }
     if (b.id === 'ptLibAllBtn'){ ptLibAll = !ptLibAll; ptRenderList(); return; }
-    if (b.dataset.x){ const id = b.dataset.x; if (ptLibOpenSet.has(id)) ptLibOpenSet.delete(id); else ptLibOpenSet.add(id); ptRenderList(); return; }
     if (b.classList.contains('ptaddalb')){ ptLibMenu = ptLibMenu === b.dataset.k ? null : b.dataset.k; ptLibMenuMode = 'stuk'; ptRenderList(); return; }
     if (b.dataset.mode){ ptLibMenuMode = b.dataset.mode; ptRenderList(); return; }
     const menu = b.closest('.ptalbmenu');

@@ -531,3 +531,6 @@ html.dark .ptfsbar #ptFsFocus.on{color:#15130f}
 .ptalb small{overflow-wrap:anywhere}
 .ptalbmenu{min-width:0}
 .ptalbnewin{flex-wrap:wrap}
+.ptalbsubs{margin-left:72px}
+.ptalbit .ptexp{flex:0 0 auto}
+@media (max-width:560px){ .ptalbsubs{margin-left:40px} }
