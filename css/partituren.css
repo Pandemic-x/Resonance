@@ -540,7 +540,7 @@ html.dark .ptfsbar #ptFsFocus.on{color:#15130f}
 .ptsemo{border:1px solid transparent;background:transparent;font-size:20px;line-height:1;padding:2px 4px;border-radius:8px;cursor:pointer;color:var(--ink)}
 .ptsemo.empty{font-size:15px;color:var(--muted);border:1px dashed var(--line);opacity:.75}
 .ptsemo:hover{border-color:var(--accent)}
-.ptemopop{position:absolute;z-index:50;top:42px;left:8px;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.25);padding:8px;width:min(330px, calc(100vw - 40px))}
+.ptemopop{position:fixed;z-index:10060;top:42px;left:8px;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.25);padding:8px;width:min(330px, calc(100vw - 40px))}
 .ptemogrid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px}
 .ptemogrid button{font-size:20px;background:transparent;border:1px solid transparent;border-radius:8px;padding:4px 0;cursor:pointer}
 .ptemogrid button:hover,.ptemogrid button.on{border-color:var(--accent);background:var(--accent-soft, var(--soft))}

@@ -74,6 +74,7 @@ let ptLibLoad = null, ptOsmd = null, ptOsmdFor = null, ptOff = 12, ptCalibrated 
 let ptList = [], ptCur = null, ptSteps = [], ptMeasures = [], ptMStarts = [], ptBeats = [], ptStaves = 1;
 let ptEls = [], ptSrc = '', ptKeyNow = '', ptGeo = null, ptRaf = 0;
 let ptPausedW = null, ptSel = null, ptDragJust = false, ptElStep = [], ptPausedBy = '', ptFsSc = 1, ptFlip = null, ptWNorm = 0, ptFsWasReal = false, ptFsOn = false, ptPages = [], ptFsP = 0, ptFsN = 1, ptFsCont = false;
+let ptNewEmo = '';   // emoji voor het blok dat je nu maakt (＋ → ☺)
 let ptRun = null, ptPausedAt = null, ptHiOK = true, ptSaveT = null, ptW = 0, ptInited = false;
 const ptMem = [];   // terugval als IndexedDB niet werkt (dan alleen deze sessie)
 
@@ -1462,9 +1463,13 @@ function ptPasLoad(id){
 function ptPasSaveNew(){
   const naam = ($('ptPasNameIn').value || '').trim() || ('Maat ' + ptCur.s.from + '–' + ptCur.s.to);
   const p = { id:'q' + Date.now().toString(36), naam, from:ptCur.s.from, to:ptCur.s.to, status:'nieuw', bpm:ptCur.s.bpm, ok:0, doel:0, secs:0, made:ptToday(), last:null };
+  if (ptNewEmo) p.emo = ptNewEmo;   // emoji gekozen bij het maken (☺ naast het naamveld)
+  ptNewEmo = '';
   ptCur.pas = (ptCur.pas || []).concat(p); ptCur.pcur = p.id;
   $('ptPasName').hidden = true; $('ptPasNew').hidden = false;
+  if ($('ptEmoPop')) $('ptEmoPop').hidden = true;
   ptSaveCur(); ptPasUI();
+  if (p.emo && typeof Ann !== 'undefined') Ann.ensureMarker(p);   // emoji meteen bij het begin van het blok in de partituur
 }
 function ptPasOk(){   // ✓ Gelukt: schoon tempo vastleggen en een stap sneller
   const p = ptPasCur(), s = ptCur.s;
@@ -1915,25 +1920,40 @@ function ptInit(){
   $('ptPasNameIn').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') ptPasSaveNew(); else if (e.key === 'Escape') $('ptPasCancel').click(); });
   $('ptStripStatus').querySelectorAll('button').forEach(b => b.onclick = () => { b.blur(); const p = ptPasCur(); if (p){ p.status = b.dataset.st; ptSaveCur(); ptPasUI(); } });
   $('ptStripDoel').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') $('ptStripDoel').blur(); });
-  $('ptStripDoel').onchange = () => { const p = ptPasCur(); if (!p) return; const v = Math.round(+$('ptStripDoel').value || 0); p.doel = v >= 20 ? Math.min(300, v) : 0; ptSaveCur(); ptPasUI(); };
-  // eigen emoji bij een blok (passage): alleen als je er een kiest; "Geen" haalt hem weg
+  // eigen emoji bij een blok (passage): alleen als je er een kiest; "Geen" haalt hem weg.
+  // Twee plekken: ☺ in de blokbalk (bestaand blok) en ☺ naast het naamveld bij ＋ (nieuw blok, ptNewEmo; bij Opslaan gezet).
   const EMO = ['🎯', '🔥', '⭐', '💪', '🐢', '🐇', '🎻', '🎹', '🎵', '⚠️', '❤️', '🧠', '👂', '✋', '🌊', '🏔️', '🌙', '☀️', '🎭', '✨', '🔁', '📌', '🚀', '🍀'];
   const emoPop = $('ptEmoPop');
-  const emoSet = v => { const p = ptPasCur(); if (!p) return; v = (v || '').trim(); if (v) p.emo = [...v].slice(0, 4).join(''); else delete p.emo; ptSaveCur(); ptPasUI(); emoPop.hidden = true;
+  document.body.appendChild(emoPop);   // vast in beeld naast de knop die hem opende (blokbalk of naamveld)
+  let emoFor = 'cur';
+  const emoBtnUI = () => { const b = $('ptPasEmo'); if (b){ b.textContent = ptNewEmo || '☺'; b.classList.toggle('empty', !ptNewEmo); } };
+  const emoSet = v => {
+    v = (v || '').trim(); const e = v ? [...v].slice(0, 4).join('') : '';
+    emoPop.hidden = true;
+    if (emoFor === 'new'){ ptNewEmo = e; emoBtnUI(); const n = $('ptPasNameIn'); if (n) n.focus(); return; }
+    const p = ptPasCur(); if (!p) return;
+    if (e) p.emo = e; else delete p.emo; ptSaveCur(); ptPasUI();
     if (typeof Ann !== 'undefined'){ if (p.emo) Ann.ensureMarker(p); else Ann.dropMarkers(p.id); }   // emoji-blok ↔ emoji in de partituur
   };
-  $('ptStripEmo').onclick = e => {
-    e.currentTarget.blur();
-    if (!emoPop.hidden){ emoPop.hidden = true; return; }
-    const p = ptPasCur(); if (!p) return;
-    emoPop.innerHTML = '<div class="ptemogrid">' + EMO.map(x => `<button data-e="${x}" class="${p.emo === x ? 'on' : ''}">${x}</button>`).join('') + '</div>' +
-      '<div class="ptemorow"><input type="text" id="ptEmoIn" maxlength="8" placeholder="of typ/plak een emoji" value="' + ptEsc(p.emo && !EMO.includes(p.emo) ? p.emo : '') + '"><button data-ok="1">OK</button><button data-none="1">Geen emoji</button></div>';
+  const emoOpen = (btn, mode) => {
+    if (!emoPop.hidden && emoFor === mode){ emoPop.hidden = true; return; }
+    emoFor = mode;
+    const curE = mode === 'new' ? ptNewEmo : (ptPasCur() || {}).emo;
+    if (mode === 'cur' && !ptPasCur()) return;
+    emoPop.innerHTML = '<div class="ptemogrid">' + EMO.map(x => `<button data-e="${x}" class="${curE === x ? 'on' : ''}">${x}</button>`).join('') + '</div>' +
+      '<div class="ptemorow"><input type="text" id="ptEmoIn" maxlength="8" placeholder="of typ/plak een emoji" value="' + ptEsc(curE && !EMO.includes(curE) ? curE : '') + '"><button data-ok="1">OK</button><button data-none="1">Geen emoji</button></div>';
     emoPop.hidden = false;
+    const r = btn.getBoundingClientRect(), w = emoPop.offsetWidth, h = emoPop.offsetHeight;
+    emoPop.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left)) + 'px';
+    emoPop.style.top = (r.bottom + 6 + h > window.innerHeight ? Math.max(8, r.top - h - 6) : r.bottom + 6) + 'px';
   };
+  $('ptStripEmo').onclick = e => { e.currentTarget.blur(); emoOpen(e.currentTarget, 'cur'); };
+  $('ptPasEmo').onclick = e => { emoOpen(e.currentTarget, 'new'); };
+  $('ptPasEmo').addEventListener('mousedown', e => e.preventDefault());   // naamveld houdt focus
   emoPop.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.e) emoSet(b.dataset.e); else if (b.dataset.ok) emoSet($('ptEmoIn').value); else if (b.dataset.none) emoSet(''); });
   emoPop.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') emoSet($('ptEmoIn').value); else if (e.key === 'Escape') emoPop.hidden = true; });
-  document.addEventListener('pointerdown', e => { if (!emoPop.hidden && !emoPop.contains(e.target) && e.target !== $('ptStripEmo')) emoPop.hidden = true; });
-  $('ptNotesBtn').onclick = e => { e.currentTarget.blur(); const box = $('ptNotesBox'); box.hidden = !box.hidden; ptPasUI(); if (!box.hidden) $('ptNotes').focus(); };
+  document.addEventListener('pointerdown', e => { if (!emoPop.hidden && !emoPop.contains(e.target) && e.target !== $('ptStripEmo') && e.target !== $('ptPasEmo')) emoPop.hidden = true; });
+  $('ptPasNew').addEventListener('click', () => { ptNewEmo = ''; emoBtnUI(); });
   $('ptNotesPrev').onclick = () => $('ptNotesBtn').click();
   $('ptNotes').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape') $('ptNotesBtn').click(); });
   $('ptNotes').addEventListener('input', () => { const p = ptPasCur(); if (!p) return; p.notes = $('ptNotes').value; ptSaveCur(); });
