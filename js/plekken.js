@@ -7,11 +7,12 @@
      eerste maat; "Geen emoji" → Ann.dropMarkers(id). Een blok verwijderen haalt ook zijn markeringen weg.
      De markering toont altijd p.emo (de passage is de bron); ✅ Zit erin = grijze markering.
    - Knop #ptPlekBtn "▦ Blokken n" (n = blokken die nog niet ✅ zijn) → #ptPlekBox: ‹ › vorige/volgende blok, ＋ nieuw blok
-     van het huidige oefenblok, lijst op maatvolgorde (tik = laden in Focus), ✓/↺ = ✅ Zit erin / weer Bezig, 🗑 (twee keer).
+     van het huidige oefenblok, lijst op maatvolgorde (tik = laden in Focus), ✎ = naam en maten aanpassen (← begin → / ← eind →,
+     Enter = opslaan; is het blok geladen, dan meteen opnieuw getekend), ✓/↺ = ✅ Zit erin / weer Bezig, ✕ (twee keer).
    - ptPlekUI (oude naam, aangeroepen door Ann.render) = ptBlkUI; ptPasUI roept ptBlkUI ook aan. */
 
 const PT_BLK_NAME = { '⚠️':'Let op', '👓':'Kijk uit', '○':'Omcirkeld', '↑':'Te laag', '↓':'Te hoog', '🔁':'Herhalen' };
-let ptBlkOpen = false, ptBlkShowDone = false;
+let ptBlkOpen = false, ptBlkShowDone = false, ptBlkEdit = null;   // ptBlkEdit = id van het blok dat je met ✎ aanpast
 function ptBlkNew(it){   // markering geplaatst → nieuw blok rond die maat
   const st = it && it.a && ptSteps[it.a.i]; if (!st || !ptCur) return null;
   const mn = st.mn, a = Math.max(ptMinM(), mn - 1), b = Math.min(ptMaxM(), mn + 1);
@@ -35,8 +36,15 @@ function ptBlkUI(){
   box.hidden = !ptBlkOpen;
   if (box.hidden) return;
   const cur = ptPasCur(), s = ptCur.s;
-  const row = p => `<div class="ptplek${p.status === 'zit' ? ' done' : ''}${cur && cur.id === p.id ? ' here' : ''}">
+  const edit = p => `<div class="ptblkedit" data-id="${p.id}">
+      <label>Naam <input type="text" class="ptbe-n" maxlength="60" value="${ptEsc(p.naam)}"></label>
+      <label>Maat <input type="number" class="ptbe-a" min="${ptMinM()}" max="${ptMaxM()}" value="${p.from}"></label>
+      <label>t/m <input type="number" class="ptbe-b" min="${ptMinM()}" max="${ptMaxM()}" value="${p.to}"></label>
+      <span class="ptbe-q"><button data-q="a-1" title="Eén maat eerder beginnen">← begin</button><button data-q="a+1" title="Eén maat later beginnen">begin →</button><button data-q="b-1" title="Eén maat eerder stoppen">← eind</button><button data-q="b+1" title="Eén maat later stoppen">eind →</button></span>
+      <span class="ptbe-btns"><button class="primary" data-save="${p.id}">Opslaan</button><button data-cancel="1">Annuleren</button></span></div>`;
+  const row = p => ptBlkEdit === p.id ? edit(p) : `<div class="ptplek${p.status === 'zit' ? ' done' : ''}${cur && cur.id === p.id ? ' here' : ''}">
       <button class="ptplekgo" data-go="${p.id}" title="Laden: maat ${p.from}–${p.to} in Focus"><span class="ptplekic">${p.emo ? ptEsc(p.emo) : PT_STATUS[p.status] ? PT_STATUS[p.status].i : ''}</span><b>${ptEsc(p.naam)}</b><small>${ptEsc(ptPasMeta(p))}</small></button>
+      <button class="ptplekedit" data-edit="${p.id}" title="Maten of naam aanpassen">✎</button>
       <button class="ptplekok" data-ok="${p.id}" title="${p.status === 'zit' ? 'Weer op 🔨 Bezig' : '✅ Zit erin'}">${p.status === 'zit' ? '↺' : '✓'}</button>
       <button class="ptplekdel" data-del="${p.id}" title="Blok verwijderen (twee keer tikken)">✕</button></div>`;
   const k = cur ? L.findIndex(p => p.id === cur.id) : -1;
@@ -58,6 +66,24 @@ function ptBlkInit(){
     b.blur();
     if (b.dataset.more){ ptBlkShowDone = !ptBlkShowDone; ptBlkUI(); return; }
     if (b.dataset.new){ $('ptPasNew').click(); return; }
+    if (b.dataset.cancel){ ptBlkEdit = null; ptBlkUI(); return; }
+    if (b.dataset.q){   // ← begin / begin → / ← eind / eind →
+      const f = b.closest('.ptblkedit'), A = f.querySelector('.ptbe-a'), B = f.querySelector('.ptbe-b');
+      const [w, d] = [b.dataset.q[0], +b.dataset.q.slice(1)], inp = w === 'a' ? A : B;
+      inp.value = Math.max(ptMinM(), Math.min(ptMaxM(), (+inp.value || 0) + d));
+      if (+A.value > +B.value){ if (w === 'a') B.value = A.value; else A.value = B.value; }
+      return;
+    }
+    if (b.dataset.save){
+      const f = b.closest('.ptblkedit'), p = (ptCur.pas || []).find(x => x.id === b.dataset.save); if (!p) return;
+      let a = Math.round(+f.querySelector('.ptbe-a').value), z = Math.round(+f.querySelector('.ptbe-b').value);
+      a = Math.max(ptMinM(), Math.min(ptMaxM(), a || p.from)); z = Math.max(a, Math.min(ptMaxM(), z || p.to));
+      p.naam = (f.querySelector('.ptbe-n').value || '').trim().slice(0, 60) || p.naam; p.from = a; p.to = z;
+      ptBlkEdit = null; ptSaveCur();
+      if (ptCur.pcur === p.id) ptPasLoad(p.id); else ptPasUI();   // geladen blok: meteen de nieuwe maten tekenen
+      return;
+    }
+    if (b.dataset.edit){ ptBlkEdit = b.dataset.edit; ptBlkUI(); const n = box.querySelector('.ptbe-a'); if (n) n.focus(); return; }
     if (b.dataset.nav){
       const L = ptBlkSorted(), cur = ptPasCur(); if (!L.length) return;
       const k = cur ? L.findIndex(p => p.id === cur.id) : -1, j = k < 0 ? (+b.dataset.nav > 0 ? 0 : L.length - 1) : k + +b.dataset.nav;
@@ -74,4 +100,14 @@ function ptBlkInit(){
     }
   });
 }
+function ptBlkKeys(){
+  const box = $('ptPlekBox'); if (!box || box._keys) return; box._keys = true;
+  box.addEventListener('keydown', e => {
+    if (!e.target.closest('.ptblkedit')) return;
+    e.stopPropagation();   // typen in het formulier: geen sneltoetsen van de speler
+    if (e.key === 'Enter'){ e.preventDefault(); const s = box.querySelector('[data-save]'); if (s) s.click(); }
+    else if (e.key === 'Escape'){ ptBlkEdit = null; ptBlkUI(); }
+  });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { ptBlkInit(); ptBlkKeys(); }); else ptBlkKeys();
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ptBlkInit); else ptBlkInit();
