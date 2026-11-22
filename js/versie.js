@@ -5,8 +5,9 @@
    (wens gebruiker: gewoon doortellen 1.7 → 1.8 → 1.9 → 1.10 …; het eerste getal alleen omhoog bij een
    echt grote update, zoals het gedeelde notensysteem). Zelfde nummer in artifact én website. */
 const Versie = (function(){
-  const VERSIE = '1.18';
+  const VERSIE = '1.19';
   const NIEUW = [
+    ['1.19', '22-11', 'Aantekeningen: 🔤 tekstvakjes en 🗂️ lagen (bv. vingerzetting, streken) die je per stuk aan en uit zet'],
     ['1.18', '22-11', 'Albums: bij een heel stuk in een album klap je met ▸ zijn blokken (passages) uit en open je ze direct'],
     ['1.17', '22-11', 'Repertoire: 📁 albums voor stukken en passages, zelf sorteren, passages per stuk uitklappen, ‹ › naar het volgende onderdeel'],
     ['1.16', '22-11', 'Aantekeningen: alle stempel-tabbladen en stempels zijn zichtbaar zonder opzij te scrollen (ook met een muis)'],

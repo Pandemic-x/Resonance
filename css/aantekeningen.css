@@ -81,3 +81,21 @@ html.dark .patabs button.on{color:#15130f}
   .pagrid button{height:38px;min-width:38px}
 }
 @media (max-width:560px){ .patabs button{height:26px;padding:0 8px;font-size:12px} .pagrid{max-height:126px} }
+
+/* stap 3: tekstvakjes en lagen */
+.painput[data-tool="text"]{cursor:text}
+.patxted{position:absolute;z-index:8;font-family:Arial,Helvetica,sans-serif;font-weight:500;line-height:1.2;padding:2px 4px;margin:0;
+  border:1.5px dashed var(--accent);border-radius:6px;background:color-mix(in srgb, var(--paper) 88%, transparent);resize:none;overflow:hidden;outline:none;white-space:pre;min-width:60px}
+.patxted.pa-ink{color:var(--ink)}
+.palayers{flex-wrap:wrap;gap:6px;border-top:1px solid var(--line);padding-top:6px;overflow:visible;width:min(720px, calc(100vw - 30px))}
+.palabel{font-size:12px;color:var(--muted);margin-right:2px}
+.palay{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper)}
+.palay.hid{opacity:.55}
+.palay button{border-radius:0;height:32px;min-width:30px;font-size:14px}
+.palay .palsel{font-size:13px;font-weight:600;padding:0 10px;gap:5px}
+.palay .palsel.on{background:color-mix(in srgb, var(--accent) 18%, transparent);border-color:transparent}
+.palay .palsel small{color:var(--muted);font-weight:500;font-size:11px}
+.palay button.arm{color:var(--accent);font-size:12px;padding:0 8px}
+.palren{height:32px;border:0;border-right:1px solid var(--line);padding:0 8px;width:130px;background:var(--paper);color:var(--ink);font:inherit;font-size:13px}
+.palayers > button{height:32px;font-size:13px;font-weight:600;border:1px dashed var(--line)}
+@media (max-width:560px){ .palayers{gap:4px} .palay button{height:30px;min-width:28px;font-size:13px} .palay .palsel{padding:0 7px;font-size:12.5px} .palabel{width:100%} }

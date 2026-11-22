@@ -13,22 +13,32 @@
        stempel {id, t:'s', k (stempel-id of 'c:<eigen tekst>'), a, c (kleur), z (grootte)}
        pen     {id, t:'p', a (= eerste punt), p:[[dx, dy, w]…] (t.o.v. a, in sp; w = dikte-factor uit de pendruk), c, hl (markeerstift)}
        boog    {id, t:'h', k:'cresc'|'dim'|'slur', a, b (b.st/b.dy = die van a, zodat hij recht blijft), c}
+       tekst   {id, t:'x', v (tekst, \n = nieuwe regel), a (= linkerkant, midden van de eerste regel), c, z}   (stap 3, v1.19)
+     Elk item heeft l = laag-id (zonder l of met een onbekende laag: de eerste laag). Lagen zijn algemeen (ptG.ann.layers),
+     welke lagen verborgen zijn hoort bij het stuk (ptCur.annHide = [laag-id's]). Nieuwe items komen in ptG.ann.layer.
    - Eigen SVG-laag #paLayer in #ptSheet (boven de noten, onder de cursorlijn), niet in de cache van de tekening.
      Hertekenen via Ann.redraw() (aangeroepen door ptAfterDraw en ptFsLayout in partituren.js).
    - Tekenmodus (✏️ in de balk of in volledig scherm): invoerlaag #paInput over de partituur; werkbalk #paBar onderaan
      (in volledig scherm verhuist hij mee naar #ptFsRot). ✋ = bladeren/cursor gebruiken zonder de modus te verlaten.
      Een stylus (pointerType 'pen') tekent ook buiten de tekenmodus (instelling ptG.ann.stylus); vingers scrollen dan.
-   - Algemene keuzes in ptG.ann (localStorage 'partituren-settings'): show, tool, color, stamp, tab, fav, custom, size, stylus. */
+   - Algemene keuzes in ptG.ann (localStorage 'partituren-settings'): show, tool, color, stamp, tab, fav, custom, size, stylus, layers, layer. */
 
 const Ann = (function(){
   const NS = 'http://www.w3.org/2000/svg';
-  const DEF = { show:true, tool:'pen', color:'ink', stamp:'down', tab:'', fav:[], custom:[], size:1, stylus:true };
+  const DEF = { show:true, tool:'pen', color:'ink', stamp:'down', tab:'', fav:[], custom:[], size:1, stylus:true, layer:'l1',
+    layers:[{ id:'l1', n:'Algemeen' }, { id:'l2', n:'Vingerzetting' }, { id:'l3', n:'Streken' }, { id:'l4', n:'Oefen-notities' }] };
   function S(){
     if (!ptG.ann || typeof ptG.ann !== 'object') ptG.ann = {};
     const a = ptG.ann;
-    for (const k in DEF) if (a[k] === undefined) a[k] = Array.isArray(DEF[k]) ? DEF[k].slice() : DEF[k];
+    for (const k in DEF) if (a[k] === undefined) a[k] = Array.isArray(DEF[k]) ? JSON.parse(JSON.stringify(DEF[k])) : DEF[k];
+    if (!Array.isArray(a.layers) || !a.layers.length) a.layers = JSON.parse(JSON.stringify(DEF.layers));
+    if (!a.layers.some(l => l.id === a.layer)) a.layer = a.layers[0].id;
     return a;
   }
+  /* ---------- lagen ---------- */
+  const layerOf = it => { const L = S().layers; return L.some(l => l.id === it.l) ? it.l : L[0].id; };
+  const hiddenSet = () => new Set((ptCur && ptCur.annHide) || []);
+  const shown = it => !hiddenSet().has(layerOf(it));
   const save = () => ptSaveG();
   const r3 = v => Math.round(v * 1000) / 1000;
   const uid = () => 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -331,8 +341,17 @@ const Ann = (function(){
     } else if (it.t === 'h'){
       const A = pos(it.a), B = pos(it.b); if (!A || !B){ g.remove(); return null; }
       spanShape(g, it.k, A, B, it.a.dy);
+    } else if (it.t === 'x'){
+      const p = pos(it.a); if (!p || !it.v){ g.remove(); return null; }
+      g._sp = p.sp; drawText(g, it.v, p.x, p.y, p.sp, it.z || 1);
     } else { g.remove(); return null; }
     return g;
+  }
+  const TXT_Z = 1.5;   // tekstgrootte in balkruimtes
+  function drawText(g, v, x, y, sp, z){
+    const fs = TXT_Z * sp * z;
+    const t = el('text', { x:r3(x), y:r3(y), 'font-size':r3(fs), 'font-family':SANS, 'font-weight':500, 'dominant-baseline':'central', fill:'currentColor' }, g);
+    String(v).split('\n').forEach((line, j) => { const ts = el('tspan', { x:r3(x), dy:j ? '1.2em' : '0' }, t); ts.textContent = line || ' '; });
   }
   let raf = 0, root = null, draft = null;
   function redraw(){ if (raf) return; raf = requestAnimationFrame(() => { raf = requestAnimationFrame(render); }); }
@@ -352,13 +371,14 @@ const Ann = (function(){
     G = null; geo();
     const r = layerRoot();
     const items = ptCur.ann || [];
-    items.filter(it => it.hl).concat(items.filter(it => !it.hl)).forEach(it => { if (!(mv && mv.it === it)) drawItem(it, r); });
+    const vis = items.filter(shown);
+    vis.filter(it => it.hl).concat(vis.filter(it => !it.hl)).forEach(it => { if (!(mv && mv.it.id === it.id) && !(ed && ed.id === it.id)) drawItem(it, r); });
     draft = el('g', { class:'pa-draft' }, r);
     if (mv) drawMove();
   }
 
   /* ---------- bewerken ---------- */
-  let active = false, undo = [], redo = [], forId = null, cur = null, mv = null, sawPen = false, eatClick = 0;
+  let active = false, undo = [], redo = [], forId = null, cur = null, mv = null, sawPen = false, eatClick = 0, ed = null, lRen = null;
   function items(){ if (!ptCur.ann) ptCur.ann = []; return ptCur.ann; }
   function checkPiece(){ if (ptCur && ptCur.id !== forId){ forId = ptCur.id; undo = []; redo = []; } }
   function snap(){ checkPiece(); undo.push(JSON.stringify(items())); if (undo.length > 60) undo.shift(); redo = []; undoUI(); }
@@ -399,7 +419,9 @@ const Ann = (function(){
   function drawMove(){   // verplaatsen/plaatsen van een stempel: voorbeeld op de vinger
     if (!draft || !mv) return;
     draft.textContent = '';
-    const g = el('g', { class:'pa-it pa-' + (mv.it.c || 'ink') }, draft), d = stamp(mv.it.k);
+    const g = el('g', { class:'pa-it pa-' + (mv.it.c || 'ink') }, draft);
+    if (mv.it.t === 'x'){ drawText(g, mv.it.v, mv.x, mv.y, spAt(mv), mv.it.z || 1); return; }
+    const d = stamp(mv.it.k);
     if (d) drawStamp(g, d, mv.x, mv.y, spAt(mv), mv.it.z || 1);
   }
 
@@ -420,13 +442,26 @@ const Ann = (function(){
         cur = { kind:'span', k:d.k, a, p0:p, p1:p, sp:spAt(p), id:e.pointerId }; liveSpan(); return true;
       }
       if (d.x === 'ask'){ askText(d.v); return false; }
-      const h = hitTest(p, ['s']);
-      if (h){ mv = { it:h.it, x:0, y:0, isNew:false }; const c = center(h.g); mv.ox = c.x - p.x; mv.oy = c.y - p.y; mv.x = c.x; mv.y = c.y; h.g.remove(); drawMove(); cur = { kind:'move', id:e.pointerId, p0:p }; return true; }
-      mv = { it:{ id:uid(), t:'s', k:s.stamp, c:s.color, z:s.size }, x:p.x, y:p.y, ox:0, oy:0, isNew:true };
+      const h = hitTest(p, ['s', 'x']);
+      if (h){ grab(h, p, e); return true; }
+      mv = { it:{ id:uid(), t:'s', k:s.stamp, c:s.color, z:s.size, l:s.layer }, x:p.x, y:p.y, ox:0, oy:0, isNew:true };
       drawMove(); cur = { kind:'move', id:e.pointerId, p0:p };
       return true;
     }
+    if (tool === 'text'){
+      if (ed){ edDone(true); return false; }
+      const h = hitTest(p, ['x']);
+      if (h){ grab(h, p, e); cur.edit = true; return true; }   // tikken = bewerken, slepen = verplaatsen
+      const a = anchorAt(p, false); if (!a) return false;
+      edOpen(null, a);
+      return false;
+    }
     return false;
+  }
+  function grab(h, p, e){   // bestaande stempel of tekst vastpakken
+    const base = h.it.t === 'x' ? pos(h.it.a) : center(h.g);
+    mv = { it:h.it, x:base.x, y:base.y, ox:base.x - p.x, oy:base.y - p.y, isNew:false };
+    h.g.remove(); drawMove(); cur = { kind:'move', id:e.pointerId, p0:p };
   }
   function move(e){
     if (!cur) return;
@@ -445,7 +480,7 @@ const Ann = (function(){
       const base = pos(c.a); if (!base){ render(); return; }
       const sp = base.sp;
       const rel = simplify(c.pts.map(q => [r3((q[0] - base.x) / sp), r3((q[1] - base.y) / sp), r3(q[2])]), .03);
-      snap(); items().push({ id:uid(), t:'p', a:c.a, p:rel, c:c.c, hl:c.hl ? 1 : 0 }); commit();
+      snap(); items().push({ id:uid(), t:'p', a:c.a, p:rel, c:c.c, hl:c.hl ? 1 : 0, l:S().layer }); commit();
     } else if (c.kind === 'erase'){ if (!c.any) undo.pop(); else commit(); undoUI(); }
     else if (c.kind === 'span'){
       if (cancel){ render(); return; }
@@ -454,19 +489,56 @@ const Ann = (function(){
       if (!b){ render(); return; }
       b = Object.assign(b, { st:c.a.st, dy:c.a.dy });
       if (b.i === c.a.i && Math.abs(b.dx - c.a.dx) < .5) b.dx = r3(c.a.dx + 4);
-      snap(); items().push({ id:uid(), t:'h', k:c.k, a:c.a, b, c:S().color }); commit();
+      snap(); items().push({ id:uid(), t:'h', k:c.k, a:c.a, b, c:S().color, l:S().layer }); commit();
     } else if (c.kind === 'move'){
       const m = mv; mv = null;
       if (cancel){ render(); return; }
       const moved = Math.hypot(m.x - (c.p0.x + m.ox), m.y - (c.p0.y + m.oy)) > 1;
-      if (!m.isNew && !moved){ render(); return; }   // alleen aangetikt: blijft staan
-      const a = anchorAt({ x:m.x, y:m.y }, true);
+      if (!m.isNew && !moved){ render(); if (c.edit) edOpen(m.it); return; }   // alleen aangetikt: blijft staan (tekst: bewerken)
+      const a = anchorAt({ x:m.x, y:m.y }, m.it.t !== 'x');
       if (!a){ render(); return; }
       snap();
       if (m.isNew){ m.it.a = a; items().push(m.it); }
       else { const it = items().find(x => x.id === m.it.id); if (it) it.a = a; }
       commit();
     }
+  }
+  /* ---------- tekstvakje typen (Enter = klaar, Shift+Enter = nieuwe regel, Esc = annuleren) ---------- */
+  function edOpen(it, a){
+    if (ed) edDone(true);
+    geo();
+    const anc = it ? it.a : a, p = pos(anc); if (!p) return;
+    const s = S(), z = it ? (it.z || 1) : s.size, sh = $('ptSheet');
+    ed = { id:it ? it.id : null, a:anc, c:it ? it.c : s.color, z };
+    const ta = document.createElement('textarea');
+    ta.className = 'patxted pa-' + ed.c; ta.rows = 1; ta.value = it ? it.v : '';
+    ta.placeholder = 'Typ je tekst…';
+    const fs = TXT_Z * p.sp * z;
+    Object.assign(ta.style, { left:(p.x - sh.clientLeft - 4) + 'px', top:(p.y - sh.clientTop - fs * .75) + 'px', fontSize:fs + 'px' });
+    sh.appendChild(ta);
+    const fit = () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; ta.style.width = 'auto'; ta.style.width = Math.max(fs * 6, Math.min(fs * 30, ta.scrollWidth + 8)) + 'px'; };
+    ta.addEventListener('input', fit);
+    ta.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); edDone(true); }
+      else if (e.key === 'Escape'){ e.preventDefault(); edDone(false); }
+    });
+    ta.addEventListener('pointerdown', e => e.stopPropagation());
+    ta.addEventListener('blur', () => setTimeout(() => { if (ed && ed.ta === ta) edDone(true); }, 0));
+    ed.ta = ta;
+    if (it) render();   // het oude vakje verbergen terwijl je typt
+    fit(); setTimeout(() => ta.focus(), 0);
+  }
+  function edDone(keep){
+    const e = ed; if (!e) return; ed = null;
+    const v = keep ? e.ta.value.replace(/\s+$/, '').slice(0, 300) : null;
+    e.ta.remove();
+    if (keep){
+      const old = e.id && items().find(x => x.id === e.id);
+      if (old && v !== old.v){ snap(); if (v) old.v = v; else ptCur.ann = items().filter(x => x !== old); commit(); return; }
+      if (!old && v){ snap(); items().push({ id:uid(), t:'x', v, a:e.a, c:e.c, z:e.z, l:S().layer }); commit(); return; }
+    }
+    render();
   }
   function eraseAt(p){
     const h = hitTest(p); if (!h) return false;
@@ -543,7 +615,9 @@ const Ann = (function(){
     sh.addEventListener('pointercancel', e => { if (!active && cur && e.pointerId === cur.id) end(e, true); }, true);
     // in de tekenmodus (behalve ✋) en net na een penstreep: klikken verplaatst de cursor niet
     ['click', 'dblclick'].forEach(t => sh.addEventListener(t, e => {
-      if ((active && S().tool !== 'pan' && e.target === inp) || Date.now() - eatClick < 400){ e.stopPropagation(); e.preventDefault(); }
+      const t = e.target, inEd = t && t.closest && t.closest('.patxted');
+      if (inEd){ e.stopPropagation(); return; }   // klikken in een tekstvakje: niet de cursor verplaatsen
+      if ((active && S().tool !== 'pan') || Date.now() - eatClick < 400){ e.stopPropagation(); e.preventDefault(); }
     }, true));
   }
 
@@ -555,10 +629,12 @@ const Ann = (function(){
       <button data-tool="pen" title="Pen">✏️</button>
       <button data-tool="hl" title="Markeerstift">🖍️</button>
       <button data-tool="erase" title="Gum: tik of veeg over een aantekening">🧽</button>
+      <button data-tool="text" title="Tekst: tik waar de tekst moet komen en typ (Enter = klaar). Tik op een tekst om hem te wijzigen, sleep om te verplaatsen.">🔤</button>
       <button data-tool="stamp" title="Stempels: kies er een en tik op de partituur. Een stempel verslepen = verplaatsen.">🏷️</button>
       <span class="pacolors">${Object.keys(COLORS).map(c => `<button data-c="${c}" class="pa-${c}" title="${COLORS[c]}"><i></i></button>`).join('')}</span>
       <span class="pasep"></span>
       <button id="paUndo" title="Ongedaan maken (Ctrl+Z)">↶</button><button id="paRedo" title="Opnieuw (Ctrl+Shift+Z)">↷</button>
+      <button id="paLay" title="Lagen: kies waarop je tekent en welke lagen je ziet">🗂️</button>
       <button id="paEye" title="Aantekeningen tonen of verbergen (buiten de tekenmodus)">👁</button>
       <button id="paDone" class="primary" title="Klaar (Esc)">✓ Klaar</button>
     </div>
@@ -572,6 +648,7 @@ const Ann = (function(){
         <button id="paDel" hidden title="Deze eigen stempel weghalen">🗑</button>
       </div>
     </div>
+    <div class="parow palayers" hidden></div>
     <div class="pamsg" id="paMsg" hidden></div>`;
   }
   function instr(){ const i = ptCur && ptCur.instr; return SETS[i] ? i : 'overig'; }
@@ -642,8 +719,55 @@ const Ann = (function(){
     $('paEye').classList.toggle('off', !s.show);
     $('paEye').textContent = s.show ? '👁' : '🚫';
     const inp = $('paInput'); if (inp){ inp.hidden = !active || s.tool === 'pan'; inp.dataset.tool = s.tool; }
-    undoUI();
+    undoUI(); layersUI();
     if (s.tool === 'stamp') stampsUI();
+  }
+  let layOpen = false;
+  function layersUI(){
+    const bar = $('paBar'); if (!bar) return;
+    const row = bar.querySelector('.palayers'); row.hidden = !layOpen;
+    const s = S(), L = s.layers, hid = hiddenSet(), cnt = {};
+    (ptCur && ptCur.ann || []).forEach(it => { const l = layerOf(it); cnt[l] = (cnt[l] || 0) + 1; });
+    $('paLay').classList.toggle('on', layOpen);
+    const cl = L.find(l => l.id === s.layer);
+    $('paLay').title = 'Lagen (je tekent nu op: ' + (cl ? cl.n : '') + ')';
+    if (!layOpen) return;
+    row.innerHTML = '<span class="palabel">Tekenen op</span>' + L.map(l => {
+      const on = l.id === s.layer, h = hid.has(l.id);
+      const name = lRen === l.id ? `<input type="text" class="palren" maxlength="30" value="${ptEsc(l.n)}">`
+        : `<button class="palsel${on ? ' on' : ''}" data-lsel="${l.id}" title="Nieuwe aantekeningen op deze laag">${on ? '●' : '○'} ${ptEsc(l.n)} <small>${cnt[l.id] || 0}</small></button>`;
+      return `<span class="palay${h ? ' hid' : ''}">${name}<button data-leye="${l.id}" title="${h ? 'Laag tonen' : 'Laag verbergen'} (bij dit stuk)">${h ? '🚫' : '👁'}</button><button data-lren="${l.id}" title="Naam wijzigen">✎</button>${L.length > 1 ? `<button data-ldel="${l.id}" title="Laag weghalen; de aantekeningen erop gaan naar ${ptEsc(L[0].id === l.id ? L[1].n : L[0].n)}">🗑</button>` : ''}</span>`;
+    }).join('') + '<button data-lnew="1" title="Nieuwe laag">＋ Laag</button>';
+    const inp = row.querySelector('.palren');
+    if (inp){
+      inp.focus(); inp.select();
+      const done = ok => { if (lRen == null) return; const l = L.find(x => x.id === lRen); const v = inp.value.trim().slice(0, 30); lRen = null; if (ok && l && v){ l.n = v; save(); } layersUI(); };
+      inp.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter'){ e.preventDefault(); done(true); } else if (e.key === 'Escape'){ e.preventDefault(); done(false); } });
+      inp.addEventListener('blur', () => done(true));
+    }
+  }
+  function layerClick(b){
+    const s = S(), L = s.layers;
+    if (b.dataset.lsel){ s.layer = b.dataset.lsel; save(); layersUI(); return true; }
+    if (b.dataset.leye){
+      if (!ptCur) return true;
+      const h = hiddenSet(), id = b.dataset.leye;
+      if (h.has(id)) h.delete(id); else h.add(id);
+      ptCur.annHide = [...h]; ptSaveCur(); layersUI(); render(); return true;
+    }
+    if (b.dataset.lren){ lRen = b.dataset.lren; layersUI(); return true; }
+    if (b.dataset.ldel){
+      if (!b.classList.contains('arm')){ b.classList.add('arm'); b.textContent = 'Zeker?'; setTimeout(() => { if (b.isConnected){ b.classList.remove('arm'); b.textContent = '🗑'; } }, 4000); return true; }
+      s.layers = L.filter(l => l.id !== b.dataset.ldel);
+      if (s.layer === b.dataset.ldel) s.layer = s.layers[0].id;
+      if (ptCur && ptCur.annHide){ ptCur.annHide = ptCur.annHide.filter(x => x !== b.dataset.ldel); ptSaveCur(); }
+      save(); layersUI(); render(); return true;
+    }
+    if (b.dataset.lnew){
+      const id = 'l' + Date.now().toString(36);
+      L.push({ id, n:'Laag ' + (L.length + 1) }); s.layer = id; lRen = id; save(); layersUI(); return true;
+    }
+    return false;
   }
   function msg(t){ const m = $('paMsg'); if (!m) return; m.textContent = t || ''; m.hidden = !t; }
   function initBar(){
@@ -659,8 +783,11 @@ const Ann = (function(){
     bar.addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return;
       const s = S();
+      if (layerClick(b)){ b.blur && b.blur(); return; }
+      if (b.id === 'paLay'){ layOpen = !layOpen; layersUI(); b.blur(); return; }
+      if (b.dataset.tool && ed) edDone(true);
       if (b.dataset.tool){ s.tool = b.dataset.tool; save(); toolsUI(); }
-      else if (b.dataset.c){ s.color = b.dataset.c; if (s.tool === 'hl' || s.tool === 'erase' || s.tool === 'pan') s.tool = 'pen'; save(); toolsUI(); }
+      else if (b.dataset.c){ s.color = b.dataset.c; if (s.tool === 'hl' || s.tool === 'erase' || s.tool === 'pan') s.tool = 'pen'; save(); toolsUI(); if (ed){ ed.c = s.color; ed.ta.className = 'patxted pa-' + ed.c; } }
       else if (b.dataset.tab){ s.tab = b.dataset.tab; save(); stampsUI(); }
       else if (b.dataset.st){ const d = stamp(b.dataset.st); if (d && d.x === 'ask'){ askText(d.v); return; } s.stamp = b.dataset.st; save(); stampsUI(); }
       else if (b.dataset.z){ s.size = +b.dataset.z; save(); stampsUI(); }
@@ -674,7 +801,7 @@ const Ann = (function(){
     });
     document.addEventListener('keydown', e => {
       if (!active) return;
-      if (e.key === 'Escape'){ if (document.activeElement && document.activeElement.id === 'paTxt') return; e.preventDefault(); e.stopImmediatePropagation(); close(); return; }
+      if (e.key === 'Escape'){ if (document.activeElement && (document.activeElement.id === 'paTxt' || document.activeElement.classList.contains('patxted') || document.activeElement.classList.contains('palren'))) return; e.preventDefault(); e.stopImmediatePropagation(); close(); return; }
       if ((e.ctrlKey || e.metaKey) && !e.altKey){
         const k = e.key.toLowerCase();
         if (k === 'z'){ e.preventDefault(); e.stopImmediatePropagation(); if (e.shiftKey) doRedo(); else doUndo(); }
@@ -695,7 +822,8 @@ const Ann = (function(){
   function close(){
     if (!active) return;
     if (cur) end({}, true);
-    active = false; mv = null;
+    if (ed) edDone(true);
+    active = false; mv = null; layOpen = false;
     $('paBar').hidden = true;
     $('ptView').classList.remove('pa-on'); document.body.classList.remove('pa-on');
     ['ptAnnBtn', 'ptFsAnn'].forEach(id => { const b = $(id); if (b) b.classList.remove('on'); });
