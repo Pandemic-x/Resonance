@@ -1,7 +1,7 @@
 /* ================= Bladmuziek → Transcriberen (eigen noteneditor, prefix tr, route #transcriberen → #trView) — 22-11-2026 =================
    Wens gebruiker: "een soort eigen MuseScore". Muziek op gehoor uitschrijven, meteen terughoren en met één klik naar Repertoire.
    Fase 1 (deze versie): één notenbalk, één stem (akkoorden mogen), nootwaarden 1/1 t/m 1/32 met punt, rusten, ♯ ♭ ♮, overbindingen,
-   akkoordsymbolen (Ctrl+K), waardestrepen en maten vanzelf, ongedaan maken/opnieuw, afspelen met cursor, export MusicXML
+   akkoordsymbolen (K), waardestrepen en maten vanzelf, ongedaan maken/opnieuw, afspelen met cursor, export MusicXML
    en ➜ Repertoire (kopie; daarna ↻ Bijwerken in Repertoire, passages en aantekeningen blijven staan).
    Later (fase 2/3): pianobalk, triolen, maat-/toonsoortwissel, herhalingen, kopiëren/plakken, transponeren, 2e stem,
    dynamiek/articulatie/bogen/tekst, MusicXML importeren.
@@ -17,7 +17,7 @@
      A–G = noot (voortekening telt mee, octaaf het dichtst bij de vorige noot) · Shift+A–G = noot erbij (akkoord) · 0 = rust ·
      ↑ ↓ = halve toon · Ctrl+↑ ↓ = octaaf · + − = = ♯ ♭ ♮ · T = overbinden · R = herhalen · Alt+2–8 = interval erboven ·
      ← → = vorige/volgende · Ctrl+← → = maat · Delete = rust · Backspace (invoer) = terug · Ctrl+Z / Ctrl+Y = ongedaan / opnieuw ·
-     Ctrl+K = akkoordsymbool (Spatie = volgende tel, Tab = volgende maat, Enter = klaar) · Spatie = afspelen/stop · Esc = invoer uit / stop. */
+     K = akkoordsymbool (Ctrl+K blijft de bibliotheek; Spatie = volgende tel, Tab = volgende maat, Enter = klaar) · Spatie = afspelen/stop · Esc = invoer uit / stop. */
 
 const TR_KEY = 'transcripties', TR_GKEY = 'transcriberen-settings', TQ = 48;
 const TR_VALS = [288, 192, 144, 96, 72, 48, 36, 24, 18, 12, 9, 6];
@@ -386,7 +386,7 @@ function trMeasures(delta){
   if (trSel != null && trSel >= trTotal()) trSel = null;
 }
 
-/* ---------- akkoordsymbool invoeren (Ctrl+K) ---------- */
+/* ---------- akkoordsymbool invoeren (K; Ctrl+K is de bibliotheek, wens Julian) ---------- */
 function trChordOpen(t){
   if (!trDoc) return;
   if (t == null) t = trIn.on ? Math.min(trIn.t, trTotal() - 1) : (trSel != null ? trSel : 0);
@@ -517,7 +517,7 @@ function trStatusText(sel){
     if (sel.rest) return '<b>Rust</b> (' + (sel.full ? 'hele maat' : trLenName(sel.len)) + ') · ' + trBeatLabel(sel.t) + ' · typ een letter om er een noot van te maken';
     return '<b>' + sel.ps.map(trPName).join(' · ') + '</b> · ' + trLenName(sel.len) + (sel.tie ? ' · overgebonden' : '') + ' · ' + trBeatLabel(sel.t) + ' · ↑↓ halve toon, Ctrl+↑↓ octaaf, Shift+letter = toon erbij';
   }
-  return 'Klik op een noot om hem te kiezen, of druk op <b>N</b> (of ✎ Invoeren) om noten te typen. Ctrl+K = akkoordsymbool.';
+  return 'Klik op een noot om hem te kiezen, of druk op <b>N</b> (of ✎ Invoeren) om noten te typen. K = akkoordsymbool.';
 }
 function trStatus(html){ const el = $('trStatus'); if (el) el.innerHTML = html; }
 function trMsg(html, cls){ const el = $('trMsg'); if (!el) return; el.innerHTML = html || ''; el.className = 'trmsg' + (cls ? ' ' + cls : ''); clearTimeout(trMsg.t); if (html) trMsg.t = setTimeout(() => { el.innerHTML = ''; }, 5000); }
@@ -853,7 +853,6 @@ function trKeydown(e){
   if (typeof view === 'undefined' || view !== 'transcriberen' || !trDoc || !$('trView').classList.contains('tr-ed')) return;
   if (e.target && e.target.id === 'trChIn') return;
   const ctrl = e.ctrlKey || e.metaKey, k = e.key, low = k.length === 1 ? k.toLowerCase() : k;
-  if (ctrl && !e.altKey && low === 'k'){ e.preventDefault(); e.stopImmediatePropagation(); trChordOpen(); return; }
   if (Keys.blocked(e)) return;
   const ae = document.activeElement;
   if (ae && (ae.tagName === 'SELECT' || ae.tagName === 'INPUT') && !Keys.is(e, 'luister')) return;
@@ -882,6 +881,7 @@ function trKeydown(e){
   if (k === '+'){ e.preventDefault(); trAcc(1); return; }
   if (k === '-'){ e.preventDefault(); trAcc(-1); return; }
   if (k === '='){ e.preventDefault(); trAcc(0); return; }
+  if (low === 'k'){ e.preventDefault(); trChordOpen(); return; }
   if (low === 't'){ e.preventDefault(); trTie(); return; }
   if (low === 'r'){ e.preventDefault(); trRepeat(); return; }
   if (Keys.is(e, 'metronoom')){ e.preventDefault(); trG.metro = !trG.metro; trSaveG(); $('trMetro').checked = trG.metro; trMsg('Metronoom ' + (trG.metro ? 'aan' : 'uit') + '.', 'muted'); return; }

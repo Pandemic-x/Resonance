@@ -79,7 +79,7 @@ const Keys = (function(){
     polyritme:   [{ keys:['f','j'], wat:'F = links, J = rechts (meetikken)' }],
     swing:       [{ keys:dig('1234'), wat:'1–4 = soort swing (luisteren)' }],
     transcriberen:[{ keys:dig('cdefgab'), wat:'A–G = noot (Shift = toon erbij)' }, { keys:dig('0234567'), wat:'2–7 = nootwaarde (zoals MuseScore), 0 = rust' },
-                  { keys:['.','+','-','=','t','r','n'], wat:'. = punt, + − = = ♯ ♭ ♮, T = overbinden, R = herhalen, N = invoerstand' },
+                  { keys:['.','+','-','=','t','r','n','k'], wat:'. = punt, + − = = ♯ ♭ ♮, T = overbinden, R = herhalen, N = invoerstand, K = akkoordsymbool' },
                   { keys:['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Delete','Backspace','Home'], wat:'↑ ↓ = halve toon, ← → = vorige/volgende, Delete = rust, Backspace = terug' }],
     drone:       [{ keys:dig('1234567'), wat:'1–7 = trap bij Degrees en Melodieën (Shift+2/3/6/7 = ♭2/♭3/♭6/♭7)' }, { keys:['t'], wat:'T = tritonus (♯4)' }]
   };
