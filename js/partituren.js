@@ -825,6 +825,7 @@ function ptAfterDraw(){
   if (ptPausedAt != null && !ptRun) requestAnimationFrame(() => requestAnimationFrame(() => { if (ptPausedAt != null && !ptRun) ptMarkAt(ptPausedAt); }));
   if (ptFsOn){ ptFsPagesFind(); ptFsLayout(); }
   ptW = $('ptSheet').clientWidth;
+  if (typeof Ann !== 'undefined') Ann.redraw();   // aantekeningen (js/aantekeningen.js) op de nieuwe tekening zetten
 }
 async function ptEnsureOsmd(){   // OSMD laden en dit stuk erin inlezen (alleen nodig om opnieuw te tekenen)
   if (ptOsmd && ptOsmdFor === ptCur.id && ptSteps.length && ptSteps[0].an) return true;
@@ -1528,6 +1529,7 @@ function ptFsLayout(){
     Object.assign(sheet.style, { transform:'scale(' + sc + ')', transformOrigin:'0 0', display:'block', width:nat.w + 'px' });
     Object.assign(box.style, { width:nat.w * sc + 'px', height:nat.h * sc + 'px' });
     $('ptFsPg').textContent = ''; $('ptFsPrev').disabled = $('ptFsNext').disabled = true;
+    if (typeof Ann !== 'undefined') Ann.redraw();
     return;
   }
   ptFsN = ptPages.length > 1 ? ptFsDims().n : 1;
@@ -1543,6 +1545,7 @@ function ptFsLayout(){
   const last = Math.min(ptPages.length, ptFsP + ptFsN);
   $('ptFsPg').textContent = 'blz ' + (ptFsP + 1) + (last > ptFsP + 1 ? '–' + last : '') + ' / ' + ptPages.length;
   $('ptFsPrev').disabled = ptFsP <= 0; $('ptFsNext').disabled = ptFsP + ptFsN >= ptPages.length;
+  if (typeof Ann !== 'undefined') Ann.redraw();   // andere bladzijde(n) in beeld: aantekeningen opnieuw plaatsen
 }
 function ptFsTurn(d){
   if (!ptFsOn || ptFsCont){ if (ptFsOn) $('ptFsPage').scrollBy({ top:d * $('ptFsPage').clientHeight * .8, behavior:'smooth' }); return; }
@@ -1604,6 +1607,7 @@ async function ptFsEnter(){
   document.body.classList.add('ptfson');
   ptPaperApply(); ptTempoUI(); ptPlayUI(); ptPasUI(); ptFsBlkUI(); ptFsModeUI(); ptFollowUI();
   box.appendChild($('ptSheet'));
+  if (typeof Ann !== 'undefined') Ann.onFs(true);   // werkbalk van de aantekeningen mee in het volledig scherm
   // eerst echt volledig scherm (en wachten tot het scherm zijn nieuwe maat heeft), dan pas uitleggen
   try {
     if (fs.requestFullscreen){
@@ -1628,6 +1632,7 @@ async function ptFsExit(quiet){
   try { if (document.fullscreenElement) await document.exitFullscreen(); } catch(e){}
   fs.hidden = true; fs.classList.remove('show'); document.body.classList.remove('ptfson');
   const sh = $('ptSheet'); $('ptSheetHome').appendChild(sh);
+  if (typeof Ann !== 'undefined') Ann.onFs(false);
   Object.assign(sh.style, { transform:'', transformOrigin:'', display:'', width:'' });
   ['ptOsmdHost', 'ptCacheView'].forEach(id => { $(id).style.display = ''; });
   ptPages.forEach(pg => { pg.style.display = ''; }); ptPages = []; ptGeo = null;
@@ -1686,7 +1691,7 @@ function ptFsPagesUI(){
    Tikken in het midden werkt zoals altijd (cursor verplaatsen). */
 function ptFsTouch(){
   const pg = $('ptFsPage'); let st = null, eat = false;
-  pg.addEventListener('pointerdown', e => { st = (e.pointerType === 'mouse') ? null : { x:e.clientX, y:e.clientY, t:Date.now() }; eat = false; }, true);
+  pg.addEventListener('pointerdown', e => { st = (e.pointerType === 'mouse' || (typeof Ann !== 'undefined' && Ann.grabs(e))) ? null : { x:e.clientX, y:e.clientY, t:Date.now() }; eat = false; }, true);
   pg.addEventListener('pointerup', e => {
     if (!st || !ptFsOn || ptFsCont) { st = null; return; }
     const dx = e.clientX - st.x, dy = e.clientY - st.y, dt = Date.now() - st.t; st = null;
@@ -1768,7 +1773,7 @@ async function ptRenderList(){
   });
   if (!PtDB.ok()) ptLibMsg('Let op: opslaan lukt niet in deze browser; je stukken blijven alleen staan tot je de pagina sluit.', 'muted');
 }
-function ptBack(){ if (ptSel) ptSelCancel(); if (ptFsOn) ptFsExit(true); ptStop(); ptPausedAt = null; if (ptCur){ clearTimeout(ptSaveT); PtDB.put(ptCur); } ptCur = null; ptShow('lib'); ptRenderList(); }
+function ptBack(){ if (typeof Ann !== 'undefined') Ann.close(); if (ptSel) ptSelCancel(); if (ptFsOn) ptFsExit(true); ptStop(); ptPausedAt = null; if (ptCur){ clearTimeout(ptSaveT); PtDB.put(ptCur); } ptCur = null; ptShow('lib'); ptRenderList(); }
 /* 🕹️ → Tempo's in dit stuk: per deel het voorgeschreven tempo en (optioneel) je eigen tempo, in de eenheid van 'Tel in'. */
 function ptTempiList(){
   const box = $('ptTempiList'); if (!box || !ptCur || !ptCur.s) return;   // nieuw stuk: instellingen bestaan pas na ptOpen (ptSyncUI roept dit later opnieuw aan)

@@ -1,0 +1,81 @@
+/* ================= Aantekeningen in Repertoire (js/aantekeningen.js) ================= */
+.palayer{position:absolute;left:0;top:0;pointer-events:none;z-index:2;overflow:visible;color:inherit}
+.palayer.pa-off{display:none}
+.painput{position:absolute;inset:0;z-index:6;touch-action:none;cursor:crosshair}
+.painput.pa-pen{touch-action:pan-x pan-y}          /* stylus gezien: vingers scrollen, de pen tekent */
+.painput[data-tool="erase"]{cursor:cell}
+.painput[data-tool="stamp"]{cursor:copy}
+
+/* kleuren: zwart = de inktkleur van de partituur (licht/donker papier volgt vanzelf) */
+.pa-ink{color:inherit}
+.pa-red{color:#d23434}
+.pa-blue{color:#1f63d1}
+.pa-hl{color:#ffd21f;opacity:.42}
+.ptpaperdark .pa-red{color:#ff7a7a}
+.ptpaperdark .pa-blue{color:#78a6ff}
+.ptpaperdark .pa-hl{color:#e6c200;opacity:.34}
+.pa-draft{opacity:.85}
+
+/* de partituur krijgt onderaan ruimte, zodat de werkbalk niets blijvend afdekt */
+#ptView.pa-on .ptsheet{margin-bottom:150px}
+.ptfs .ptsheet{margin-bottom:0}
+#ptAnnBtn.on,#ptFsAnn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+html.dark #ptAnnBtn.on,html.dark #ptFsAnn.on{color:#15130f}
+
+/* werkbalk */
+.pabar{position:fixed;left:50%;bottom:max(10px, env(safe-area-inset-bottom));transform:translateX(-50%);z-index:9500;
+  width:max-content;max-width:calc(100vw - 16px);background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:16px;
+  box-shadow:0 6px 24px rgba(0,0,0,.22);padding:6px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.ptfsrot .pabar{position:absolute;bottom:12px}
+.parow{display:flex;align-items:center;gap:4px;overflow-x:auto;scrollbar-width:none;max-width:100%}
+.parow::-webkit-scrollbar{display:none}
+.pabar button{flex:0 0 auto;min-width:36px;height:36px;padding:0 8px;border-radius:10px;border:1px solid transparent;background:transparent;color:inherit;font-size:17px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.pabar button:hover{background:var(--soft)}
+.pabar button.on{background:color-mix(in srgb, var(--accent) 18%, transparent);border-color:var(--accent)}
+.pabar button:disabled{opacity:.35;cursor:default}
+.pabar button.primary{background:var(--accent);color:#fff;font-size:13px;font-weight:600;padding:0 12px}
+html.dark .pabar button.primary{color:#15130f}
+.pasep{flex:0 0 1px;align-self:stretch;background:var(--line);margin:4px 2px}
+.pacolors{display:inline-flex;gap:2px;transition:opacity .15s}
+.pacolors.dim{opacity:.4}
+.pacolors button{min-width:30px;padding:0}
+.pacolors i{display:block;width:18px;height:18px;border-radius:50%;box-shadow:0 0 0 2px var(--paper), 0 0 0 3px color-mix(in srgb, var(--ink) 25%, transparent)}
+.pacolors .pa-ink i{background:var(--ink)}
+.pacolors .pa-red i{background:#d23434}
+.pacolors .pa-blue i{background:#1f63d1}
+.pacolors button.on i{box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--accent)}
+.pacolors button.on{background:transparent;border-color:transparent}
+#paEye.off{opacity:.7}
+
+.pastamps{flex-direction:column;align-items:stretch;gap:4px;overflow:visible;border-top:1px solid var(--line);padding-top:6px;width:min(720px, calc(100vw - 30px))}
+.patabs,.pagrid,.paopts{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;align-items:center}
+.patabs::-webkit-scrollbar,.pagrid::-webkit-scrollbar{display:none}
+.patabs button{height:28px;font-size:12.5px;font-weight:600;padding:0 10px;border-radius:14px;background:var(--soft)}
+.patabs button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+html.dark .patabs button.on{color:#15130f}
+.pagrid{min-height:42px;flex-wrap:nowrap}
+.pagrid button{height:40px;min-width:40px;border:1px solid var(--line);background:var(--paper)}
+.pagrid button span{white-space:nowrap}
+.pa-ital{font-family:"Times New Roman",Georgia,serif;font-style:italic;font-size:15px}
+.pahint{color:var(--muted);font-size:12.5px;padding:0 6px;white-space:nowrap}
+.patxt{display:inline-flex;gap:4px;align-items:center;flex:0 0 auto;margin-left:4px}
+.patxt input{width:170px;height:34px;border:1px solid var(--line);border-radius:9px;padding:0 8px;background:var(--paper);color:var(--ink);font-size:13px}
+.paopts{font-size:12px;color:var(--muted)}
+.paopts button{height:30px;min-width:30px;font-size:15px}
+.pacur{white-space:nowrap;margin-right:auto;padding-left:4px;overflow:hidden;text-overflow:ellipsis}
+.pacur b{color:var(--ink)}
+.paseg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.paseg button{border-radius:0;height:28px;min-width:30px;font-family:"Times New Roman",Georgia,serif;font-weight:700}
+.paseg button:nth-child(1){font-size:12px}.paseg button:nth-child(2){font-size:15px}.paseg button:nth-child(3){font-size:19px}
+.pamsg{font-size:12.5px;color:var(--muted);padding:0 6px 2px;max-width:min(720px, calc(100vw - 30px))}
+#paDone{position:sticky;right:0;margin-left:auto;box-shadow:-8px 0 8px var(--paper)}   /* Klaar blijft altijd in beeld, de rest schuift */
+@media (max-width:560px){
+  .parow{gap:2px}
+  .pasep{display:none}
+  .pacolors button{min-width:27px}
+  .pacolors i{width:16px;height:16px}
+  .pabar{border-radius:14px;padding:5px;bottom:max(6px, env(safe-area-inset-bottom))}
+  .pabar button{min-width:34px;height:34px;padding:0 6px;font-size:16px}
+  .pabar button.primary{padding:0 9px}
+  .pagrid button{height:38px;min-width:38px}
+}

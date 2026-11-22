@@ -1,10 +1,11 @@
 // Resonance service worker: app werkt offline na het eerste bezoek.
 // Verhoog VERSION bij elke nieuwe versie, dan halen telefoons de update op.
-const VERSION = 'resonance-v21';
+const VERSION = 'resonance-v22';
 const CORE = [
  "./",
  "index.html",
  "manifest.json",
+ "css/aantekeningen.css",
  "css/bibliotheek.css",
  "css/dagroutine.css",
  "css/dictee.css",
@@ -25,6 +26,7 @@ const CORE = [
  "icons/icon-192.png",
  "icons/icon-512.png",
  "icons/maskable-512.png",
+ "js/aantekeningen.js",
  "js/absoluut.js",
  "js/akkoorden.js",
  "js/akkoordsymbolen.js",

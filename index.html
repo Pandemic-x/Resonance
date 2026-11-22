@@ -21,6 +21,7 @@
 <link rel="stylesheet" href="css/metronoom.css">
 <link rel="stylesheet" href="css/notatie.css">
 <link rel="stylesheet" href="css/partituren.css">
+<link rel="stylesheet" href="css/aantekeningen.css">
 <link rel="stylesheet" href="css/intonatie.css">
 <link rel="stylesheet" href="css/harmonie.css">
 <link rel="stylesheet" href="css/ritmetrainer.css">
@@ -1532,6 +1533,7 @@
         <label class="ptchk"><input type="checkbox" id="ptLoop"> Lus</label>
         <button id="ptSelBtn" class="ptsmall ptic" title="Selecteer passage: klik daarna op de eerste en de laatste maat">⬚</button>
         <span id="ptSelHint" class="ptselhint" hidden></span>
+        <button id="ptAnnBtn" class="ptsmall ptic" title="Aantekeningen: pen, markeerstift, gum en stempels (Esc = klaar)">✏️</button>
         <button id="ptPasNew" class="ptsmall ptic" title="Bewaar het oefenblok als passage">＋</button>
         <span id="ptPasName" class="ptpasname" hidden><input type="text" id="ptPasNameIn" maxlength="60" placeholder="Naam, bv. Thema m. 1–8"><button id="ptPasSave" class="ptsmall primary">Opslaan</button><button id="ptPasCancel" class="ptsmall">Annuleren</button></span>
         <span class="ptgap"></span>
@@ -1612,6 +1614,7 @@
           <div class="ptrow" title="Loopt de cursor achter op het geluid? Schuif naar rechts. Loopt hij voor? Naar links."><span>Cursor-timing</span><span class="ptrange3"><small>later</small><input type="range" id="ptLineOfs" min="-200" max="200" step="10"><small>eerder</small></span></div>
           <p class="pthint" id="ptLineOfsVal"></p>
           <label class="ptchk" title="Titel, componist en instrumentnaam bovenaan de partituur (kost wat ruimte)"><input type="checkbox" id="ptTitles"> Titel en instrumentnamen tonen</label>
+          <label class="ptchk" title="Met een stylus (Apple Pencil, Surface-pen) meteen tekenen, ook zonder ✏️; je vinger scrolt en verplaatst de cursor"><input type="checkbox" id="ptAnnStylus"> Stylus tekent meteen</label>
           <label class="ptchk" title="Tijdens het afspelen schuift de bovenbalk weg, zodat de partituur het hele scherm heeft. Bij pauze, met de muis naar de bovenrand of met de knop rechtsonder komt hij terug."><input type="checkbox" id="ptHideBar"> Balk verbergen tijdens het spelen</label>
         </div>
       </details>
@@ -1645,7 +1648,7 @@
         <span class="ptseg" id="ptFsPagesSeg" title="Eén of twee bladzijden naast elkaar"><button data-n="1">1 blz</button><button data-n="2">2 blz</button></span>
         <span class="ptseg" id="ptFsModeSeg" title="Bladzijden: als een boek. Doorlopend: meteen klaar, de partituur scrolt mee."><button data-m="blad">Bladzijden</button><button data-m="door">Doorlopend</button></span>
         <span class="ptfsg"><button id="ptFsOut" title="Uitzoomen (Ctrl −, of knijpen op het touchpad)">−</button><button id="ptFsIn" title="Inzoomen (Ctrl +, of spreiden op het touchpad)">＋</button></span>
-        <span class="ptfsg"><button id="ptFsRotBtn" title="90° draaien (laptop op zijn kant, als een boek)">⟳</button><button id="ptFsFollow" title="Automatisch omslaan aan/uit">⇣</button><button id="ptFsPaper" title="Licht / donker">🌓</button></span>
+        <span class="ptfsg"><button id="ptFsAnn" title="Aantekeningen: pen, markeerstift, gum en stempels">✏️</button><button id="ptFsRotBtn" title="90° draaien (laptop op zijn kant, als een boek)">⟳</button><button id="ptFsFollow" title="Automatisch omslaan aan/uit">⇣</button><button id="ptFsPaper" title="Licht / donker">🌓</button></span>
         <button id="ptFsClose" class="ptfsclose" data-ktitle="Volledig scherm sluiten (Esc of {volscherm})">✕</button>
       </div>
       <div id="ptFsPage" class="ptfspage"><div id="ptFsLoad" class="ptfsload" hidden></div><div id="ptFsBox" class="ptfsbox"></div></div>
@@ -1698,6 +1701,7 @@
 <script src="js/presets.js"></script>
 <script src="js/metronoom.js"></script>
 <script src="js/partituren.js"></script>
+<script src="js/aantekeningen.js"></script>
 <script src="js/vraag.js"></script>
 <script src="js/vraag-app.js"></script>
 <script src="js/opnames.js"></script>
