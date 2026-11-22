@@ -2,6 +2,7 @@
 // Werkt vanzelf: elke bekende emoji in tekst (HTML, handleiding, knoppen die JS later vult) wordt een
 // SVG-icoon in currentColor (volgt dus de themakleur, licht/donker). In <option>, title, placeholder en
 // aria-label kan geen SVG: daar wordt de emoji gewoon weggehaald.
+// Niet omzetten binnen een element met data-noicon (aantekeningen in de partituur, print).
 // 💬 (Vraag aan Claude) wordt het AI-teken: ✦ in een rondje (class .aiico).
 // Nieuwe knop met icoon? Schrijf gewoon de emoji uit de lijst hieronder, of Icon.svg('naam').
 const Icon = (() => {
@@ -89,6 +90,7 @@ const Icon = (() => {
   function textNode(n){
     const t = n.nodeValue; if (!t || !TEST.test(t)) return;
     const p = n.parentNode; if (!p || SKIP.has(p.nodeName)) return;
+    if (p.closest && p.closest('[data-noicon]')) return;   // bv. stempels in de partituur (⚠️, 🔁): emoji laten staan
     if (STRIP.has(p.nodeName) || p.closest && p.closest('select, svg')){ n.nodeValue = strip(t); return; }
     const tpl = document.createElement('template');
     tpl.innerHTML = t.replace(/[&<>]/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;'}[c]))

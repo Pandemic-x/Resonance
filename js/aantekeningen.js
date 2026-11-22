@@ -394,6 +394,12 @@ const Ann = (function(){
   function items(){ if (!ptCur.ann) ptCur.ann = []; return ptCur.ann; }
   function checkPiece(){ if (ptCur && ptCur.id !== forId){ forId = ptCur.id; undo = []; redo = []; sel.clear(); } }
   function snap(){ checkPiece(); undo.push(JSON.stringify(items())); if (undo.length > 60) undo.shift(); redo = []; undoUI(); }
+  function unhideCur(){   // tekenen op een verborgen laag: die laag weer tonen, anders zie je niets
+    const L = S().layer, h = hiddenSet(); if (!ptCur || !h.has(L)) return;
+    h.delete(L); ptCur.annHide = [...h];
+    const l = S().layers.find(x => x.id === L); msg('Laag "' + (l ? l.n : '') + '" stond verborgen en is weer zichtbaar.'); setTimeout(() => msg(''), 4000);
+    layersUI();
+  }
   function commit(){ ptSaveCur(); undoUI(); const ids = new Set(items().map(x => x.id)); [...sel].forEach(id => { if (!ids.has(id)) sel.delete(id); }); render(); selUI(); }
   function doUndo(){ checkPiece(); if (!undo.length) return; redo.push(JSON.stringify(items())); ptCur.ann = JSON.parse(undo.pop()); commit(); }
   function doRedo(){ checkPiece(); if (!redo.length) return; undo.push(JSON.stringify(items())); ptCur.ann = JSON.parse(redo.pop()); commit(); }
@@ -508,7 +514,7 @@ const Ann = (function(){
       const base = pos(c.a); if (!base){ render(); return; }
       const sp = base.sp;
       const rel = simplify(c.pts.map(q => [r3((q[0] - base.x) / sp), r3((q[1] - base.y) / sp), r3(q[2])]), .03);
-      snap(); items().push({ id:uid(), t:'p', a:c.a, p:rel, c:c.c, hl:c.hl ? 1 : 0, l:S().layer }); commit();
+      snap(); unhideCur(); items().push({ id:uid(), t:'p', a:c.a, p:rel, c:c.c, hl:c.hl ? 1 : 0, l:S().layer }); commit();
     } else if (c.kind === 'erase'){ if (!c.any) undo.pop(); else commit(); undoUI(); }
     else if (c.kind === 'span'){
       if (cancel){ render(); return; }
@@ -517,7 +523,7 @@ const Ann = (function(){
       if (!b){ render(); return; }
       b = Object.assign(b, { st:c.a.st, dy:c.a.dy });
       if (b.i === c.a.i && Math.abs(b.dx - c.a.dx) < .5) b.dx = r3(c.a.dx + 4);
-      snap(); items().push({ id:uid(), t:'h', k:c.k, a:c.a, b, c:S().color, l:S().layer }); commit();
+      snap(); unhideCur(); items().push({ id:uid(), t:'h', k:c.k, a:c.a, b, c:S().color, l:S().layer }); commit();
     } else if (c.kind === 'lasso'){
       if (cancel){ render(); return; }
       const P = c.pts, sp = G.sp || 10;
@@ -546,7 +552,7 @@ const Ann = (function(){
       const a = anchorAt({ x:m.x, y:m.y }, m.it.t !== 'x');
       if (!a){ render(); return; }
       snap();
-      if (m.isNew){ m.it.a = a; items().push(m.it); }
+      unhideCur(); if (m.isNew){ m.it.a = a; items().push(m.it); }
       else { const it = items().find(x => x.id === m.it.id); if (it) it.a = a; }
       commit();
     }
@@ -634,7 +640,7 @@ const Ann = (function(){
     if (keep){
       const old = e.id && items().find(x => x.id === e.id);
       if (old && v !== old.v){ snap(); if (v) old.v = v; else ptCur.ann = items().filter(x => x !== old); commit(); return; }
-      if (!old && v){ snap(); items().push({ id:uid(), t:'x', v, a:e.a, c:e.c, z:e.z, l:S().layer }); commit(); return; }
+      if (!old && v){ snap(); unhideCur(); items().push({ id:uid(), t:'x', v, a:e.a, c:e.c, z:e.z, l:S().layer }); commit(); return; }
     }
     render();
   }
@@ -676,7 +682,7 @@ const Ann = (function(){
   /* ---------- invoer ---------- */
   function initInput(){
     const sh = $('ptSheet');
-    const lay = el('svg', { id:'paLayer', class:'palayer', 'aria-hidden':'true' });
+    const lay = el('svg', { id:'paLayer', class:'palayer', 'aria-hidden':'true', 'data-noicon':'1' });
     sh.appendChild(lay);
     const inp = document.createElement('div'); inp.id = 'paInput'; inp.className = 'painput'; inp.hidden = true;
     sh.appendChild(inp);

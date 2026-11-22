@@ -64,7 +64,7 @@ function ptPrBuild(o){
   const svgs = [...ptActive().querySelectorAll('svg')].filter(x => !x.parentElement.closest('svg'));
   if (!svgs.length) return null;
   const ann = typeof Ann !== 'undefined' && o.ann ? Ann.printLayer({ ann:true, hidden:o.hid, noDone:o.done }) : null;
-  const box = document.createElement('div'); box.id = 'ptPrint';
+  const box = document.createElement('div'); box.id = 'ptPrint'; box.dataset.noicon = '1';
   svgs.forEach(svg => {
     const r = svg.getBoundingClientRect(); if (!r.width) return;
     const ox = (r.left - sr.left) / sc, oy = (r.top - sr.top) / sc;
