@@ -99,3 +99,16 @@ html.dark .patabs button.on{color:#15130f}
 .palren{height:32px;border:0;border-right:1px solid var(--line);padding:0 8px;width:130px;background:var(--paper);color:var(--ink);font:inherit;font-size:13px}
 .palayers > button{height:32px;font-size:13px;font-weight:600;border:1px dashed var(--line)}
 @media (max-width:560px){ .palayers{gap:4px} .palay button{height:30px;min-width:28px;font-size:13px} .palay .palsel{padding:0 7px;font-size:12.5px} .palabel{width:100%} }
+
+/* selecteren (➰) en opgeloste plekken */
+.painput[data-tool="select"]{cursor:default}
+.pa-done{opacity:.35;filter:grayscale(1)}
+.pa-sel{filter:drop-shadow(0 0 2px var(--accent)) drop-shadow(0 0 1px var(--accent))}
+.pa-selbox{fill:color-mix(in srgb, var(--accent) 8%, transparent);stroke:var(--accent);stroke-width:1.2;stroke-dasharray:5 4}
+.pa-lasso{fill:color-mix(in srgb, var(--accent) 10%, transparent);stroke:var(--accent);stroke-width:1.3;stroke-dasharray:4 3}
+.pasel{flex-wrap:wrap;gap:6px;border-top:1px solid var(--line);padding-top:6px;overflow:visible;width:min(720px, calc(100vw - 30px))}
+.pasel button{height:32px;font-size:13px;font-weight:600;border:1px solid var(--line)}
+.pacount{font-weight:600;font-size:13px}
+.pasellay{font-size:12.5px;color:var(--muted);display:inline-flex;gap:4px;align-items:center}
+.pasellay select{height:30px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;font-size:13px}
+.pasel .pahint{white-space:normal}

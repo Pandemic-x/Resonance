@@ -46,10 +46,11 @@ const ptAlbIn = id => ptAlbs.some(a => a.items.some(r => r.id === id));
 /* ---------- regels in de lijst ---------- */
 function ptLibItemHTML(it, p, extra){   // knop met titel + regel eronder; p = passage of null
   const ic = it.instr && PT_INSTR[it.instr] ? PT_INSTR[it.instr].split(' ')[0] + ' ' : '';
-  if (p) return `<b>${PT_STATUS[p.status] ? PT_STATUS[p.status].i + ' ' : ''}${ptEsc(p.naam)}</b><small>${ptEsc([extra ? (it.titel || it.naam) : '', ptPasMeta(p)].filter(Boolean).join(' · '))}</small>`;
+  if (p) return `<b>${PT_STATUS[p.status] ? PT_STATUS[p.status].i + ' ' : ''}${ptEsc(ptPasNm(p))}</b><small>${ptEsc([extra ? (it.titel || it.naam) : '', ptPasMeta(p)].filter(Boolean).join(' · '))}</small>`;
   const ps = it.pas || [], c = k => ps.filter(x => x.status === k).length;
   const sum = ps.length ? ps.length + ' passage' + (ps.length === 1 ? '' : 's') + ' (' + ['zit', 'bezig', 'nieuw'].filter(k => c(k)).map(k => PT_STATUS[k].i + c(k)).join(' ') + ')' : '';
-  return `<b>${ic}${ptEsc(it.titel || it.naam)}</b><small>${ptEsc([extra ? 'hele stuk' : '', it.comp, it.maten ? it.maten + ' maten' : '', sum, it.last ? 'geoefend ' + ptDay(it.last) : 'nieuw'].filter(Boolean).join(' · '))}</small>`;
+  const pl = typeof ptPlekCount === 'function' ? ptPlekCount(it) : 0;
+  return `<b>${ic}${ptEsc(it.titel || it.naam)}</b><small>${ptEsc([extra ? 'hele stuk' : '', it.comp, it.maten ? it.maten + ' maten' : '', sum, pl ? '⚠️ ' + pl + ' lastige plek' + (pl === 1 ? '' : 'ken') : '', it.last ? 'geoefend ' + ptDay(it.last) : 'nieuw'].filter(Boolean).join(' · '))}</small>`;
 }
 function ptLibMenuHTML(key){   // 📁 → in welk album?
   const [id, p] = key.split('|'), it = ptAlbPiece(id), np = !p && it ? (it.pas || []).length : 0;

@@ -328,7 +328,7 @@ const Ann = (function(){
     });
   }
   function drawItem(it, root){
-    const g = el('g', { class:'pa-it pa-' + (it.hl ? 'hl' : (it.c || 'ink')) }, root);
+    const g = el('g', { class:'pa-it pa-' + (it.hl ? 'hl' : (it.c || 'ink')) + (it.ok ? ' pa-done' : '') + (sel.has(it.id) ? ' pa-sel' : '') }, root);
     g.dataset.aid = it.id;
     if (it.t === 's'){
       const p = pos(it.a), d = stamp(it.k); if (!p || !d){ g.remove(); return null; }
@@ -365,6 +365,7 @@ const Ann = (function(){
   function render(){
     raf = 0;
     const lay = $('paLayer'); if (!lay) return;
+    if (typeof ptPlekUI === 'function') ptPlekUI();   // lijst met lastige plekken (js/plekken.js)
     const s = S();
     lay.classList.toggle('pa-off', !s.show && !active);
     if (!ptCur || !ptSteps.length || !ptEls.length || !$('ptView').classList.contains('pt-play')){ lay.textContent = ''; root = null; return; }
@@ -373,16 +374,27 @@ const Ann = (function(){
     const items = ptCur.ann || [];
     const vis = items.filter(shown);
     vis.filter(it => it.hl).concat(vis.filter(it => !it.hl)).forEach(it => { if (!(mv && mv.it.id === it.id) && !(ed && ed.id === it.id)) drawItem(it, r); });
+    selFrame(r);
     draft = el('g', { class:'pa-draft' }, r);
     if (mv) drawMove();
+  }
+  /* ---------- printen: alle (zichtbare) aantekeningen als losse <g> in coördinaten van #ptSheet ---------- */
+  function printLayer(o){
+    const g = document.createElementNS(NS, 'g');
+    if (!ptCur || !o || !o.ann) return g;
+    geo();
+    const list = (ptCur.ann || []).filter(it => (o.hidden || shown(it)) && !(o.noDone && it.ok));
+    list.filter(it => it.hl).concat(list.filter(it => !it.hl)).forEach(it => { const x = drawItem(it, g); if (x){ x.classList.remove('pa-sel'); delete x.dataset.aid; } });
+    return g;
   }
 
   /* ---------- bewerken ---------- */
   let active = false, undo = [], redo = [], forId = null, cur = null, mv = null, sawPen = false, eatClick = 0, ed = null, lRen = null;
+  const sel = new Set();   // geselecteerde aantekeningen (id's), gereedschap ➰
   function items(){ if (!ptCur.ann) ptCur.ann = []; return ptCur.ann; }
-  function checkPiece(){ if (ptCur && ptCur.id !== forId){ forId = ptCur.id; undo = []; redo = []; } }
+  function checkPiece(){ if (ptCur && ptCur.id !== forId){ forId = ptCur.id; undo = []; redo = []; sel.clear(); } }
   function snap(){ checkPiece(); undo.push(JSON.stringify(items())); if (undo.length > 60) undo.shift(); redo = []; undoUI(); }
-  function commit(){ ptSaveCur(); undoUI(); render(); }
+  function commit(){ ptSaveCur(); undoUI(); const ids = new Set(items().map(x => x.id)); [...sel].forEach(id => { if (!ids.has(id)) sel.delete(id); }); render(); selUI(); }
   function doUndo(){ checkPiece(); if (!undo.length) return; redo.push(JSON.stringify(items())); ptCur.ann = JSON.parse(undo.pop()); commit(); }
   function doRedo(){ checkPiece(); if (!redo.length) return; undo.push(JSON.stringify(items())); ptCur.ann = JSON.parse(redo.pop()); commit(); }
   function undoUI(){ const u = $('paUndo'), r = $('paRedo'); if (u) u.disabled = !undo.length; if (r) r.disabled = !redo.length; }
@@ -448,6 +460,16 @@ const Ann = (function(){
       drawMove(); cur = { kind:'move', id:e.pointerId, p0:p };
       return true;
     }
+    if (tool === 'select'){
+      const bb = selBox();
+      if (bb && sel.size){
+        const m = .5 * (G.sp || 10);
+        if (p.x >= bb.x - m && p.x <= bb.x + bb.w + m && p.y >= bb.y - m && p.y <= bb.y + bb.h + m){
+          cur = { kind:'selmove', p0:p, d:{ x:0, y:0 }, id:e.pointerId }; return true;
+        }
+      }
+      cur = { kind:'lasso', pts:[p], id:e.pointerId }; liveLasso(); return true;
+    }
     if (tool === 'text'){
       if (ed){ edDone(true); return false; }
       const h = hitTest(p, ['x']);
@@ -472,6 +494,12 @@ const Ann = (function(){
     } else if (cur.kind === 'erase'){ if (eraseAt(toP(e))) cur.any = true; }
     else if (cur.kind === 'span'){ cur.p1 = toP(e); liveSpan(); }
     else if (cur.kind === 'move'){ const p = toP(e); mv.x = p.x + mv.ox; mv.y = p.y + mv.oy; drawMove(); }
+    else if (cur.kind === 'lasso'){ list.forEach(ev => cur.pts.push(toP(ev))); liveLasso(); }
+    else if (cur.kind === 'selmove'){
+      const p = toP(e); cur.d = { x:p.x - cur.p0.x, y:p.y - cur.p0.y };
+      const tr = 'translate(' + r3(cur.d.x) + ' ' + r3(cur.d.y) + ')';
+      root.querySelectorAll('.pa-sel, .pa-selbox').forEach(g => g.setAttribute('transform', tr));
+    }
   }
   function end(e, cancel){
     const c = cur; cur = null; if (!c) return;
@@ -490,6 +518,26 @@ const Ann = (function(){
       b = Object.assign(b, { st:c.a.st, dy:c.a.dy });
       if (b.i === c.a.i && Math.abs(b.dx - c.a.dx) < .5) b.dx = r3(c.a.dx + 4);
       snap(); items().push({ id:uid(), t:'h', k:c.k, a:c.a, b, c:S().color, l:S().layer }); commit();
+    } else if (c.kind === 'lasso'){
+      if (cancel){ render(); return; }
+      const P = c.pts, sp = G.sp || 10;
+      let len = 0; for (let j = 1; j < P.length; j++) len += Math.hypot(P[j].x - P[j - 1].x, P[j].y - P[j - 1].y);
+      if (len < sp){   // tikken: één aantekening erbij of eraf
+        const h = hitTest(P[0]);
+        if (h){ if (sel.has(h.it.id)) sel.delete(h.it.id); else sel.add(h.it.id); } else sel.clear();
+      } else {
+        sel.clear();
+        root.querySelectorAll('.pa-it[data-aid]').forEach(g => {
+          let bb; try { bb = g.getBBox(); } catch(x){ return; }
+          if (inPoly({ x:bb.x + bb.width / 2, y:bb.y + bb.height / 2 }, P)) sel.add(g.dataset.aid);
+        });
+      }
+      render(); selUI();
+    } else if (c.kind === 'selmove'){
+      if (cancel || Math.hypot(c.d.x, c.d.y) < 1){ render(); return; }
+      snap();
+      items().filter(it => sel.has(it.id)).forEach(it => shiftItem(it, c.d.x, c.d.y));
+      commit();
     } else if (c.kind === 'move'){
       const m = mv; mv = null;
       if (cancel){ render(); return; }
@@ -502,6 +550,56 @@ const Ann = (function(){
       else { const it = items().find(x => x.id === m.it.id); if (it) it.a = a; }
       commit();
     }
+  }
+  /* ---------- selecteren ---------- */
+  function inPoly(pt, P){
+    let inside = false;
+    for (let i = 0, j = P.length - 1; i < P.length; j = i++){
+      const a = P[i], b = P[j];
+      if ((a.y > pt.y) !== (b.y > pt.y) && pt.x < (b.x - a.x) * (pt.y - a.y) / ((b.y - a.y) || 1e-9) + a.x) inside = !inside;
+    }
+    return inside;
+  }
+  function selBox(){
+    if (!root || !sel.size) return null;
+    let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+    root.querySelectorAll('.pa-sel').forEach(g => { let bb; try { bb = g.getBBox(); } catch(e){ return; } x1 = Math.min(x1, bb.x); y1 = Math.min(y1, bb.y); x2 = Math.max(x2, bb.x + bb.width); y2 = Math.max(y2, bb.y + bb.height); });
+    return isFinite(x1) ? { x:x1, y:y1, w:x2 - x1, h:y2 - y1 } : null;
+  }
+  function selFrame(r){
+    const bb = selBox(); if (!bb) return;
+    const m = .4 * (G.sp || 10);
+    el('rect', { class:'pa-selbox', x:r3(bb.x - m), y:r3(bb.y - m), width:r3(bb.w + 2 * m), height:r3(bb.h + 2 * m), rx:4 }, r);
+  }
+  function liveLasso(){
+    if (!draft) return;
+    draft.textContent = '';
+    el('path', { class:'pa-lasso', d:'M' + cur.pts.map(q => r3(q.x) + ' ' + r3(q.y)).join('L') }, draft);
+  }
+  function shiftItem(it, dx, dy){   // verplaatsen = opnieuw verankeren op de nieuwe plek
+    const mv1 = a => { const p = pos(a); return p ? anchorAt({ x:p.x + dx, y:p.y + dy }, false) : null; };
+    const a = mv1(it.a); if (!a) return;
+    if (it.t === 'h'){ const b = mv1(it.b); if (!b) return; it.b = Object.assign(b, { st:a.st, dy:a.dy }); }
+    it.a = a;
+  }
+  function selUI(){
+    const row = $('paBar') && $('paBar').querySelector('.pasel'); if (!row) return;
+    const s = S(); row.hidden = !(active && s.tool === 'select');
+    $('paBar').querySelector('.pacolors').classList.toggle('dim', s.tool === 'hl' || s.tool === 'erase' || s.tool === 'pan' || (s.tool === 'select' && !sel.size));
+    if (row.hidden) return;
+    const n = sel.size;
+    row.innerHTML = n ? `<span class="pacount">${n} geselecteerd</span>
+        <label class="pasellay">Laag <select id="paSelLay">${s.layers.map(l => `<option value="${l.id}">${ptEsc(l.n)}</option>`).join('')}<option value="" selected disabled>kiezen…</option></select></label>
+        <button id="paSelDel" title="Verwijderen (Delete)">🗑 Weg</button><button id="paSelAll" title="Alles selecteren (Ctrl+A)">Alles</button><button id="paSelNone" title="Niets selecteren">✕</button>
+        <span class="pahint">Sleep binnen het kader om te verplaatsen · kleurtje = kleur wijzigen</span>`
+      : `<span class="pahint">Trek een lus om aantekeningen heen, of tik er een aan. Daarna slepen = verplaatsen.</span><button id="paSelAll">Alles</button>`;
+    const ls = $('paSelLay');
+    if (ls) ls.onchange = () => { snap(); items().forEach(it => { if (sel.has(it.id)) it.l = ls.value; }); commit(); };
+  }
+  function selDo(id){
+    if (id === 'paSelDel'){ if (!sel.size) return; snap(); ptCur.ann = items().filter(it => !sel.has(it.id)); sel.clear(); commit(); }
+    else if (id === 'paSelAll'){ items().filter(shown).forEach(it => sel.add(it.id)); render(); selUI(); }
+    else if (id === 'paSelNone'){ sel.clear(); render(); selUI(); }
   }
   /* ---------- tekstvakje typen (Enter = klaar, Shift+Enter = nieuwe regel, Esc = annuleren) ---------- */
   function edOpen(it, a){
@@ -629,6 +727,7 @@ const Ann = (function(){
       <button data-tool="pen" title="Pen">✏️</button>
       <button data-tool="hl" title="Markeerstift">🖍️</button>
       <button data-tool="erase" title="Gum: tik of veeg over een aantekening">🧽</button>
+      <button data-tool="select" title="Selecteren: lus trekken of aantikken, daarna slepen, laag of kleur wijzigen, verwijderen">➰</button>
       <button data-tool="text" title="Tekst: tik waar de tekst moet komen en typ (Enter = klaar). Tik op een tekst om hem te wijzigen, sleep om te verplaatsen.">🔤</button>
       <button data-tool="stamp" title="Stempels: kies er een en tik op de partituur. Een stempel verslepen = verplaatsen.">🏷️</button>
       <span class="pacolors">${Object.keys(COLORS).map(c => `<button data-c="${c}" class="pa-${c}" title="${COLORS[c]}"><i></i></button>`).join('')}</span>
@@ -648,6 +747,7 @@ const Ann = (function(){
         <button id="paDel" hidden title="Deze eigen stempel weghalen">🗑</button>
       </div>
     </div>
+    <div class="parow pasel" hidden></div>
     <div class="parow palayers" hidden></div>
     <div class="pamsg" id="paMsg" hidden></div>`;
   }
@@ -714,12 +814,13 @@ const Ann = (function(){
     const s = S(), bar = $('paBar'); if (!bar) return;
     bar.querySelectorAll('[data-tool]').forEach(b => b.classList.toggle('on', b.dataset.tool === s.tool));
     bar.querySelectorAll('[data-c]').forEach(b => b.classList.toggle('on', b.dataset.c === s.color));
-    bar.querySelector('.pacolors').classList.toggle('dim', s.tool === 'hl' || s.tool === 'erase' || s.tool === 'pan');
+    bar.querySelector('.pacolors').classList.toggle('dim', s.tool === 'hl' || s.tool === 'erase' || s.tool === 'pan' || (s.tool === 'select' && !sel.size));
     bar.querySelector('.pastamps').hidden = s.tool !== 'stamp';
     $('paEye').classList.toggle('off', !s.show);
     $('paEye').textContent = s.show ? '👁' : '🚫';
     const inp = $('paInput'); if (inp){ inp.hidden = !active || s.tool === 'pan'; inp.dataset.tool = s.tool; }
-    undoUI(); layersUI();
+    if (s.tool !== 'select' && sel.size){ sel.clear(); render(); }
+    undoUI(); layersUI(); selUI();
     if (s.tool === 'stamp') stampsUI();
   }
   let layOpen = false;
@@ -784,9 +885,11 @@ const Ann = (function(){
       const b = e.target.closest('button'); if (!b) return;
       const s = S();
       if (layerClick(b)){ b.blur && b.blur(); return; }
+      if (b.id && b.id.slice(0, 5) === 'paSel'){ selDo(b.id); b.blur(); return; }
       if (b.id === 'paLay'){ layOpen = !layOpen; layersUI(); b.blur(); return; }
       if (b.dataset.tool && ed) edDone(true);
       if (b.dataset.tool){ s.tool = b.dataset.tool; save(); toolsUI(); }
+      else if (b.dataset.c && s.tool === 'select' && sel.size){ snap(); items().forEach(it => { if (sel.has(it.id) && !it.hl) it.c = b.dataset.c; }); commit(); }
       else if (b.dataset.c){ s.color = b.dataset.c; if (s.tool === 'hl' || s.tool === 'erase' || s.tool === 'pan') s.tool = 'pen'; save(); toolsUI(); if (ed){ ed.c = s.color; ed.ta.className = 'patxted pa-' + ed.c; } }
       else if (b.dataset.tab){ s.tab = b.dataset.tab; save(); stampsUI(); }
       else if (b.dataset.st){ const d = stamp(b.dataset.st); if (d && d.x === 'ask'){ askText(d.v); return; } s.stamp = b.dataset.st; save(); stampsUI(); }
@@ -802,6 +905,9 @@ const Ann = (function(){
     document.addEventListener('keydown', e => {
       if (!active) return;
       if (e.key === 'Escape'){ if (document.activeElement && (document.activeElement.id === 'paTxt' || document.activeElement.classList.contains('patxted') || document.activeElement.classList.contains('palren'))) return; e.preventDefault(); e.stopImmediatePropagation(); close(); return; }
+      const typing = document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+      if (!typing && S().tool === 'select' && (e.key === 'Delete' || e.key === 'Backspace') && sel.size){ e.preventDefault(); e.stopImmediatePropagation(); selDo('paSelDel'); return; }
+      if (!typing && S().tool === 'select' && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a'){ e.preventDefault(); e.stopImmediatePropagation(); selDo('paSelAll'); return; }
       if ((e.ctrlKey || e.metaKey) && !e.altKey){
         const k = e.key.toLowerCase();
         if (k === 'z'){ e.preventDefault(); e.stopImmediatePropagation(); if (e.shiftKey) doRedo(); else doUndo(); }
@@ -823,7 +929,7 @@ const Ann = (function(){
     if (!active) return;
     if (cur) end({}, true);
     if (ed) edDone(true);
-    active = false; mv = null; layOpen = false;
+    active = false; mv = null; layOpen = false; sel.clear();
     $('paBar').hidden = true;
     $('ptView').classList.remove('pa-on'); document.body.classList.remove('pa-on');
     ['ptAnnBtn', 'ptFsAnn'].forEach(id => { const b = $(id); if (b) b.classList.remove('on'); });
@@ -847,7 +953,7 @@ const Ann = (function(){
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 
   return {
-    redraw, open, close, onFs, isActive:() => active,
+    redraw, open, close, onFs, isActive:() => active, printLayer,
     // grijpt deze aanwijzer in (dan geen omslaan/cursor in partituren.js)?
     grabs:e => (active && S().tool !== 'pan') || (e && e.pointerType === 'pen' && S().stylus) || !!cur,
     _dbg:{ geo:() => { G = null; return geo(); }, anchorAt, pos, stamp, LIST, TABS, items:() => items(), render }

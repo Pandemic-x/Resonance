@@ -1535,14 +1535,17 @@
         <button id="ptSelBtn" class="ptsmall ptic" title="Selecteer passage: klik daarna op de eerste en de laatste maat">⬚</button>
         <span id="ptSelHint" class="ptselhint" hidden></span>
         <button id="ptAnnBtn" class="ptsmall ptic" title="Aantekeningen: pen, markeerstift, gum en stempels (Esc = klaar)">✏️</button>
+        <button id="ptPlekBtn" class="ptsmall ptplekbtn" hidden title="Lastige plekken">⚠️ 0</button>
         <button id="ptPasNew" class="ptsmall ptic" title="Bewaar het oefenblok als passage">＋</button>
         <span id="ptPasName" class="ptpasname" hidden><input type="text" id="ptPasNameIn" maxlength="60" placeholder="Naam, bv. Thema m. 1–8"><button id="ptPasSave" class="ptsmall primary">Opslaan</button><button id="ptPasCancel" class="ptsmall">Annuleren</button></span>
         <span class="ptgap"></span>
         <span class="ptzoom" title="Zoom (de partituur vult altijd de hele breedte)"><button id="ptZoomOut" class="ptsmall ptic" title="Kleiner">−</button><span id="ptZoomVal"></span><button id="ptZoomIn" class="ptsmall ptic" title="Groter">＋</button></span>
-        <span class="ptright"><button id="ptFollowBtn" class="ptsmall ptic" title="Automatisch meescrollen en omslaan tijdens het afspelen">⇣</button><button id="ptFsBtn" class="ptsmall ptic" data-ktitle="Volledig scherm: bladzijden, draaien en zoomen ({volscherm})">⛶</button><button id="ptInfoBtn" class="ptsmall ptic" title="Uitleg en sneltoetsen">?</button><button class="pnlbtn ptic" title="Instellingen van de speler">🕹️</button></span>
+        <span class="ptright"><button id="ptFollowBtn" class="ptsmall ptic" title="Automatisch meescrollen en omslaan tijdens het afspelen">⇣</button><button id="ptPrintBtn" class="ptsmall ptic" title="Printen of als PDF opslaan (met aantekeningen)">🖨️</button><button id="ptFsBtn" class="ptsmall ptic" data-ktitle="Volledig scherm: bladzijden, draaien en zoomen ({volscherm})">⛶</button><button id="ptInfoBtn" class="ptsmall ptic" title="Uitleg en sneltoetsen">?</button><button class="pnlbtn ptic" title="Instellingen van de speler">🕹️</button></span>
       </div>
+      <div id="ptPlekBox" class="ptplekbox" hidden></div>
       <div id="ptStrip" class="ptstrip" hidden>
         <div class="ptsrow">
+          <button id="ptStripEmo" class="ptsemo empty" title="Emoji bij dit blok (alleen als je er een kiest)">☺</button><div id="ptEmoPop" class="ptemopop" hidden></div>
           <span id="ptStripName" class="ptsname"></span>
           <span class="ptseg ptsstatus" id="ptStripStatus"><button data-st="nieuw">🆕 Nieuw</button><button data-st="bezig">🔨 Bezig</button><button data-st="zit">✅ Zit erin</button></span>
           <span class="ptstempo">
@@ -1635,6 +1638,19 @@
       </details>
     </aside>
   </section>
+  <div id="ptPrintDlg" class="ptprintdlg" hidden><div class="ptprintcard">
+    <b class="ptprt">🖨️ Printen of PDF</b>
+    <label class="ptrow"><span>Wat</span><select id="ptPrRange"></select></label>
+    <div id="ptPrAnnBox">
+      <label class="ptchk"><input type="checkbox" id="ptPrAnn"> Aantekeningen meeprinten</label>
+      <label class="ptchk"><input type="checkbox" id="ptPrHid"> Ook lagen die nu verborgen zijn</label>
+      <label class="ptchk"><input type="checkbox" id="ptPrDone"> Opgeloste plekken weglaten</label>
+    </div>
+    <label class="ptchk"><input type="checkbox" id="ptPrTitle"> Titel en componist bovenaan</label>
+    <p class="muted ptprtip">Een PDF? Kies in het printvenster bij <i>Bestemming</i> of <i>Printer</i>: <b>Opslaan als PDF</b>.</p>
+    <p class="ptprmsg" id="ptPrMsg"></p>
+    <div class="ptprbtns"><button id="ptPrGo" class="primary">🖨️ Printen…</button><button id="ptPrNo">Annuleren</button></div>
+  </div></div>
   <div id="ptFs" class="ptfs" hidden>
     <div id="ptFsRot" class="ptfsrot">
       <div class="ptfsbar">
@@ -1703,6 +1719,8 @@
 <script src="js/metronoom.js"></script>
 <script src="js/partituren.js"></script>
 <script src="js/albums.js"></script>
+<script src="js/plekken.js"></script>
+<script src="js/printen.js"></script>
 <script src="js/aantekeningen.js"></script>
 <script src="js/vraag.js"></script>
 <script src="js/vraag-app.js"></script>

@@ -534,3 +534,61 @@ html.dark .ptfsbar #ptFsFocus.on{color:#15130f}
 .ptalbsubs{margin-left:72px}
 .ptalbit .ptexp{flex:0 0 auto}
 @media (max-width:560px){ .ptalbsubs{margin-left:40px} }
+
+/* ---------- Emoji bij een blok + lastige plekken (js/plekken.js) ---------- */
+.ptstrip{position:relative}
+.ptsemo{border:1px solid transparent;background:transparent;font-size:20px;line-height:1;padding:2px 4px;border-radius:8px;cursor:pointer;color:var(--ink)}
+.ptsemo.empty{font-size:15px;color:var(--muted);border:1px dashed var(--line);opacity:.75}
+.ptsemo:hover{border-color:var(--accent)}
+.ptemopop{position:absolute;z-index:50;top:42px;left:8px;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.25);padding:8px;width:min(330px, calc(100vw - 40px))}
+.ptemogrid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px}
+.ptemogrid button{font-size:20px;background:transparent;border:1px solid transparent;border-radius:8px;padding:4px 0;cursor:pointer}
+.ptemogrid button:hover,.ptemogrid button.on{border-color:var(--accent);background:var(--accent-soft, var(--soft))}
+.ptemorow{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.ptemorow input{flex:1;min-width:120px;font:inherit;font-size:14px;padding:5px 8px;border-radius:9px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.ptemorow button{font:inherit;font-size:13px;padding:5px 10px;border-radius:9px;border:1px solid var(--line);background:var(--soft, var(--paper));color:var(--ink);cursor:pointer}
+.ptplekbtn{font-weight:600;white-space:nowrap}
+.ptplekbtn.on{border-color:var(--accent);background:var(--accent-soft, var(--paper))}
+.ptplekbtn.zero{opacity:.6}
+.ptplekbox{display:flex;flex-direction:column;gap:6px;margin:6px 0;padding:10px;border:1px solid var(--line);border-radius:14px;background:var(--paper);max-width:620px}
+.ptplek{display:flex;gap:6px;align-items:stretch}
+.ptplekgo{flex:1;min-width:0;display:grid;grid-template-columns:auto 1fr;column-gap:10px;text-align:left;padding:7px 12px;border-radius:11px;border:1px solid var(--line);background:var(--soft, var(--paper));color:var(--ink);cursor:pointer;font:inherit}
+.ptplekgo:hover{border-color:var(--accent)}
+.ptplekic{grid-row:span 2;font-size:18px;align-self:center;min-width:22px;text-align:center}
+.ptplekgo b{font-size:14px}
+.ptplekgo small{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ptplek.here .ptplekgo{border-color:var(--accent)}
+.ptplek.done .ptplekgo{opacity:.55}
+.ptplekpas,.ptplekok{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:11px;background:var(--paper);color:var(--ink);cursor:pointer;padding:0 10px;white-space:nowrap}
+.ptplekok{min-width:40px;font-size:16px}
+.ptplekmore{margin-top:2px}
+.ptplektip,.ptplekempty{font-size:12px;margin:2px 2px 0}
+
+/* ---------- Printen (js/printen.js) ---------- */
+.ptprintdlg{position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;padding:16px}
+.ptprintdlg[hidden]{display:none}
+.ptprintcard{background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.3);padding:18px;width:min(420px, 100%);display:flex;flex-direction:column;gap:10px}
+.ptprt{font-size:17px}
+.ptprintcard .ptrow{display:flex;gap:10px;align-items:center}
+.ptprintcard select{flex:1;font:inherit;font-size:14px;padding:6px 8px;border-radius:9px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.ptprintcard .ptchk{display:flex;gap:8px;align-items:center;font-size:14px;margin:3px 0}
+#ptPrAnnBox{display:flex;flex-direction:column}
+#ptPrAnnBox[hidden]{display:none}
+.ptprtip{font-size:12.5px;margin:0}
+.ptprmsg{font-size:13px;margin:0;color:var(--muted)}
+.ptprmsg:empty{display:none}
+.ptprbtns{display:flex;gap:8px;justify-content:flex-end}
+.ptprbtns button{font:inherit;font-size:14px;padding:8px 14px;border-radius:11px;border:1px solid var(--line);background:var(--soft, var(--paper));color:var(--ink);cursor:pointer}
+.ptprbtns button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+html.dark .ptprbtns button.primary{color:#15130f}
+#ptPrint{display:none;color:#000;background:#fff}
+#ptPrint svg{display:block;width:100%;height:auto}
+#ptPrint .pa-ink{color:#000}
+@media print{
+  @page{size:A4 portrait;margin:10mm}
+  html,body{background:#fff !important}
+  body.ptprinting > *{display:none !important}
+  body.ptprinting > #ptPrint{display:block !important}
+  #ptPrint .ptpp{break-after:page;page-break-after:always}
+  #ptPrint .ptpp:last-child{break-after:auto;page-break-after:auto}
+}

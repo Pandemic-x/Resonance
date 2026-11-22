@@ -789,7 +789,8 @@ function ptSelClick(i){
    (sleutel = modus|breedte (per 40 px)|zoom|maten). Max 6 opmakken per stuk (it.ck, oudste eruit). */
 const ptCK = (id, k) => id + '|' + PT_CV + '|' + k;
 const ptActive = () => ptSrc === 'cache' ? $('ptCacheView') : $('ptOsmdHost');
-const ptPaged = () => ptFsOn && ptG.fsMode !== 'door';   // volledig scherm met bladzijden (anders doorlopend = de gewone tekening)
+let ptPrintDims = null;   // tijdens printen (js/printen.js): A4-bladzijden {pw, ph}
+const ptPaged = () => !!ptPrintDims || (ptFsOn && ptG.fsMode !== 'door');   // volledig scherm met bladzijden (anders doorlopend = de gewone tekening)
 function ptKey(){
   const s = ptCur.s, range = s.focus ? s.from + '-' + s.to : 'all';
   const t = (ptG.titles ? 't' : 'n') + (s.show != null && s.show !== 'alle' ? 'p' + s.show : '');
@@ -1394,7 +1395,8 @@ async function ptAddSample(){
 const ptDaysSince = d => { if (!d) return 999; const a = new Date(d + 'T12:00'), b = new Date(ptToday() + 'T12:00'); return Math.round((b - a) / 864e5); };
 function ptPasCur(){ return ptCur && ptCur.pcur ? (ptCur.pas || []).find(x => x.id === ptCur.pcur) || null : null; }
 function ptPasSame(p){ return p && ptCur && p.from === ptCur.s.from && p.to === ptCur.s.to; }
-function ptPasLabel(){ const p = ptPasCur(); return p ? p.naam + ' · m. ' + p.from + '–' + p.to : 'maat ' + ptCur.s.from + '–' + ptCur.s.to; }
+const ptPasNm = p => (p.emo ? p.emo + ' ' : '') + p.naam;   // naam met de eigen emoji (alleen als je er een koos)
+function ptPasLabel(){ const p = ptPasCur(); return p ? ptPasNm(p) + ' · m. ' + p.from + '–' + p.to : 'maat ' + ptCur.s.from + '–' + ptCur.s.to; }
 function ptPasStart(p){   // voorgesteld starttempo: na rust iets lager dan je schone tempo (zoals de slimme metronoom)
   let b = p.bpm || ptCur.s.bpm; const days = ptDaysSince(p.last);
   if (p.ok && days >= 1 && days < 999){ const v = Math.round(p.ok * (days >= 7 ? .85 : .92)); if (v < b) return { bpm:v, why:(days >= 7 ? '85' : '92') + '% van je schone tempo, want je deed hem ' + days + ' dag' + (days === 1 ? '' : 'en') + ' niet' }; }
@@ -1411,7 +1413,7 @@ function ptPasUI(){
   if (!ptCur) return;
   const list = ptCur.pas || [], cur = ptPasCur();
   const el = $('ptPasList');
-  el.innerHTML = list.length ? list.map(p => `<span class="ptpchip${cur && cur.id === p.id ? ' on' : ''} st-${p.status}"><button class="ptpload" data-id="${p.id}" title="${ptEsc(p.notes ? p.notes : 'Laden: maten en tempo')}"><span class="ptpst">${PT_STATUS[p.status].i}</span><b>${ptEsc(p.naam)}</b><small>${ptEsc(ptPasMeta(p))}</small></button><button class="ptpdel" data-id="${p.id}" title="Verwijderen (twee keer klikken)">✕</button></span>`).join('')
+  el.innerHTML = list.length ? list.map(p => `<span class="ptpchip${cur && cur.id === p.id ? ' on' : ''} st-${p.status}"><button class="ptpload" data-id="${p.id}" title="${ptEsc(p.notes ? p.notes : 'Laden: maten en tempo')}"><span class="ptpst">${PT_STATUS[p.status].i}</span><b>${ptEsc(ptPasNm(p))}</b><small>${ptEsc(ptPasMeta(p))}</small></button><button class="ptpdel" data-id="${p.id}" title="Verwijderen (twee keer klikken)">✕</button></span>`).join('')
     : '<span class="muted ptpasempty">Nog geen passages. Kies een blok (maat … t/m …, of klik op een noot) en bewaar het hier met een naam.</span>';
   el.querySelectorAll('.ptpload').forEach(b => b.onclick = () => { b.blur(); ptPasLoad(b.dataset.id); });
   el.querySelectorAll('.ptpdel').forEach(b => b.onclick = () => {
@@ -1425,6 +1427,7 @@ function ptPasUI(){
   $('ptStrip').hidden = !cur;
   if (cur){
     const same = ptPasSame(cur), u = PT_UNITS[ptCur.s.unit].s;
+    $('ptStripEmo').textContent = cur.emo || '☺'; $('ptStripEmo').classList.toggle('empty', !cur.emo);
     $('ptStripName').innerHTML = '<b>' + ptEsc(cur.naam) + '</b><small>m. ' + cur.from + '–' + cur.to + (same ? '' : ' · blok gewijzigd') + '</small>';
     $('ptStripStatus').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.st === cur.status));
     $('ptStripNow').textContent = u + ' ' + ptCur.s.bpm;
@@ -1504,6 +1507,7 @@ function ptFsArea(){   // beschikbare ruimte voor de bladzijden (rekening houden
   return { sw, sh, aw:sw - 16, ah:sh - ((bar && bar.offsetHeight) || 44) - 12 };
 }
 function ptFsDims(){   // aantal bladzijden naast elkaar en de tekenmaat per bladzijde (zoom = smaller tekenen = grotere noten)
+  if (ptPrintDims) return { n:1, pw:ptPrintDims.pw, ph:ptPrintDims.ph };
   const a = ptFsArea(), pref = ptG.fsPages;
   const n = pref === '1' ? 1 : pref === '2' ? 2 : (a.aw / a.ah > 1.25 ? 2 : 1);
   const asp = Math.max(.35, Math.min(2.6, (a.aw / n) / a.ah));
@@ -1753,7 +1757,7 @@ async function ptRenderList(){
   ptList.forEach(it => (it.pas || []).forEach(p => all.push({ it, p, x:ptPrio(p) })));
   all.sort((a, b) => b.x - a.x);
   const top = all.slice(0, 3);
-  $('ptToday').innerHTML = top.length ? '<div class="rlabel">Vandaag oefenen</div><div class="pttodaylist">' + top.map(o => `<button class="pttodayb" data-id="${o.it.id}" data-p="${o.p.id}"><span>${PT_STATUS[o.p.status].i}</span><b>${ptEsc(o.p.naam)}</b><small>${ptEsc((o.it.titel || o.it.naam) + ' · ' + ptPasMeta(o.p))}</small></button>`).join('') + '</div>' : '';
+  $('ptToday').innerHTML = top.length ? '<div class="rlabel">Vandaag oefenen</div><div class="pttodaylist">' + top.map(o => `<button class="pttodayb" data-id="${o.it.id}" data-p="${o.p.id}"><span>${PT_STATUS[o.p.status].i}</span><b>${ptEsc(ptPasNm(o.p))}</b><small>${ptEsc((o.it.titel || o.it.naam) + ' · ' + ptPasMeta(o.p))}</small></button>`).join('') + '</div>' : '';
   $('ptToday').querySelectorAll('.pttodayb').forEach(b => b.onclick = () => ptOpen(b.dataset.id, b.dataset.p));
   // filter op instrument
   const has = k => ptList.some(it => (it.instr || '') === k);
@@ -1833,7 +1837,7 @@ function ptFsBlkUI(){
   $('ptFsFocus').classList.toggle('on', !!s.focus);
   const list = ptCur.pas || [], sel = $('ptFsPas'), cur = ptPasCur();
   sel.hidden = !list.length;
-  sel.innerHTML = '<option value="">Passage…</option>' + list.map(p => `<option value="${p.id}">${ptEsc(p.naam)} (m. ${p.from}–${p.to})</option>`).join('');
+  sel.innerHTML = '<option value="">Passage…</option>' + list.map(p => `<option value="${p.id}">${ptEsc(ptPasNm(p))} (m. ${p.from}–${p.to})</option>`).join('');
   sel.value = cur ? cur.id : '';
 }
 function ptSetFocus(on){
@@ -1911,6 +1915,21 @@ function ptInit(){
   $('ptStripStatus').querySelectorAll('button').forEach(b => b.onclick = () => { b.blur(); const p = ptPasCur(); if (p){ p.status = b.dataset.st; ptSaveCur(); ptPasUI(); } });
   $('ptStripDoel').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') $('ptStripDoel').blur(); });
   $('ptStripDoel').onchange = () => { const p = ptPasCur(); if (!p) return; const v = Math.round(+$('ptStripDoel').value || 0); p.doel = v >= 20 ? Math.min(300, v) : 0; ptSaveCur(); ptPasUI(); };
+  // eigen emoji bij een blok (passage): alleen als je er een kiest; "Geen" haalt hem weg
+  const EMO = ['🎯', '🔥', '⭐', '💪', '🐢', '🐇', '🎻', '🎹', '🎵', '⚠️', '❤️', '🧠', '👂', '✋', '🌊', '🏔️', '🌙', '☀️', '🎭', '✨', '🔁', '📌', '🚀', '🍀'];
+  const emoPop = $('ptEmoPop');
+  const emoSet = v => { const p = ptPasCur(); if (!p) return; v = (v || '').trim(); if (v) p.emo = [...v].slice(0, 4).join(''); else delete p.emo; ptSaveCur(); ptPasUI(); emoPop.hidden = true; };
+  $('ptStripEmo').onclick = e => {
+    e.currentTarget.blur();
+    if (!emoPop.hidden){ emoPop.hidden = true; return; }
+    const p = ptPasCur(); if (!p) return;
+    emoPop.innerHTML = '<div class="ptemogrid">' + EMO.map(x => `<button data-e="${x}" class="${p.emo === x ? 'on' : ''}">${x}</button>`).join('') + '</div>' +
+      '<div class="ptemorow"><input type="text" id="ptEmoIn" maxlength="8" placeholder="of typ/plak een emoji" value="' + ptEsc(p.emo && !EMO.includes(p.emo) ? p.emo : '') + '"><button data-ok="1">OK</button><button data-none="1">Geen emoji</button></div>';
+    emoPop.hidden = false;
+  };
+  emoPop.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.e) emoSet(b.dataset.e); else if (b.dataset.ok) emoSet($('ptEmoIn').value); else if (b.dataset.none) emoSet(''); });
+  emoPop.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') emoSet($('ptEmoIn').value); else if (e.key === 'Escape') emoPop.hidden = true; });
+  document.addEventListener('pointerdown', e => { if (!emoPop.hidden && !emoPop.contains(e.target) && e.target !== $('ptStripEmo')) emoPop.hidden = true; });
   $('ptNotesBtn').onclick = e => { e.currentTarget.blur(); const box = $('ptNotesBox'); box.hidden = !box.hidden; ptPasUI(); if (!box.hidden) $('ptNotes').focus(); };
   $('ptNotesPrev').onclick = () => $('ptNotesBtn').click();
   $('ptNotes').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape') $('ptNotesBtn').click(); });
