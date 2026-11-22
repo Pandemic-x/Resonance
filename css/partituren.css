@@ -461,3 +461,12 @@ body.ptplaymode .tabbar{display:none}
 /* volledig scherm: balk loopt door op een tweede regel als hij niet past (vooral 90° gedraaid), zodat alle knoppen
    (ook zoom − ＋) altijd zichtbaar zijn; geen zijwaarts scrollen meer nodig */
 .ptfsbar{flex-wrap:wrap;row-gap:4px;overflow:visible}
+
+/* volledig scherm: blok + Focus + passage (22-11-2026) */
+.ptfsblk{gap:4px}
+.ptfsblk .ptfsm{color:var(--muted);font-size:12px}
+.ptfsblk input[type=number]{font:inherit;font-size:13px;font-weight:600;width:52px;height:28px;box-sizing:border-box;border:1px solid var(--line);border-radius:8px;padding:2px 5px;background:var(--paper);color:var(--ink)}
+.ptfsblk select{font:inherit;font-size:12px;height:28px;max-width:150px;border:1px solid var(--line);border-radius:8px;padding:0 4px;background:var(--paper);color:var(--ink);margin-right:4px}
+.ptfsbar #ptFsFocus{font-size:12px}
+.ptfsbar #ptFsFocus.on{background:var(--accent);color:#fff;font-weight:600}
+html.dark .ptfsbar #ptFsFocus.on{color:#15130f}

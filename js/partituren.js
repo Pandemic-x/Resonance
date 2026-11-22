@@ -326,7 +326,7 @@ function ptGalmRow(inst, label, tip){
   return `<div class="ptrow ptmixgalm" title="${tip}"><span>${label}</span><span class="ptrange2"><input type="range" class="ptmixg ptgalm" data-g="${inst}" min="0" max="100" step="5" value="${v}"><output>${v}%</output></span></div>`;
 }
 function ptShowUI(){   // 🕹️ → Weergave: welke partij(en) als bladmuziek
-  const sel = $('ptShow'); if (!sel || !ptCur) return;
+  const sel = $('ptShow'); if (!sel || !ptCur || !ptCur.s) return;
   const cur = ptCur.s.show != null ? String(ptCur.s.show) : 'alle';
   sel.innerHTML = '<option value="alle">alle partijen</option>' + ptParts.map((p, i) => `<option value="${i}">alleen ${ptEsc(p.name)}</option>`).join('');
   sel.value = ptParts[cur] || cur === 'alle' ? cur : 'alle';
@@ -600,7 +600,7 @@ function ptTrUp(){
   return PT_OLD.test((ptCur && ptCur.comp) || '');
 }
 function ptTrUI(){
-  if (!$('ptTr') || !ptCur) return;
+  if (!$('ptTr') || !ptCur || !ptCur.s) return;   // nieuw stuk: s bestaat pas aan het eind van ptOpen
   $('ptTr').value = ptCur.s.tr || 'auto';
   const n = { tr:0, mor:0, imor:0 }; (ptOrn || []).forEach(e => { n[e[4]]++; });
   const tot = n.tr + n.mor + n.imor;
@@ -1417,6 +1417,7 @@ function ptPasUI(){
     ptSaveCur(); ptPasUI();
   });
   if (!ptRun && $('ptFsInfo')) $('ptFsInfo').textContent = ptPasLabel();
+  ptFsBlkUI();
   // passage-balk bovenin: status, tempo's, doel, aantekeningen
   $('ptStrip').hidden = !cur;
   if (cur){
@@ -1448,7 +1449,7 @@ function ptPasLoad(id){
   ptSaveCur(); ptPasUI();
   ptMsg(st.why ? 'Starttempo ' + PT_UNITS[s.unit].s + ' = ' + st.bpm + ': ' + st.why + '.' : '', 'muted');
   const go = () => { if (was) ptPlay(); };
-  if (changed || !wasFocus) ptShowSheet().then(() => { if (st.why) ptMsg('Starttempo ' + PT_UNITS[s.unit].s + ' = ' + st.bpm + ': ' + st.why + '.', 'muted'); go(); });
+  if (changed || !wasFocus) ptRedraw().then(() => { if (st.why) ptMsg('Starttempo ' + PT_UNITS[s.unit].s + ' = ' + st.bpm + ': ' + st.why + '.', 'muted'); go(); });
   else { ptDim(); go(); }
 }
 function ptPasSaveNew(){
@@ -1601,7 +1602,7 @@ async function ptFsEnter(){
   box.classList.add('prep');                      // inhoud onzichtbaar tot alles op zijn plek staat
   fs.hidden = false; fs.classList.remove('show');
   document.body.classList.add('ptfson');
-  ptPaperApply(); ptTempoUI(); ptPlayUI(); ptPasUI(); ptFsModeUI(); ptFollowUI();
+  ptPaperApply(); ptTempoUI(); ptPlayUI(); ptPasUI(); ptFsBlkUI(); ptFsModeUI(); ptFollowUI();
   box.appendChild($('ptSheet'));
   // eerst echt volledig scherm (en wachten tot het scherm zijn nieuwe maat heeft), dan pas uitleggen
   try {
@@ -1810,7 +1811,7 @@ function ptSyncUI(){
   ptTempoUI();
   $('ptFrom').min = $('ptTo').min = ptMinM(); $('ptFrom').max = $('ptTo').max = ptMaxM();
   $('ptFrom').value = s.from; $('ptTo').value = s.to;
-  $('ptFocus').checked = s.focus; $('ptLoop').checked = s.loop;
+  $('ptFocus').checked = s.focus; $('ptLoop').checked = s.loop; ptFsBlkUI();
   $('ptMetro').checked = ptG.metro; if ($('ptTempi')) $('ptTempi').checked = ptG.tempi !== false;
   $('ptUnit').value = s.unit; $('ptInc').value = s.inc; $('ptMax').value = s.max || '';
   $('ptHands').value = s.hands; $('ptHandsRow').hidden = ptStaves < 2;
@@ -1821,16 +1822,37 @@ function ptSyncUI(){
   $('ptStap').value = s.stap; $('ptSolo').value = String(s.solo || 0); $('ptInstr').value = ptCur.instr || '';
   ptPlayUI();
 }
+function ptRedraw(){   // in volledig scherm: zacht uit/infaden en terug naar de eerste bladzijde
+  if (!ptFsOn) return ptShowSheet();
+  ptFsP = 0; return ptFsFade(ptShowSheet);
+}
+/* Volledig scherm: blok (maat … – …), Focus en passage kiezen zonder het volledig scherm te verlaten (22-11-2026, wens gebruiker) */
+function ptFsBlkUI(){
+  if (!ptCur || !$('ptFsFrom')) return;
+  const s = ptCur.s, f = $('ptFsFrom'), t = $('ptFsTo');
+  f.min = t.min = ptMinM(); f.max = t.max = ptMaxM();
+  if (document.activeElement !== f) f.value = s.from;
+  if (document.activeElement !== t) t.value = s.to;
+  $('ptFsFocus').classList.toggle('on', !!s.focus);
+  const list = ptCur.pas || [], sel = $('ptFsPas'), cur = ptPasCur();
+  sel.hidden = !list.length;
+  sel.innerHTML = '<option value="">Passage…</option>' + list.map(p => `<option value="${p.id}">${ptEsc(p.naam)} (m. ${p.from}–${p.to})</option>`).join('');
+  sel.value = cur ? cur.id : '';
+}
+function ptSetFocus(on){
+  ptCur.s.focus = !!on; $('ptFocus').checked = !!on; ptSaveCur(); ptFsBlkUI();
+  const was = !!ptRun; ptStop(); ptRedraw().then(() => { if (was) ptPlay(); });
+}
 function ptSetBlock(a, b, reRender){
   const s = ptCur.s;
   a = Math.max(ptMinM(), Math.min(ptMaxM(), Math.round(a))); b = Math.max(a, Math.min(ptMaxM(), Math.round(b)));
   const changed = a !== s.from || b !== s.to;
-  s.from = a; s.to = b; $('ptFrom').value = a; $('ptTo').value = b;
+  s.from = a; s.to = b; $('ptFrom').value = a; $('ptTo').value = b; ptFsBlkUI();
   ptPausedAt = null; if (!ptRun) ptLineHide(); ptPasUI(); ptPlayUI(); ptTempiList();
   if (!changed) return Promise.resolve();
   ptSaveCur();
   const was = !!ptRun; if (was) ptStop();
-  if (s.focus && reRender !== false) return ptShowSheet().then(() => { if (was) ptPlay(); });
+  if (s.focus && reRender !== false) return ptRedraw().then(() => { if (was) ptPlay(); });
   ptDim(); if (was) ptPlay();
   return Promise.resolve();
 }
@@ -1857,7 +1879,12 @@ function ptInit(){
   $('ptFrom').onchange = () => ptSetBlock(+$('ptFrom').value, Math.max(+$('ptFrom').value, +$('ptTo').value));
   $('ptTo').onchange = () => ptSetBlock(Math.min(+$('ptFrom').value, +$('ptTo').value), +$('ptTo').value);
   $('ptAll').onclick = () => ptSetBlock(ptMinM(), ptMaxM());
-  $('ptFocus').onchange = () => { ptCur.s.focus = $('ptFocus').checked; ptSaveCur(); const was = !!ptRun; ptStop(); ptShowSheet().then(() => { if (was) ptPlay(); }); };
+  $('ptFocus').onchange = () => ptSetFocus($('ptFocus').checked);
+  $('ptFsFocus').onclick = e => { e.currentTarget.blur(); ptSetFocus(!ptCur.s.focus); };
+  $('ptFsFrom').onchange = () => { const a = +$('ptFsFrom').value; ptSetBlock(a, Math.max(a, +$('ptFsTo').value)); };
+  $('ptFsTo').onchange = () => { const b = +$('ptFsTo').value; ptSetBlock(Math.min(+$('ptFsFrom').value, b), b); };
+  ['ptFsFrom', 'ptFsTo'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); e.target.blur(); } }));
+  $('ptFsPas').onchange = e => { const id = e.target.value; e.target.blur(); if (id) ptPasLoad(id); };
   $('ptLoop').onchange = () => { ptCur.s.loop = $('ptLoop').checked; ptSaveCur(); };
   $('ptUnit').onchange = () => {   // tempo omrekenen zodat het even snel blijft klinken
     const s = ptCur.s, old = PT_UNITS[s.unit].w, nu = PT_UNITS[$('ptUnit').value].w;

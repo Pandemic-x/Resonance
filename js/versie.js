@@ -5,8 +5,9 @@
    (wens gebruiker: gewoon doortellen 1.7 → 1.8 → 1.9 → 1.10 …; het eerste getal alleen omhoog bij een
    echt grote update, zoals het gedeelde notensysteem). Zelfde nummer in artifact én website. */
 const Versie = (function(){
-  const VERSIE = '1.13';
+  const VERSIE = '1.14';
   const NIEUW = [
+    ['1.14', '22-11', 'Repertoire: in volledig scherm kun je nu maten, Focus en passage aanpassen zonder het volledig scherm te verlaten; een nieuw toegevoegd stuk opent weer meteen'],
     ['1.13', '21-11', 'Repertoire: trillers (tr) en mordenten klinken nu echt, met de juiste hulpnoot (ook met ♭/♮/♯ boven het teken); keuze beginnen op de noot erboven of de geschreven noot'],
     ['1.12', '19-11', 'Dagroutine: duurknop heet nu 30 min (in plaats van Half uur)'],
     ['1.11', '19-11', 'Sneller openen op je telefoon (bestanden uit de cache), zachte start ook bij traag internet, nieuwe versie laadt vanzelf'],
