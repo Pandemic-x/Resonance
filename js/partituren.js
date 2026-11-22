@@ -1359,6 +1359,7 @@ async function ptOpen(id, pasId){
     if (st.why) startWhy = 'Starttempo ' + PT_UNITS[s.unit].s + ' = ' + s.bpm + ': ' + st.why + '.';
   }
   $('ptTitle').textContent = it.titel || it.naam; $('ptSub').textContent = [it.comp, it.maten + ' maten'].filter(Boolean).join(' · ');
+  if (typeof ptAlbOnOpen === 'function') ptAlbOnOpen();   // geopend vanuit een album: ‹ › en "📁 naam · 3/24"
   ptSyncUI(); ptPasUI(); ptPaperApply();
   PtDB.put(it);
   await ptShowSheet();
@@ -1375,6 +1376,7 @@ function ptAddFile(f){
     const it = { id:'p' + Date.now().toString(36), naam:f.name.replace(/\.(mxl|musicxml|xml)$/i, ''), data:r.result, made:ptToday(), last:null, s:null };
     ptList.unshift(it);
     await PtDB.put(it);
+    if (typeof ptAlbAutoAdd === 'function') ptAlbAutoAdd(it.id);   // album open in de bibliotheek: daar ook in zetten
     ptOpen(it.id);
   };
   r.onerror = () => ptLibMsg('Het bestand kon niet gelezen worden.', 'bad');
@@ -1382,7 +1384,7 @@ function ptAddFile(f){
 }
 async function ptAddSample(){
   const it = { id:'p' + Date.now().toString(36), naam:'Voorbeeld in b-klein', data:PT_SAMPLE, made:ptToday(), last:null, s:null };
-  ptList.unshift(it); await PtDB.put(it); ptOpen(it.id);
+  ptList.unshift(it); await PtDB.put(it); if (typeof ptAlbAutoAdd === 'function') ptAlbAutoAdd(it.id); ptOpen(it.id);
 }
 
 
@@ -1760,17 +1762,7 @@ async function ptRenderList(){
   $('ptFilter').innerHTML = F.length > 2 ? F.map(f => `<button class="ptfchip${ptG.libF === f[0] ? ' on' : ''}" data-f="${f[0]}">${f[1]}</button>`).join('') : '';
   $('ptFilter').querySelectorAll('.ptfchip').forEach(b => b.onclick = () => { ptG.libF = b.dataset.f; ptSaveG(); ptRenderList(); });
   const shown = ptList.filter(it => ptG.libF === 'alle' || (it.instr || '') === ptG.libF);
-  const el = $('ptList');
-  const sum = it => { const ps = it.pas || []; if (!ps.length) return ''; const c = k => ps.filter(p => p.status === k).length;
-    return ps.length + ' passage' + (ps.length === 1 ? '' : 's') + ' (' + ['zit', 'bezig', 'nieuw'].filter(k => c(k)).map(k => PT_STATUS[k].i + c(k)).join(' ') + ')'; };
-  if (!ptList.length){ el.innerHTML = '<p class="muted ptempty">Nog geen stukken. Voeg een MusicXML-bestand toe, of probeer eerst het voorbeeld.</p>'; }
-  else el.innerHTML = shown.map(it => `<div class="ptrow"><button class="ptopen" data-id="${it.id}"><b>${it.instr ? PT_INSTR[it.instr].split(' ')[0] + ' ' : ''}${ptEsc(it.titel || it.naam)}</b><small>${ptEsc([it.comp, it.maten ? it.maten + ' maten' : '', sum(it), it.last ? 'geoefend ' + ptDay(it.last) : 'nieuw'].filter(Boolean).join(' · '))}</small></button><button class="ptdel" data-id="${it.id}" title="Verwijderen (twee keer klikken)">✕</button></div>`).join('');
-  el.querySelectorAll('.ptopen').forEach(b => b.onclick = () => ptOpen(b.dataset.id));
-  el.querySelectorAll('.ptdel').forEach(b => b.onclick = async () => {
-    if (!b.classList.contains('arm')){ b.classList.add('arm'); b.textContent = 'Zeker?'; setTimeout(() => { if (b.isConnected){ b.classList.remove('arm'); b.textContent = '✕'; } }, 4000); return; }
-    const gone = ptList.find(x => x.id === b.dataset.id); if (gone) ptCacheDrop(gone);
-    await PtDB.del(b.dataset.id); if (ptCur && ptCur.id === b.dataset.id) ptCur = null; ptRenderList();
-  });
+  ptLibRender(shown);   // albums + stukken + passages (js/albums.js)
   if (!PtDB.ok()) ptLibMsg('Let op: opslaan lukt niet in deze browser; je stukken blijven alleen staan tot je de pagina sluit.', 'muted');
 }
 function ptBack(){ if (typeof Ann !== 'undefined') Ann.close(); if (ptSel) ptSelCancel(); if (ptFsOn) ptFsExit(true); ptStop(); ptPausedAt = null; if (ptCur){ clearTimeout(ptSaveT); PtDB.put(ptCur); } ptCur = null; ptShow('lib'); ptRenderList(); }
@@ -1871,6 +1863,7 @@ function ptInit(){
   secs.forEach(d => d.addEventListener('toggle', () => { const o = {}; secs.forEach(x => { o[x.dataset.sec] = x.open; }); try { localStorage.setItem('pt-pnl-open', JSON.stringify(o)); } catch(e){} }));
   $('ptFile').onchange = e => { ptAddFile(e.target.files[0]); e.target.value = ''; };
   $('ptSample').onclick = ptAddSample;
+  if (typeof ptLibInit === 'function') ptLibInit();   // albums (js/albums.js; laadt na dit bestand, roept het anders zelf aan)
   const lib = $('ptLibBox');
   lib.addEventListener('dragover', e => { e.preventDefault(); lib.classList.add('drag'); });
   lib.addEventListener('dragleave', () => lib.classList.remove('drag'));
