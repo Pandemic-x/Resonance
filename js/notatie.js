@@ -311,6 +311,10 @@ const Notatie = (function(){
      h = Notatie.score(el, {clef ('grand' = pianobalk), key, time:[n, d], measures:[{num, cap, evs:[{id, off, len, rest, full, ps:[p], tie}], evsF (onderste balk)}],
                            chords:[{m, off, text, bad, id}], width (px), zoom (1 = lijnafstand 10 px), end:true})
        ev.len moet een gewone nootwaarde zijn (LEN_DUR); ev.tie = overgebonden naar het volgende event (ook over de maatstreep).
+       N-olen (23-11-2026): ev.tup = {id, n, of} = n noten in de tijd van 'of' (triool {n:3, of:2}); ev.len blijft in echte ticks
+       (triool-achtste = 16, triool-kwart = 32, triool-16e = 8) en Notatie.normLen(ev) = len·n/of moet een gewone waarde zijn.
+       Alle events met dezelfde tup.id = één groep: getekend met VF.Tuplet (haak als er een rust in zit of ze niet samen gebalkt zijn),
+       eigen waardestreep (beamGroups houdt een n-ool bij elkaar en los van de rest).
        full = rust van een hele maat (gecentreerde hele rust, ook in 3/4 of 6/8).
      Terug: h.meas[i] = {x, w, top, tops, sys, nx (begin noten), st:[[{id, x, off, len}] per balk], evs (= st[0])}, h.sys[j] = {y0, y1, top, tops}, h.svg, h.scale
        h.at(clientX, clientY) → {m, i (event-index), st (balk 0/1), off, pos (plaats op die balk, 0 = onderste lijn)} of null
@@ -324,16 +328,25 @@ const Notatie = (function(){
     return { n, d, unit, comp, beat:comp ? unit * 3 : unit, cap:n * unit,
              group:comp ? unit * 3 : d === 2 ? 2 * Q : d === 8 ? Q : d === 16 ? Q / 2 : Q };
   }
+  // n-olen (23-11-2026): ev.tup = {id, n, of} → n noten in de tijd van 'of'; ev.len blijft in echte ticks (triool-achtste = 16).
+  // normLen(ev) = de geschreven ("gewone") waarde: triool-achtste 16 → 24 = '8'.
+  const normLen = e => e.tup ? e.len * e.tup.n / e.tup.of : e.len;
+  const durOf = e => LEN_DUR[normLen(e)];
   function beamGroups(evs, time){
-    const g = meter(time).group, out = []; let cur = [];
-    const flush = () => { if (cur.length > 1) out.push(cur); cur = []; };
+    const g = meter(time).group, out = []; let cur = [], ck = null;
+    const flush = () => { if (cur.length > 1) out.push(cur); cur = []; ck = null; };
     evs.forEach((e, i) => {
-      const beamable = !e.rest && e.len < Q && LEN_DUR[e.len] && !/^q|^h|^w/.test(LEN_DUR[e.len]);
+      const d = durOf(e), beamable = !e.rest && normLen(e) < Q && d && !/^q|^h|^w/.test(d);
       if (!beamable){ flush(); return; }
-      const win = Math.floor(e.off / g);
-      if (cur.length && (Math.floor(evs[cur[0]].off / g) !== win || Math.floor((e.off + e.len - 1) / g) !== win)) flush();
-      if (Math.floor((e.off + e.len - 1) / g) !== win){ flush(); return; }
-      cur.push(i);
+      let key;
+      if (e.tup) key = 't' + e.tup.id;            // een n-ool krijgt zijn eigen waardestreep
+      else {
+        const win = Math.floor(e.off / g);
+        if (Math.floor((e.off + e.len - 1) / g) !== win){ flush(); return; }
+        key = 'w' + win;
+      }
+      if (cur.length && key !== ck) flush();
+      cur.push(i); ck = key;
     });
     flush();
     return out;
@@ -400,8 +413,8 @@ const Notatie = (function(){
       if (!evs.length || (evs.length === 1 && evs[0].full)) return Math.max(64, (chordAt[mi] || []).reduce((a, c) => a + c.text.length * 8 + 10, 0) + 24);
       let w = 22; const acc = {};
       evs.forEach(e => {
-        let ew = 14 + 30 * Math.sqrt(e.len / Q);
-        if (/d$/.test(LEN_DUR[e.len] || '')) ew += 6;
+        let ew = 14 + 30 * Math.sqrt(e.len / Q) + (e.tup ? 4 : 0);
+        if (/d$/.test(durOf(e) || '')) ew += 6;
         if (!e.rest) e.ps.forEach(p => { const k = p.l + p.o, cur = acc[k] != null ? acc[k] : sig[p.l]; if (p.a !== cur){ ew += 9; acc[k] = p.a; } });
         (chordAt[mi] || []).forEach(c => { if (c.off >= e.off && c.off < e.off + e.len) ew = Math.max(ew, c.text.length * 8 + 10); });
         w += ew;
@@ -425,14 +438,15 @@ const Notatie = (function(){
     systems.forEach((S, si) => {
       const rng = clefs.map((c, k) => { let lo = 0, hi = 8; S.ms.forEach(i => evsOf(measures[i], k).forEach(e => { if (!e.rest) e.ps.forEach(p => { const q = pos(p, c); lo = Math.min(lo, q); hi = Math.max(hi, q); }); })); return [lo, hi]; });
       const hasCh = S.ms.some(i => chordAt[i]);
-      const hi0 = rng[0][1], chordLift = Math.max(16, (hi0 - 8) * 5 + 20);
-      const above = Math.max(26, (hi0 - 8) * 5 + 18) + (hasCh ? 26 : 0) + (si ? 8 : 0);
+      const tupK = clefs.map((c, k) => S.ms.some(i => evsOf(measures[i], k).some(e => e.tup)) ? 16 : 0);   // ruimte voor het n-ool-cijfer
+      const hi0 = rng[0][1], chordLift = Math.max(16, (hi0 - 8) * 5 + 20) + tupK[0];
+      const above = Math.max(26, (hi0 - 8) * 5 + 18) + tupK[0] + (hasCh ? 26 : 0) + (si ? 8 : 0);
       const tops = [y + above];
       for (let k = 1; k < clefs.length; k++){
-        const gap = Math.max(46, Math.max(20, -rng[k - 1][0] * 5 + 16) + Math.max(20, (rng[k][1] - 8) * 5 + 16));
+        const gap = Math.max(46, Math.max(20, -rng[k - 1][0] * 5 + 16) + Math.max(20, (rng[k][1] - 8) * 5 + 16) + tupK[k]);
         tops.push(tops[k - 1] + 40 + gap);
       }
-      const below = Math.max(24, -rng[clefs.length - 1][0] * 5 + 20), last = tops[tops.length - 1];
+      const below = Math.max(24, -rng[clefs.length - 1][0] * 5 + 20) + tupK[clefs.length - 1], last = tops[tops.length - 1];
       h.sys.push({ y0:y, y1:last + 40 + below, top:tops[0], tops, chordY:tops[0] - chordLift - 4 });
       y = last + 40 + below + 4;
     });
@@ -470,7 +484,7 @@ const Notatie = (function(){
         }
         if (k === 0 && si > 0 && ms.num != null){ const t = svgEl('text', { x:x + 2, y:h.sys[si].tops[0] - 9, class:'ntnum' }); t.textContent = ms.num; geo.numEl = t; }
         // noten per balk
-        const voices = [], beams = [], noteSets = [];
+        const voices = [], beams = [], noteSets = [], tuplets = [];
         clefs.forEach((c, ci) => {
           const evs = evsOf(ms, ci);
           let barAcc = {};
@@ -478,13 +492,13 @@ const Notatie = (function(){
             let sn;
             if (e.rest){
               const full = e.full || (evs.length === 1 && e.len >= ms.cap);
-              sn = new VF.StaveNote({ clef:CLEFS[c].vf, keys:[vfKey(atPos(full ? 6 : 4, c))], duration:(full ? 'w' : LEN_DUR[e.len] || 'q') + 'r', align_center:!!full });
-              if (!full && /d$/.test(LEN_DUR[e.len] || '')) VF.Dot.buildAndAttach([sn], { all:true });
+              sn = new VF.StaveNote({ clef:CLEFS[c].vf, keys:[vfKey(atPos(full ? 6 : 4, c))], duration:(full ? 'w' : durOf(e) || 'q') + 'r', align_center:!!full });
+              if (!full && /d$/.test(durOf(e) || '')) VF.Dot.buildAndAttach([sn], { all:true });
             } else {
               const ps = e.ps.slice().sort((a, b) => midi(a) - midi(b));
               e._ps = ps;
-              sn = new VF.StaveNote({ clef:CLEFS[c].vf, keys:ps.map(vfKey), duration:LEN_DUR[e.len] || 'q', auto_stem:true });
-              if (/d$/.test(LEN_DUR[e.len] || '')) VF.Dot.buildAndAttach([sn], { all:true });
+              sn = new VF.StaveNote({ clef:CLEFS[c].vf, keys:ps.map(vfKey), duration:durOf(e) || 'q', auto_stem:true });
+              if (/d$/.test(durOf(e) || '')) VF.Dot.buildAndAttach([sn], { all:true });
               const pv = prev[ci], tiedIn = pv && pv.ev.tie && !pv.ev.rest ? pv.ev._ps.map(midi) : [];
               ps.forEach((p, j) => {
                 const bk = p.l + p.o, curA = barAcc[bk] != null ? barAcc[bk] : sig[p.l];
@@ -503,9 +517,19 @@ const Notatie = (function(){
           });
           noteSets.push(notes);
           if (!notes.length) return;
+          // waardestrepen en n-olen vóór de voice: een Tuplet past de tijdwaarde van zijn noten aan (2/3 bij een triool)
+          beamGroups(evs, time).forEach(g => { try { beams.push(new VF.Beam(g.map(i => notes[i]), true)); } catch(e){} });
+          const tg = {};
+          evs.forEach((e, i) => { if (e.tup) (tg[e.tup.id] = tg[e.tup.id] || { t:e.tup, ix:[] }).ix.push(i); });
+          Object.keys(tg).forEach(id => {
+            const G = tg[id], ns = G.ix.map(i => notes[i]);
+            const allBeam = G.ix.every(i => !evs[i].rest) && beamGroups(G.ix.map(i => evs[i]), time).some(b => b.length === G.ix.length);
+            let loc = VF.Tuplet.LOCATION_TOP;
+            try { const fn = ns.find((n, j) => !evs[G.ix[j]].rest); if (allBeam && fn && fn.getStemDirection() < 0) loc = VF.Tuplet.LOCATION_BOTTOM; } catch(er){}
+            try { tuplets.push(new VF.Tuplet(ns, { num_notes:G.t.n, notes_occupied:G.t.of, bracketed:!allBeam, ratioed:false, location:loc })); } catch(er){ console.error(er); }
+          });
           const voice = new VF.Voice({ num_beats:time[0], beat_value:time[1] }).setMode(VF.Voice.Mode.SOFT);
           voice.addTickables(notes);
-          beamGroups(evs, time).forEach(g => { try { beams.push(new VF.Beam(g.map(i => notes[i]), true)); } catch(e){} });
           voices.push({ voice, stave:staves[ci] });
         });
         if (voices.length){
@@ -514,6 +538,7 @@ const Notatie = (function(){
           catch(e){ voices.forEach(v => { try { new VF.Formatter().joinVoices([v.voice]).format([v.voice], fw); } catch(e2){} }); }
           voices.forEach(v => v.voice.draw(ctx, v.stave));
           beams.forEach(b => { try { b.setContext(ctx).draw(); } catch(e){} });
+          tuplets.forEach(t => { try { t.setContext(ctx).draw(); } catch(e){} });
           clefs.forEach((c, ci) => evsOf(ms, ci).forEach((e, i) => { let ax = 0; try { ax = noteSets[ci][i].getAbsoluteX(); } catch(er){} geo.st[ci].push({ id:e.id, x:ax, off:e.off, len:e.len }); }));
         }
         geo.evs = geo.st[0];
@@ -546,6 +571,6 @@ const Notatie = (function(){
     h.layer = svgEl('g', { class:'ntlayer' }, svg);
   }
 
-  return { ready, _loaded, parse, pool, KEYLIST, midi, code, spell, name, keySig, fifths, pos, atPos, draw, play, klavier, beats, score, beamGroups, meter, LEN_DUR, Q,
+  return { ready, _loaded, parse, pool, KEYLIST, midi, code, spell, name, keySig, fifths, pos, atPos, draw, play, klavier, beats, score, beamGroups, meter, normLen, LEN_DUR, Q,
            CLEFS, LETTERS:LET, NAT, KEYS:Object.keys(MAJ) };
 })();

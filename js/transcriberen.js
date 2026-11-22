@@ -3,20 +3,25 @@
    Fase 1 (deze versie): één notenbalk of pianobalk (viool + bas, 23-11: wens Julian), één stem per balk (akkoorden mogen), nootwaarden 1/1 t/m 1/32 met punt, rusten, ♯ ♭ ♮, overbindingen,
    akkoordsymbolen (K), waardestrepen en maten vanzelf, ongedaan maken/opnieuw, afspelen met cursor, export MusicXML
    en ➜ Repertoire (kopie; daarna ↻ Bijwerken in Repertoire, passages en aantekeningen blijven staan).
-   Later (fase 2/3): pianobalk, triolen, maat-/toonsoortwissel, herhalingen, kopiëren/plakken, transponeren, 2e stem,
+   Triolen (23-11-2026, stap 1 van "ritme en noten in de hele app combineren" = 2.0): Ctrl+3 of knop 3, zoals MuseScore.
+   Later (fase 2/3): maat-/toonsoortwissel, herhalingen, kopiëren/plakken, transponeren, 2e stem,
    dynamiek/articulatie/bogen/tekst, MusicXML importeren.
 
    Datamodel (localStorage 'transcripties' = {items:[doc], cur:id}; gaat dus vanzelf mee in back-up en synchronisatie):
      doc = {id, titel, comp, clef, key ('C', 'Bb', 'F#m' …), time:[n, d], pickup (ticks, 0 = geen opmaat), bpm (per tel), n (maten),
             evs:[{t, len, ps:[{l, a, o}], tie}]  ← alleen NOTEN (rusten = gaten), gesorteerd, niet overlappend, nooit over een maatstreep,
             evsF:[…] ← zelfde voor de onderste balk (bassleutel) als clef = 'grand' (pianobalk),
+            tups:[{t, len, n:3, of:2}] ← triolen op de bovenste (of enige) balk: n noten in de tijd van 'of', len = duur van de hele groep
+                  (24 = 16e-triool … 192 = halve-noot-triool), binnen één maat; tupsF:[…] ← zelfde voor de onderste balk,
             chords:{tick: tekst}, repId (stuk in Repertoire), repAt, made, upd}
+     Noten in een triool hebben hun echte lengte in ticks (triool-achtste = 16); trLayout geeft ze tup = {id, n, of} mee voor de kern.
      Tijd in ticks: kwartnoot = 48 (Notatie.Q). trNorm() splitst noten over de maatstreep (overgebonden) en rare lengtes in
      gewone nootwaarden; trLayout() maakt per maat de events mét rusten (gaten opgevuld, uitgelijnd op de tel), voor tekenen,
      afspelen en export.
    Invoer zoals MuseScore: N = invoerstand · 2–7 = nootwaarde (2 = 1/32, 3 = 1/16, 4 = 1/8, 5 = 1/4, 6 = 1/2, 7 = 1/1) · . = punt ·
      A–G = noot (voortekening telt mee, octaaf het dichtst bij de vorige noot) · Shift+A–G = noot erbij (akkoord) · 0 = rust ·
      ↑ ↓ = halve toon · Ctrl+↑ ↓ = octaaf · + − = = ♯ ♭ ♮ · T = overbinden · R = herhalen · Alt+2–8 = interval erboven ·
+     Ctrl+3 = triool (de gekozen waarde = duur van de hele triool; daarna vullen de letters de triool) ·
      ← → = vorige/volgende · Ctrl+← → = maat · Alt+↑ ↓ = naar de bovenste/onderste balk (pianobalk) · Delete = rust · Backspace (invoer) = terug · Ctrl+Z / Ctrl+Y = ongedaan / opnieuw ·
      K = akkoordsymbool (Ctrl+K blijft de bibliotheek; Spatie = volgende tel, Tab = volgende maat, Enter = klaar) · Spatie = afspelen/stop · Esc = invoer uit / stop. */
 
@@ -32,6 +37,7 @@ const TR_TIMES = [[4,4],[3,4],[2,4],[5,4],[6,4],[2,2],[3,2],[6,8],[9,8],[12,8],[
 const TR_REF = { g:71, f:50, c1:67, c2:64, c3:60, c4:57, c5:53 };   // middenlijn: eerste noot komt hier in de buurt
 const TR_KLAV = { g:[55, 84], f:[36, 64], c1:[57, 81], c2:[53, 79], c3:[48, 76], c4:[45, 72], c5:[41, 67] };
 const TR_LET = ['c','d','e','f','g','a','b'];
+const TR_TUP_SPANS = [192, 96, 48, 24, 12];   // duur van een hele triool: halve-noot-triool (1/1) … 32e-triool (1/16)
 
 let trDB = { items:[], cur:null }, trG = null, trDoc = null, trH = null, trInited = false, trSaveT = null;
 let trIn = { on:false, t:0, len:48, dot:false, add:false };   // invoerstand: cursor (tick), gekozen nootwaarde, punt, klavier = akkoord erbij
@@ -57,7 +63,7 @@ const trCopy = o => JSON.parse(JSON.stringify(o));
 
 function trNewDoc(o){
   return Object.assign({ id:'t' + Date.now().toString(36), titel:'Zonder titel', comp:'', clef:'g', key:'C', time:[4, 4], pickup:0, bpm:80, n:8,
-                         evs:[], chords:{}, repId:null, repAt:null, made:trToday(), upd:trToday() }, o || {});
+                         evs:[], tups:[], chords:{}, repId:null, repAt:null, made:trToday(), upd:trToday() }, o || {});
 }
 
 /* ---------- maten en tijd ---------- */
@@ -71,6 +77,32 @@ const trClefOf = (st, d) => trGrand(d) ? (st === 1 ? 'f' : 'g') : (d || trDoc).c
 function trEv(st, d){ d = d || trDoc; st = st == null ? trSt : st; if (st === 1 && trGrand(d)) return d.evsF || (d.evsF = []); return d.evs; }
 function trSetEv(arr, st, d){ d = d || trDoc; st = st == null ? trSt : st; if (st === 1 && trGrand(d)) d.evsF = arr; else d.evs = arr; }
 function trMeasOf(t, d){ d = d || trDoc; const c = trM(d).cap; if (d.pickup) return t < d.pickup ? 0 : 1 + Math.floor((t - d.pickup) / c); return Math.floor(t / c); }
+
+/* ---------- triolen (n-olen) ---------- */
+function trTps(st, d){ d = d || trDoc; st = st == null ? trSt : st; if (st === 1 && trGrand(d)) return d.tupsF || (d.tupsF = []); return d.tups || (d.tups = []); }
+function trSetTps(arr, st, d){ d = d || trDoc; st = st == null ? trSt : st; if (st === 1 && trGrand(d)) d.tupsF = arr; else d.tups = arr; }
+function trTupAt(t, st, d){ return trTps(st, d).find(g => t >= g.t && t < g.t + g.len) || null; }
+const trTupInfo = (G, st) => ({ id:(st === 1 ? 'f' : '') + 'tp' + G.t, n:G.n, of:G.of });
+// lengte binnen een triool opdelen: gewone waarden van len·n/of (greedy), terug naar echte ticks
+function trTupDecomp(len, G){
+  let N = Math.round(len * G.n / G.of); const out = [];
+  while (N > 0){ const v = TR_VALS.find(x => x <= N) || N; out.push(v * G.of / G.n); N -= v; }
+  return out;
+}
+// gewone (geschreven) waarde → echte lengte op plek t: in een triool ×2/3 en niet voorbij het eind van de triool
+function trScaleAt(t, len, st){ const G = trTupAt(t, st); return G ? Math.min(len * G.of / G.n, G.t + G.len - t) : len; }
+// geschreven waarde van een opgeslagen noot (zonder tup-info)
+function trNormalLen(e, st){ const G = trTupAt(e.t, st); return G ? e.len * G.n / G.of : e.len; }
+// triolen opschonen: geldig, binnen één maat, niet overlappend. drop = triolen die weg moeten (met hun noten)
+function trNormTups(d, list, total){
+  const keep = [], drop = [];
+  (list || []).filter(g => g && g.len > 0).map(g => ({ t:g.t | 0, len:g.len | 0, n:g.n || 3, of:g.of || 2 })).sort((a, b) => a.t - b.t).forEach(g => {
+    const m = trMeasOf(g.t, d), end = trStart(m, d) + trCap(m, d), last = keep[keep.length - 1];
+    const ok = g.t >= 0 && g.t + g.len <= total && g.t + g.len <= end && g.n === 3 && g.of === 2 && TR_TUP_SPANS.includes(g.len) && !(last && last.t + last.len > g.t);
+    (ok ? keep : drop).push(g);
+  });
+  return { keep, drop };
+}
 
 // een lengte op plek 'off' in de maat opdelen in gewone nootwaarden (uitgelijnd op de tel; rusten in een enkelvoudige maat zonder punt)
 function trDecomp(off, len, M, rest){
@@ -102,14 +134,17 @@ function trNorm(d){
   d = d || trDoc;
   const total = trTotal(d), M = trM(d);
   if (!Array.isArray(d.evsF)) d.evsF = [];
-  d.evs = trNormList(d, d.evs, total, M);
-  d.evsF = trNormList(d, d.evsF, total, M);   // onderste balk (blijft bewaard als je weer één balk kiest)
+  const ta = trNormTups(d, d.tups, total), tb = trNormTups(d, d.tupsF, total);
+  d.tups = ta.keep; d.tupsF = tb.keep;
+  d.evs = trNormList(d, d.evs, total, M, ta);
+  d.evsF = trNormList(d, d.evsF, total, M, tb);   // onderste balk (blijft bewaard als je weer één balk kiest)
   // akkoordsymbolen buiten het stuk weg
   Object.keys(d.chords || {}).forEach(k => { if (+k >= total || !String(d.chords[k]).trim()) delete d.chords[k]; });
   return d;
 }
-function trNormList(d, list, total, M){
-  let evs = (list || []).filter(e => e && e.len > 0 && e.t >= 0 && e.t < total && e.ps && e.ps.length).sort((a, b) => a.t - b.t);
+function trNormList(d, list, total, M, T){
+  const tups = T ? T.keep : [], dropped = T ? T.drop : [];
+  let evs = (list || []).filter(e => e && e.len > 0 && e.t >= 0 && e.t < total && e.ps && e.ps.length && !dropped.some(g => e.t >= g.t && e.t < g.t + g.len)).sort((a, b) => a.t - b.t);
   const clean = [];
   evs.forEach(e => {
     e = { t:e.t, len:Math.min(e.len, total - e.t), ps:e.ps.map(p => ({ l:p.l, a:p.a | 0, o:p.o | 0 })), tie:!!e.tie };
@@ -121,8 +156,12 @@ function trNormList(d, list, total, M){
   clean.forEach(e => {
     let t = e.t, rest = e.len;
     while (rest > 0){
-      const m = trMeasOf(t, d), s = trStart(m, d), end = s + trCap(m, d), piece = Math.min(rest, end - t);
-      const vals = (piece === e.len && Notatie.LEN_DUR[piece]) ? [piece] : trDecomp(t - s, piece, M, false);
+      const m = trMeasOf(t, d), s = trStart(m, d), G = tups.find(g => t >= g.t && t < g.t + g.len);
+      let end = s + trCap(m, d);
+      if (G) end = Math.min(end, G.t + G.len);                       // een triool is een eigen vakje: niet eroverheen
+      else { const nx = tups.find(g => g.t > t); if (nx) end = Math.min(end, nx.t); }
+      const piece = Math.min(rest, end - t);
+      const vals = G ? trTupDecomp(piece, G) : (piece === e.len && Notatie.LEN_DUR[piece]) ? [piece] : trDecomp(t - s, piece, M, false);
       vals.forEach(v => { out.push({ t, len:v, ps:trCopy(e.ps), tie:true }); t += v; });
       rest -= piece;
     }
@@ -142,22 +181,34 @@ function trNormList(d, list, total, M){
 function trLayout(d, st){
   d = d || trDoc; st = st == null ? (d === trDoc ? trSt : 0) : st;
   if (st === 1 && !trGrand(d)) st = 0;
-  const list = trEv(st, d), pre = st === 1 ? 'f' : '';
+  const list = trEv(st, d), pre = st === 1 ? 'f' : '', tps = trTps(st, d);
   const M = trM(d), out = [];
+  const tupAt = t => tps.find(g => t >= g.t && t < g.t + g.len);
   let k = 0;
   for (let m = 0; m < d.n; m++){
     const s = trStart(m, d), cap = trCap(m, d), evs = [];
     let t = s;
     const gap = (a, b) => {
       if (b <= a) return;
-      if (a === s && b === s + cap && cap === M.cap && !list.some(e => e.t >= s && e.t < s + cap)){ evs.push({ id:pre + 'r' + a, t:a, off:0, len:cap, rest:true, full:true, st }); return; }
-      let o = a - s;
-      trDecomp(o, b - a, M, true).forEach(v => { evs.push({ id:pre + 'r' + (s + o), t:s + o, off:o, len:v, rest:true, st }); o += v; });
+      if (a === s && b === s + cap && cap === M.cap && !list.some(e => e.t >= s && e.t < s + cap) && !tps.some(g => g.t >= s && g.t < s + cap)){ evs.push({ id:pre + 'r' + a, t:a, off:0, len:cap, rest:true, full:true, st }); return; }
+      let x = a;
+      while (x < b){   // gaten opdelen op de grenzen van triolen: binnen een triool triool-rusten
+        const G = tupAt(x); let y = b;
+        if (G) y = Math.min(b, G.t + G.len); else { const nx = tps.find(g => g.t > x && g.t < b); if (nx) y = nx.t; }
+        let o = x - s;
+        (G ? trTupDecomp(y - x, G) : trDecomp(o, y - x, M, true)).forEach(v => {
+          const r = { id:pre + 'r' + (s + o), t:s + o, off:o, len:v, rest:true, st };
+          if (G) r.tup = trTupInfo(G, st);
+          evs.push(r); o += v;
+        });
+        x = y;
+      }
     };
     while (k < list.length && list[k].t < s + cap){
       const e = list[k];
       gap(t, e.t);
-      evs.push({ st, id:pre + 'n' + e.t, t:e.t, off:e.t - s, len:e.len, ps:e.ps, tie:e.tie, ref:e });
+      const G = tupAt(e.t);
+      evs.push({ st, id:pre + 'n' + e.t, t:e.t, off:e.t - s, len:e.len, ps:e.ps, tie:e.tie, ref:e, tup:G ? trTupInfo(G, st) : undefined });
       t = e.t + e.len; k++;
     }
     gap(t, s + cap);
@@ -237,7 +288,7 @@ function trStep(p, dir){
 const trPName = p => Notatie.name(p, 'nl', true);
 
 /* ---------- bewerken (met ongedaan maken) ---------- */
-function trSnap(){ return JSON.stringify({ evs:trDoc.evs, evsF:trDoc.evsF || [], chords:trDoc.chords, n:trDoc.n, time:trDoc.time, pickup:trDoc.pickup, key:trDoc.key, clef:trDoc.clef }); }
+function trSnap(){ return JSON.stringify({ evs:trDoc.evs, evsF:trDoc.evsF || [], tups:trDoc.tups || [], tupsF:trDoc.tupsF || [], chords:trDoc.chords, n:trDoc.n, time:trDoc.time, pickup:trDoc.pickup, key:trDoc.key, clef:trDoc.clef }); }
 function trDo(fn){
   const before = trSnap();
   fn();
@@ -252,11 +303,24 @@ function trUndoDo(){ if (!trUndo.length){ trMsg('Niets meer om ongedaan te maken
 function trRedoDo(){ if (!trRedo.length) return; trUndo.push(trSnap()); trRestore(trRedo.pop()); trMsg('↷ Opnieuw gedaan.', 'muted'); }
 
 // gebied [t, t+len) overschrijven met een noot (ps) of rust (ps = null), zoals MuseScore; maten erbij als het niet past
+// in een triool: niet voorbij het eind van de triool; van buiten over een triool heen = die triool (met zijn noten) weg
 function trPut(t, len, ps, tie){
+  const G = trTupAt(t);
+  if (G) len = Math.min(len, G.t + G.len - t);
   while (t + len > trTotal()) trDoc.n++;
-  const L = trEv().filter(e => !(e.t >= t && e.t < t + len)).map(e => (e.t < t && e.t + e.len > t) ? Object.assign({}, e, { len:t - e.t, tie:false }) : e);
+  let L = trEv();
+  if (!G){
+    const hit = trTps().filter(g => g.t < t + len && g.t + g.len > t);
+    if (hit.length){
+      L = L.filter(e => !hit.some(g => e.t >= g.t && e.t < g.t + g.len));
+      trSetTps(trTps().filter(g => !hit.includes(g)));
+      trMsg('Triool overschreven (Ctrl+Z = terug).', 'muted');
+    }
+  }
+  L = L.filter(e => !(e.t >= t && e.t < t + len)).map(e => (e.t < t && e.t + e.len > t) ? Object.assign({}, e, { len:t - e.t, tie:false }) : e);
   if (ps && ps.length) L.push({ t, len, ps:trCopy(ps), tie:!!tie });
   trSetEv(L);
+  return len;
 }
 const trCurLen = () => trIn.dot ? trIn.len * 1.5 : trIn.len;
 function trHear(ps){
@@ -266,7 +330,7 @@ function trHear(ps){
 
 // noot (of rust) invoeren op de cursor; tie = aan de vorige noot overbinden (T in de invoerstand)
 function trEnter(ps, tie){
-  const t = trIn.t, len = trCurLen();
+  const t = trIn.t, len = trScaleAt(t, trCurLen());   // in een triool: triool-waarde
   trDo(() => {
     trPut(t, len, ps, false);
     if (tie){ const prev = trEv().find(e => e.t + e.len === t); if (prev) prev.tie = true; }
@@ -321,15 +385,15 @@ function trSetLen(len){
   const e = trSel != null ? trEvAt(trSel) : null;
   trIn.len = len; trIn.dot = false;
   if (!e){ trPalUI(); return; }
-  trDo(() => trPut(e.t, len, e.rest ? null : e.ps, e.tie));
+  trDo(() => trPut(e.t, trScaleAt(e.t, len), e.rest ? null : e.ps, e.tie));
   trPalUI();
 }
 function trToggleDot(){
   if (trIn.on || trSel == null){ trIn.dot = !trIn.dot; if (trIn.dot && !Notatie.LEN_DUR[trIn.len * 1.5]) trIn.dot = false; trPalUI(); return; }
-  const e = trEvAt(trSel); if (!e) return;
-  const nl = TR_DOTTED[e.len] ? e.len / 1.5 : e.len * 1.5;
+  const e = trEvAt(trSel); if (!e || e.full) return;
+  const w = Notatie.normLen(e), nl = TR_DOTTED[w] ? w / 1.5 : w * 1.5;
   if (!Notatie.LEN_DUR[nl]) return;
-  trDo(() => trPut(e.t, nl, e.rest ? null : e.ps, e.tie));
+  trDo(() => trPut(e.t, trScaleAt(e.t, nl), e.rest ? null : e.ps, e.tie));
 }
 function trRest(){
   if (trIn.on){ trEnter(null); return; }
@@ -350,8 +414,10 @@ function trTie(){
 function trRepeat(){
   const src = trIn.on ? trEv().filter(x => x.t < trIn.t).pop() : trSelNote();
   if (!src){ return; }
-  if (trIn.on){ const keep = trIn.len, kd = trIn.dot; trIn.len = src.len; trIn.dot = false; trEnter(src.ps); trIn.len = keep; trIn.dot = kd; return; }
-  const t = src.t + src.len; trDo(() => trPut(t, src.len, src.ps, false)); trSel = t; trHear(src.ps);
+  const w = trNormalLen(src);   // geschreven waarde (triool-achtste = achtste), op de nieuwe plek weer omgerekend
+  if (trIn.on){ const keep = trIn.len, kd = trIn.dot; trIn.len = TR_DOTTED[w] ? w / 1.5 : w; trIn.dot = !!TR_DOTTED[w]; trEnter(src.ps); trIn.len = keep; trIn.dot = kd; return; }
+  const t = src.t + src.len; if (t >= trTotal()) return;
+  trDo(() => trPut(t, trScaleAt(t, w), src.ps, false)); trSel = t; trHear(src.ps);
 }
 function trDelete(){
   if (trIn.on){   // terug: vorige event wordt rust, cursor erheen
@@ -359,7 +425,42 @@ function trDelete(){
     trDo(() => { trSetEv(trEv().filter(x => x.t !== prev.t)); });
     trIn.t = prev.t; trSel = null; trRender(); return;
   }
+  const e = trSel != null ? trEvAt(trSel) : null;
+  if (e && e.rest && e.tup){   // Delete op een rust in een triool = de hele triool weg (noten erin ook)
+    const G = trTupAt(e.t); if (!G) return;
+    trDo(() => { trSetEv(trEv().filter(x => !(x.t >= G.t && x.t < G.t + G.len))); trSetTps(trTps().filter(g => g !== G)); });
+    trSel = G.t; trRender(); trMsg('Triool weggehaald (Ctrl+Z = terug).', 'muted'); return;
+  }
   trRest();
+}
+
+// Ctrl+3 (of knop 3) zoals MuseScore: de gekozen waarde (invoerstand) of de gekozen noot/rust = duur van de hele triool.
+// Invoerstand: de triool begint op de cursor met drie triool-rusten, de nootwaarde wordt de helft (kwart gekozen → triool-achtsten),
+// daarna vullen de letters de triool. Gekozen noot: die wordt de eerste noot van de triool.
+function trTuplet(){
+  if (!trDoc) return;
+  let t, span, ps = null;
+  if (trIn.on){ t = Math.min(trIn.t, trTotal()); span = trIn.len; }
+  else {
+    const e = trSel != null ? trEvAt(trSel) : null;
+    if (!e){ trMsg('Kies eerst een noot of rust (of zet invoeren aan met N) en druk dan op Ctrl+3.', 'muted'); return; }
+    if (e.tup){ trMsg('Dit is al een triool. Delete op een rust in de triool haalt de hele triool weg.', 'muted'); return; }
+    t = e.t; span = e.full ? 0 : e.len; ps = e.rest ? null : e.ps;
+  }
+  if (trTupAt(t)){ trMsg('Een triool in een triool kan (nog) niet.', 'muted'); return; }
+  if (!TR_TUP_SPANS.includes(span)){ trMsg('Een triool vervangt een hele, halve, kwart, achtste of zestiende (zonder punt): kies eerst zo’n waarde. Kwart → drie triool-achtsten.', 'muted'); return; }
+  if (t >= trTotal()){ trDoc.n++; trNorm(); }
+  const m = trMeasOf(t), end = trStart(m) + trCap(m);
+  if (t + span > end){ trMsg('Die triool past niet meer in deze maat: kies een kortere waarde of begin eerder.', 'muted'); return; }
+  trDo(() => {
+    trPut(t, span, null);
+    trTps().push({ t, len:span, n:3, of:2 });
+    if (ps) trEv().push({ t, len:span / 3, ps:trCopy(ps), tie:false });
+  });
+  const nm = (TR_DURS.find(x => x.len === span / 2) || {}).n || '';
+  if (trIn.on){ trIn.len = span / 2; trIn.dot = false; trIn.t = t; trMsg('Triool van ' + nm + 'n: typ drie noten (0 = rust). Daarna ga je gewoon verder.', 'muted'); }
+  else { trSel = t; trMsg('Triool van ' + nm + 'n gemaakt. Delete op een rust erin haalt de triool weg.', 'muted'); }
+  trRender();
 }
 function trMove(dir, measure){
   const f = trFlat();
@@ -511,7 +612,9 @@ function trDurIcon(len, dotted){
 function trPalUI(){
   if (!$('trDurs')) return;
   const sel = !trIn.on && trSel != null ? trEvAt(trSel) : null;
-  const shownLen = sel ? (TR_DOTTED[sel.len] ? sel.len / 1.5 : sel.len) : trIn.len, shownDot = sel ? !!TR_DOTTED[sel.len] : trIn.dot;
+  const sw = sel ? Notatie.normLen(sel) : 0;
+  const shownLen = sel ? (TR_DOTTED[sw] ? sw / 1.5 : sw) : trIn.len, shownDot = sel ? !!TR_DOTTED[sw] : trIn.dot;
+  const tb = $('trTupBtn'); if (tb) tb.classList.toggle('on', !!(sel ? sel.tup : (trIn.on && trDoc && trIn.t < trTotal() && trTupAt(trIn.t))));
   $('trDurs').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.len === shownLen && !(sel && sel.full)));
   $('trDot').classList.toggle('on', shownDot);
   $('trInBtn').classList.toggle('on', trIn.on);
@@ -527,21 +630,23 @@ function trPalUI(){
 function trBeatLabel(t){
   const m = trMeasOf(t), M = trM(), off = t - trStart(m) + (m === 0 && trDoc.pickup ? M.cap - trDoc.pickup : 0);
   const b = off / M.beat, whole = Math.floor(b), frac = b - whole;
-  const fr = frac === 0 ? '' : Math.abs(frac - .5) < 1e-9 ? '½' : Math.abs(frac - .25) < 1e-9 ? '¼' : Math.abs(frac - .75) < 1e-9 ? '¾' : '+';
+  const F = [[.5, '½'], [.25, '¼'], [.75, '¾'], [1 / 3, '⅓'], [2 / 3, '⅔'], [1 / 6, '⅙'], [5 / 6, '⅚']].find(x => Math.abs(frac - x[0]) < 1e-6);
+  const fr = frac === 0 ? '' : F ? F[1] : '+';
   return 'maat ' + (trDoc.pickup ? m : m + 1) + ', tel ' + (whole + 1) + fr;
 }
-function trLenName(len){ const base = TR_DOTTED[len] ? len / 1.5 : len, d = TR_DURS.find(x => x.len === base); return (TR_DOTTED[len] ? 'gepunteerde ' : '') + (d ? d.n : len + ' ticks'); }
+function trLenName(len, tup){ const base = TR_DOTTED[len] ? len / 1.5 : len, d = TR_DURS.find(x => x.len === base); return (TR_DOTTED[len] ? 'gepunteerde ' : '') + (tup ? 'triool-' : '') + (d ? d.n : len + ' ticks'); }
+const trEvName = e => e.tup ? trLenName(Notatie.normLen(e), true) : trLenName(e.len);
 function trStatusText(sel){
   if (!trDoc) return '';
   if (trIn.on){
     const t = Math.min(trIn.t, trTotal());
-    return '<b>Invoeren</b>' + (trGrand() ? (trSt ? ' (onderste balk)' : ' (bovenste balk)') : '') + ' · ' + trLenName(trCurLen()) + ' · ' + (t >= trTotal() ? 'einde' : trBeatLabel(t)) + ' · typ A–G (Shift = erbij), 0 = rust, 2–7 = nootwaarde, . = punt, T = overbinden, Esc = klaar';
+    return '<b>Invoeren</b>' + (trGrand() ? (trSt ? ' (onderste balk)' : ' (bovenste balk)') : '') + ' · ' + trLenName(trCurLen(), t < trTotal() && trTupAt(t)) + ' · ' + (t >= trTotal() ? 'einde' : trBeatLabel(t)) + ' · typ A–G (Shift = erbij), 0 = rust, 2–7 = nootwaarde, . = punt, Ctrl+3 = triool, T = overbinden, Esc = klaar';
   }
   if (sel){
-    if (sel.rest) return '<b>Rust</b> (' + (sel.full ? 'hele maat' : trLenName(sel.len)) + ') · ' + trBeatLabel(sel.t) + ' · typ een letter om er een noot van te maken';
-    return '<b>' + sel.ps.map(trPName).join(' · ') + '</b> · ' + trLenName(sel.len) + (sel.tie ? ' · overgebonden' : '') + ' · ' + trBeatLabel(sel.t) + ' · ↑↓ halve toon, Ctrl+↑↓ octaaf, Shift+letter = toon erbij';
+    if (sel.rest) return '<b>Rust</b> (' + (sel.full ? 'hele maat' : trEvName(sel)) + ') · ' + trBeatLabel(sel.t) + ' · typ een letter om er een noot van te maken';
+    return '<b>' + sel.ps.map(trPName).join(' · ') + '</b> · ' + trEvName(sel) + (sel.tie ? ' · overgebonden' : '') + ' · ' + trBeatLabel(sel.t) + ' · ↑↓ halve toon, Ctrl+↑↓ octaaf, Shift+letter = toon erbij';
   }
-  return 'Klik op een noot om hem te kiezen, of druk op <b>N</b> (of ✎ Invoeren) om noten te typen. K = akkoordsymbool.';
+  return 'Klik op een noot om hem te kiezen, of druk op <b>N</b> (of ✎ Invoeren) om noten te typen. K = akkoordsymbool, Ctrl+3 = triool.';
 }
 function trStatus(html){ const el = $('trStatus'); if (el) el.innerHTML = html; }
 function trMsg(html, cls){ const el = $('trMsg'); if (!el) return; el.innerHTML = html || ''; el.className = 'trmsg' + (cls ? ' ' + cls : ''); clearTimeout(trMsg.t); if (html) trMsg.t = setTimeout(() => { el.innerHTML = ''; }, 5000); }
@@ -716,21 +821,27 @@ function trXML(d){
     let out = '';
     const voice = st ? 5 : 1, stf = grand ? '<staff>' + (st + 1) + '</staff>' : '';
     const beams = {};
+    const NL = e => Notatie.normLen(e);   // geschreven waarde (triool-achtste → achtste)
     Notatie.beamGroups(ms.evs, d.time).forEach(g => g.forEach((i, j) => {
-      const e = ms.evs[i], lv = e.len <= 9 || e.len === 12 || e.len === 18 ? (e.len <= 9 ? 3 : 2) : 1;
+      const e = ms.evs[i], w = NL(e), lv = w <= 9 || w === 12 || w === 18 ? (w <= 9 ? 3 : 2) : 1;
       const b = beams[i] = [j === 0 ? 'begin' : j === g.length - 1 ? 'end' : 'continue'];
       if (lv >= 2){   // tweede waardestreep: met de buren mee of een haakje
-        const L2 = k => k >= 0 && k < g.length && (ms.evs[g[k]].len <= 18 && ms.evs[g[k]].len !== 24);
+        const L2 = k => k >= 0 && k < g.length && (NL(ms.evs[g[k]]) <= 18 && NL(ms.evs[g[k]]) !== 24);
         const pv = L2(j - 1), nx = L2(j + 1);
         b.push(pv && nx ? 'continue' : pv ? 'end' : nx ? 'begin' : (j === 0 ? 'forward hook' : 'backward hook'));
       }
     }));
+    // triolen: eerste en laatste event van elke groep (voor <tuplet type="start|stop">), haak als er een rust of kwart+ in zit
+    const tg = {};
+    ms.evs.forEach((e, i) => { if (e.tup){ const G = tg[e.tup.id] = tg[e.tup.id] || { a:i, b:i, br:false }; G.b = i; if (e.rest || NL(e) >= TQ) G.br = true; } });
+    const tm = e => e.tup ? '<time-modification><actual-notes>' + e.tup.n + '</actual-notes><normal-notes>' + e.tup.of + '</normal-notes></time-modification>' : '';
+    const tupN = (e, i) => { if (!e.tup) return ''; const G = tg[e.tup.id]; return (G.a === i ? '<tuplet type="start" bracket="' + (G.br ? 'yes' : 'no') + '"/>' : '') + (G.b === i ? '<tuplet type="stop"/>' : ''); };
     const barAcc = {};
     ms.evs.forEach((e, i) => {
       if (chs) chs.filter(t => t >= e.t && t < e.t + e.len).forEach(t => { out += harmony(d.chords[t], t - e.t); });
-      const dot = TR_DOTTED[e.len], base = dot ? e.len / 1.5 : e.len;
+      const w = NL(e), dot = TR_DOTTED[w], base = dot ? w / 1.5 : w, tn = tupN(e, i);
       if (e.rest){
-        out += '<note><rest' + (e.full ? ' measure="yes"' : '') + '/><duration>' + e.len + '</duration><voice>' + voice + '</voice>' + (e.full ? '' : '<type>' + (TR_TYPE[base] || 'quarter') + '</type>' + (dot ? '<dot/>' : '')) + stf + '</note>';
+        out += '<note><rest' + (e.full ? ' measure="yes"' : '') + '/><duration>' + e.len + '</duration><voice>' + voice + '</voice>' + (e.full ? '' : '<type>' + (TR_TYPE[base] || 'quarter') + '</type>' + (dot ? '<dot/>' : '') + tm(e)) + stf + (tn ? '<notations>' + tn + '</notations>' : '') + '</note>';
         prev[st] = null; return;
       }
       const ps = e.ps.slice().sort((a, b) => trMidi(a) - trMidi(b)), nextTie = e.tie ? ps.map(trMidi) : null;
@@ -741,9 +852,10 @@ function trXML(d){
         if (!tin && p.a !== curA){ acc = '<accidental>' + ({ 0:'natural', 1:'sharp', '-1':'flat', 2:'double-sharp', '-2':'flat-flat' })[p.a] + '</accidental>'; }
         barAcc[bk] = p.a;
         out += '<note>' + (j ? '<chord/>' : '') + '<pitch><step>' + p.l.toUpperCase() + '</step>' + (p.a ? '<alter>' + p.a + '</alter>' : '') + '<octave>' + p.o + '</octave></pitch>';
-        out += '<duration>' + e.len + '</duration>' + (tin ? '<tie type="stop"/>' : '') + (tout ? '<tie type="start"/>' : '') + '<voice>' + voice + '</voice><type>' + (TR_TYPE[base] || 'quarter') + '</type>' + (dot ? '<dot/>' : '') + acc + stf;
+        out += '<duration>' + e.len + '</duration>' + (tin ? '<tie type="stop"/>' : '') + (tout ? '<tie type="start"/>' : '') + '<voice>' + voice + '</voice><type>' + (TR_TYPE[base] || 'quarter') + '</type>' + (dot ? '<dot/>' : '') + acc + tm(e) + stf;
         if (!j && beams[i]) beams[i].forEach((b, k) => { out += '<beam number="' + (k + 1) + '">' + b + '</beam>'; });
-        if (tin || tout) out += '<notations>' + (tin ? '<tied type="stop"/>' : '') + (tout ? '<tied type="start"/>' : '') + '</notations>';
+        const tnj = j ? '' : tn;
+        if (tin || tout || tnj) out += '<notations>' + (tin ? '<tied type="stop"/>' : '') + (tout ? '<tied type="start"/>' : '') + tnj + '</notations>';
         out += '</note>';
       });
       prev[st] = nextTie;
@@ -925,6 +1037,7 @@ function trKeydown(e){
   if (Keys.is(e, 'luister') && !ctrl){ e.preventDefault(); trPlay ? trPlayStop() : trPlayStart(); return; }
   if (e.altKey && (k === 'ArrowUp' || k === 'ArrowDown')){ e.preventDefault(); trSwitchSt(k === 'ArrowUp' ? 0 : 1); return; }
   if (ctrl && (k === 'ArrowLeft' || k === 'ArrowRight')){ e.preventDefault(); trMove(k === 'ArrowRight' ? 1 : -1, true); return; }
+  if (ctrl && !e.altKey && (e.code === 'Digit3' || k === '3')){ e.preventDefault(); trTuplet(); return; }
   if (ctrl && (k === 'ArrowUp' || k === 'ArrowDown')){ e.preventDefault(); trPitch(p => ({ l:p.l, a:p.a, o:Math.max(0, Math.min(8, p.o + (k === 'ArrowUp' ? 1 : -1))) })); return; }
   if (ctrl) return;
   if (e.altKey && /^Digit[2-8]$/.test(e.code)){ e.preventDefault(); trInterval(+e.code.slice(5)); return; }
@@ -978,6 +1091,7 @@ function trInit(){
   $('trDurs').querySelectorAll('button').forEach(b => b.onclick = () => { b.blur(); trSetLen(+b.dataset.len); });
   $('trDot').onclick = () => { $('trDot').blur(); trToggleDot(); };
   $('trRestBtn').onclick = () => { $('trRestBtn').blur(); trRest(); };
+  $('trTupBtn').onclick = () => { $('trTupBtn').blur(); trTuplet(); };
   $('trInBtn').onclick = () => { $('trInBtn').blur(); trIn.on ? trStopInput() : trStartInput(); };
   document.querySelectorAll('#trView [data-acc]').forEach(b => b.onclick = () => { b.blur(); trAcc(+b.dataset.acc); });
   $('trTieBtn').onclick = () => { $('trTieBtn').blur(); trTie(); };
@@ -1000,9 +1114,9 @@ function trInit(){
     const nc = $('trClef').value, oc = trDoc.clef;
     let note = '';
     trDo(() => {
-      if (nc === 'grand' && oc !== 'grand' && oc === 'f' && !(trDoc.evsF || []).length){ trDoc.evsF = trDoc.evs; trDoc.evs = []; note = 'Je noten staan nu in de onderste balk (bassleutel).'; }
+      if (nc === 'grand' && oc !== 'grand' && oc === 'f' && !(trDoc.evsF || []).length){ trDoc.evsF = trDoc.evs; trDoc.evs = []; trDoc.tupsF = trDoc.tups || []; trDoc.tups = []; note = 'Je noten staan nu in de onderste balk (bassleutel).'; }
       if (oc === 'grand' && nc !== 'grand'){
-        if (nc === 'f' && !trDoc.evs.length && (trDoc.evsF || []).length){ trDoc.evs = trDoc.evsF; trDoc.evsF = []; }
+        if (nc === 'f' && !trDoc.evs.length && (trDoc.evsF || []).length){ trDoc.evs = trDoc.evsF; trDoc.evsF = []; trDoc.tups = trDoc.tupsF || []; trDoc.tupsF = []; }
         else if ((trDoc.evsF || []).length) note = 'De onderste balk is verborgen, niet weg: kies weer Pianobalk om hem terug te zien.';
       }
       trDoc.clef = nc;
@@ -1015,7 +1129,7 @@ function trInit(){
     // noten houden hun plek in de maat: alles schuift op met het verschil in opmaat (opmaat erbij = één maat meer)
     const np = +$('trPick').value, op = trDoc.pickup, dl = np - op;
     trDo(() => {
-      ['evs', 'evsF'].forEach(k => { (trDoc[k] || []).forEach(e => { e.t += dl; }); trDoc[k] = (trDoc[k] || []).filter(e => e.t >= 0); });
+      ['evs', 'evsF', 'tups', 'tupsF'].forEach(k => { (trDoc[k] || []).forEach(e => { e.t += dl; }); trDoc[k] = (trDoc[k] || []).filter(e => e.t >= 0); });
       const ch = {}; Object.keys(trDoc.chords).forEach(k => { const t = +k + dl; if (t >= 0) ch[t] = trDoc.chords[k]; }); trDoc.chords = ch;
       trDoc.n += (np && !op) ? 1 : (!np && op) ? -1 : 0; trDoc.n = Math.max(1, trDoc.n); trDoc.pickup = np;
     });

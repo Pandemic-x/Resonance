@@ -5,8 +5,9 @@
    (wens gebruiker: gewoon doortellen 1.7 → 1.8 → 1.9 → 1.10 …; het eerste getal alleen omhoog bij een
    echt grote update, zoals het gedeelde notensysteem). Zelfde nummer in artifact én website. */
 const Versie = (function(){
-  const VERSIE = '1.27';
+  const VERSIE = '1.28';
   const NIEUW = [
+    ['1.28', '23-11', 'Transcriberen: triolen (Ctrl+3 of knop 3, zoals MuseScore), ook in de pianobalk; ze klinken en gaan mee naar Repertoire en MusicXML'],
     ['1.27', '22-11', 'Transcriberen: pianobalk (viool- en bassleutel met accolade), wissel met Alt+↑ ↓ of ⇅; beide balken klinken en gaan mee naar Repertoire'],
     ['1.26', '22-11', 'Transcriberen: akkoordsymbool met K; Ctrl+K opent weer overal de bibliotheek'],
     ['1.25', '22-11', 'Nieuw onder Bladmuziek: ✍️ Transcriberen, je eigen noteneditor (zoals MuseScore) met akkoordsymbolen, afspelen en ➜ naar Repertoire'],
