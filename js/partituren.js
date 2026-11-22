@@ -1419,7 +1419,7 @@ function ptPasUI(){
   el.querySelectorAll('.ptpdel').forEach(b => b.onclick = () => {
     if (!b.classList.contains('arm')){ b.classList.add('arm'); b.textContent = 'Zeker?'; setTimeout(() => { if (b.isConnected){ b.classList.remove('arm'); b.textContent = '✕'; } }, 4000); return; }
     ptCur.pas = ptCur.pas.filter(x => x.id !== b.dataset.id); if (ptCur.pcur === b.dataset.id) ptCur.pcur = null;
-    ptSaveCur(); ptPasUI();
+    ptSaveCur(); ptPasUI(); if (typeof Ann !== 'undefined') Ann.dropMarkers(b.dataset.id);   // emoji-markering in de partituur ook weg
   });
   if (!ptRun && $('ptFsInfo')) $('ptFsInfo').textContent = ptPasLabel();
   ptFsBlkUI();
@@ -1442,6 +1442,7 @@ function ptPasUI(){
     $('ptNotesPrev').hidden = open || !first; $('ptNotesPrev').textContent = '📝 ' + first + ((cur.notes || '').trim().split('\n').filter(l => l.trim()).length > 1 ? ' …' : '');
     $('ptNotesBtn').classList.toggle('on', open || !!first);
   }
+  if (typeof ptBlkUI === 'function') ptBlkUI();   // ▦ Blokken (js/plekken.js)
 }
 function ptPasLoad(id){
   const p = (ptCur.pas || []).find(x => x.id === id); if (!p) return;
@@ -1918,7 +1919,9 @@ function ptInit(){
   // eigen emoji bij een blok (passage): alleen als je er een kiest; "Geen" haalt hem weg
   const EMO = ['🎯', '🔥', '⭐', '💪', '🐢', '🐇', '🎻', '🎹', '🎵', '⚠️', '❤️', '🧠', '👂', '✋', '🌊', '🏔️', '🌙', '☀️', '🎭', '✨', '🔁', '📌', '🚀', '🍀'];
   const emoPop = $('ptEmoPop');
-  const emoSet = v => { const p = ptPasCur(); if (!p) return; v = (v || '').trim(); if (v) p.emo = [...v].slice(0, 4).join(''); else delete p.emo; ptSaveCur(); ptPasUI(); emoPop.hidden = true; };
+  const emoSet = v => { const p = ptPasCur(); if (!p) return; v = (v || '').trim(); if (v) p.emo = [...v].slice(0, 4).join(''); else delete p.emo; ptSaveCur(); ptPasUI(); emoPop.hidden = true;
+    if (typeof Ann !== 'undefined'){ if (p.emo) Ann.ensureMarker(p); else Ann.dropMarkers(p.id); }   // emoji-blok ↔ emoji in de partituur
+  };
   $('ptStripEmo').onclick = e => {
     e.currentTarget.blur();
     if (!emoPop.hidden){ emoPop.hidden = true; return; }

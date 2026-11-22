@@ -1,92 +1,77 @@
-/* ================= Lastige plekken in Repertoire (js/plekken.js, prefix ptPlek) — 22-11-2026 =================
-   Idee (plan met Julian): zien → markeren → oefenen → afvinken. Een paar stempels uit de aantekeningen betekenen
-   "lastige plek": ⚠️ (warn), 👓 (look), de cirkel (circ), ↑ (hi) en ↓ (lo). Zetten = markeren, er hoeft niets extra's.
-   - Gegevens: gewoon de stempels in ptCur.ann (js/aantekeningen.js). Extra velden op zo'n stempel:
-       ok (1 = opgelost, de stempel wordt grijs getekend), okd (datum), pas (id van de gekoppelde passage).
-     Uitgummen = de plek is weg. Verborgen lagen tellen gewoon mee in de lijst.
-   - Speler: knop #ptPlekBtn "⚠️ n" (n = open plekken; verborgen als het stuk geen plekken heeft) opent #ptPlekBox:
-       regel = teken + maat + omschrijving; tik = oefenblok maat−1 … maat+1 in Focus + Lus (of de gekoppelde passage laden);
-       ＋ passage = passage "<omschrijving> m. N" van die maten (status Bezig) en meteen laden; ✓ = opgelost (gekoppelde
-       passage → ✅ Zit erin); ↺ = weer open. Opgeloste plekken staan ingeklapt onderaan.
-   - Bibliotheek: ptPlekCount(it) → aantal open plekken, getoond in de regel van het stuk (albums.js).
-   - ptPlekUI() wordt aangeroepen door Ann.render (na elke wijziging en elke nieuwe tekening). */
+/* ================= Blokken-bibliotheek per stuk (js/plekken.js, prefix ptBlk) — v1.22, 22-11-2026 =================
+   Wens Julian: emoji's zijn gewoon een snelle manier om blokken (passages) te maken; één bibliotheek voor alle blokken,
+   en makkelijk tussen blokken wisselen. (Vervangt de "lastige plekken" van v1.20: die worden vanzelf blokken.)
+   - Emoji in de partituur zetten (✏️ → 🏷️ → tab Blokken: ⚠️ 👓 ○ ↑ ↓ 🔁 en meer) = markering (ann-item k:'blk', e, pas)
+     én een nieuw blok via ptBlkNew: maat−1 … maat+1, naam "<omschrijving> m. N", emo = die emoji, viaMark = 1.
+   - Andersom: een blok een emoji geven (☺ in de blokbalk) → Ann.ensureMarker(p) zet de emoji in de partituur bij de
+     eerste maat; "Geen emoji" → Ann.dropMarkers(id). Een blok verwijderen haalt ook zijn markeringen weg.
+     De markering toont altijd p.emo (de passage is de bron); ✅ Zit erin = grijze markering.
+   - Knop #ptPlekBtn "▦ Blokken n" (n = blokken die nog niet ✅ zijn) → #ptPlekBox: ‹ › vorige/volgende blok, ＋ nieuw blok
+     van het huidige oefenblok, lijst op maatvolgorde (tik = laden in Focus), ✓/↺ = ✅ Zit erin / weer Bezig, 🗑 (twee keer).
+   - ptPlekUI (oude naam, aangeroepen door Ann.render) = ptBlkUI; ptPasUI roept ptBlkUI ook aan. */
 
-const PT_PLEK = { warn:'⚠️ let op', look:'👓 kijk uit', circ:'○ omcirkeld', hi:'↑ te laag, hoger spelen', lo:'↓ te hoog, lager spelen' };
-const PT_PLEK_ICON = { warn:'⚠️', look:'👓', circ:'○', hi:'↑', lo:'↓' };
-let ptPlekOpen = false, ptPlekShowDone = false;
-const ptPlekIs = it => it && it.t === 's' && PT_PLEK[it.k];
-function ptPlekCount(it){ return (it && it.ann || []).filter(x => ptPlekIs(x) && !x.ok).length; }
-function ptPlekMn(it){ const st = ptSteps[it.a && it.a.i]; return st ? st.mn : null; }
-function ptPlekList(){
-  return (ptCur && ptCur.ann || []).filter(ptPlekIs).map(it => ({ it, mn:ptPlekMn(it) })).filter(x => x.mn != null)
-    .sort((a, b) => a.mn - b.mn || (a.it.a.i - b.it.a.i));
-}
-function ptPlekUI(){
-  const btn = $('ptPlekBtn'), box = $('ptPlekBox'); if (!btn || !box) return;
-  const L = ptCur ? ptPlekList() : [], open = L.filter(x => !x.it.ok), done = L.filter(x => x.it.ok);
-  btn.hidden = !L.length;
-  btn.textContent = '⚠️ ' + open.length;
-  btn.title = open.length ? open.length + ' lastige plek' + (open.length === 1 ? '' : 'ken') + ' (⚠️ 👓 ○ ↑ ↓ uit de aantekeningen)' : 'Alle lastige plekken opgelost 🎉';
-  btn.classList.toggle('on', ptPlekOpen); btn.classList.toggle('zero', !open.length);
-  box.hidden = !ptPlekOpen || !L.length;
-  if (box.hidden) return;
-  const pasOf = it => it.pas && (ptCur.pas || []).find(p => p.id === it.pas);
-  const row = ({ it, mn }) => {
-    const p = pasOf(it), hereB = ptCur.s.from <= mn && ptCur.s.to >= mn;
-    return `<div class="ptplek${it.ok ? ' done' : ''}${hereB ? ' here' : ''}" data-id="${it.id}">
-      <button class="ptplekgo" data-go="${it.id}" title="${p ? 'Passage laden: ' + ptEsc(p.naam) : 'Oefenen: maat ' + (mn - 1) + '–' + (mn + 1) + ' in Focus en Lus'}"><span class="ptplekic">${PT_PLEK_ICON[it.k]}</span><b>maat ${mn}</b><small>${ptEsc(p ? ptPasNm(p) + ' · m. ' + p.from + '–' + p.to : PT_PLEK[it.k].replace(/^\S+\s/, ''))}</small></button>
-      ${it.ok ? '' : p ? '' : `<button class="ptplekpas" data-pas="${it.id}" title="Passage van maken (met tempo, status en in Vandaag oefenen)">＋ passage</button>`}
-      <button class="ptplekok" data-ok="${it.id}" title="${it.ok ? 'Weer open zetten' : 'Opgelost: zit erin'}">${it.ok ? '↺' : '✓'}</button></div>`;
-  };
-  box.innerHTML = (open.length ? open.map(row).join('') : '<p class="muted ptplekempty">Alle plekken in dit stuk zijn opgelost. 🎉</p>') +
-    (done.length ? `<button class="ptlink ptplekmore" data-more="1">${ptPlekShowDone ? '▾' : '▸'} Opgelost (${done.length})</button>` + (ptPlekShowDone ? done.map(row).join('') : '') : '') +
-    '<p class="muted ptplektip">Zet in de tekenmodus (✏️) een ⚠️, 👓, ○, ↑ of ↓ (tab Practice) bij een lastige plek: die komt vanzelf in deze lijst.</p>';
-}
-function ptPlekGo(it){
-  const mn = ptPlekMn(it); if (mn == null) return;
-  const p = it.pas && (ptCur.pas || []).find(x => x.id === it.pas);
-  if (p){ ptPasLoad(p.id); return; }
-  const s = ptCur.s, a = Math.max(ptMinM(), mn - 1), b = Math.min(ptMaxM(), mn + 1);
-  const ch = s.from !== a || s.to !== b, wasF = s.focus;
-  ptStop(); ptCur.pcur = null;
-  s.focus = true; s.loop = true; $('ptFocus').checked = true; $('ptLoop').checked = true;
-  ptSetBlock(a, b, false);
-  ptSaveCur(); ptPasUI();
-  if (ch || !wasF) ptRedraw(); else ptDim();
-  ptMsg(PT_PLEK_ICON[it.k] + ' Maat ' + a + '–' + b + ' rond de plek in maat ' + mn + '. Druk op ▶ (de lus staat aan).', 'muted');
-}
-function ptPlekPas(it){
-  const mn = ptPlekMn(it); if (mn == null) return;
-  const a = Math.max(ptMinM(), mn - 1), b = Math.min(ptMaxM(), mn + 1);
-  const naam = PT_PLEK[it.k].replace(/^\S+\s/, '').replace(/^./, c => c.toUpperCase()).split(',')[0] + ' m. ' + mn;
-  const p = { id:'q' + Date.now().toString(36), naam, from:a, to:b, status:'bezig', bpm:ptCur.s.bpm, ok:0, doel:0, secs:0, made:ptToday(), last:null };
+const PT_BLK_NAME = { '⚠️':'Let op', '👓':'Kijk uit', '○':'Omcirkeld', '↑':'Te laag', '↓':'Te hoog', '🔁':'Herhalen' };
+let ptBlkOpen = false, ptBlkShowDone = false;
+function ptBlkNew(it){   // markering geplaatst → nieuw blok rond die maat
+  const st = it && it.a && ptSteps[it.a.i]; if (!st || !ptCur) return null;
+  const mn = st.mn, a = Math.max(ptMinM(), mn - 1), b = Math.min(ptMaxM(), mn + 1);
+  const nm = PT_BLK_NAME[it.e] || (it.nm ? it.nm.replace(/^./, c => c.toUpperCase()) : 'Blok');
+  const p = { id:'q' + Date.now().toString(36) + Math.random().toString(36).slice(2, 4), naam:nm + ' m. ' + mn, from:a, to:b, status:'nieuw', bpm:ptCur.s.bpm,
+    ok:0, doel:0, secs:0, made:ptToday(), last:null, emo:it.e, viaMark:1 };
   ptCur.pas = (ptCur.pas || []).concat(p);
   it.pas = p.id;
-  ptSaveCur();
-  ptPasLoad(p.id);
-  ptMsg('Passage "' + ptEsc(naam) + '" gemaakt (maat ' + a + '–' + b + '). Je kunt de naam en het doeltempo aanpassen in 🕹️ → Passages.', 'muted');
-}
-function ptPlekOk(it){
-  if (it.ok){ delete it.ok; delete it.okd; }
-  else {
-    it.ok = 1; it.okd = ptToday();
-    const p = it.pas && (ptCur.pas || []).find(x => x.id === it.pas);
-    if (p) p.status = 'zit';
-  }
   ptSaveCur(); ptPasUI();
-  if (typeof Ann !== 'undefined') Ann.redraw(); else ptPlekUI();
+  return p;
 }
-function ptPlekInit(){
+function ptBlkSorted(){ return (ptCur && ptCur.pas || []).slice().sort((a, b) => a.from - b.from || a.to - b.to || String(a.made || '').localeCompare(String(b.made || ''))); }
+function ptBlkUI(){
+  const btn = $('ptPlekBtn'), box = $('ptPlekBox'); if (!btn || !box) return;
+  if (!ptCur){ btn.hidden = true; box.hidden = true; return; }
+  const L = ptBlkSorted(), open = L.filter(p => p.status !== 'zit'), done = L.filter(p => p.status === 'zit');
+  btn.hidden = false;
+  btn.textContent = '▦ Blokken' + (L.length ? ' ' + open.length : '');
+  btn.title = L.length ? L.length + ' blok' + (L.length === 1 ? '' : 'ken') + ' in dit stuk, ' + open.length + ' nog niet ✅' : 'Blokken van dit stuk (nog geen)';
+  btn.classList.toggle('on', ptBlkOpen);
+  box.hidden = !ptBlkOpen;
+  if (box.hidden) return;
+  const cur = ptPasCur(), s = ptCur.s;
+  const row = p => `<div class="ptplek${p.status === 'zit' ? ' done' : ''}${cur && cur.id === p.id ? ' here' : ''}">
+      <button class="ptplekgo" data-go="${p.id}" title="Laden: maat ${p.from}–${p.to} in Focus"><span class="ptplekic">${p.emo ? ptEsc(p.emo) : PT_STATUS[p.status] ? PT_STATUS[p.status].i : ''}</span><b>${ptEsc(p.naam)}</b><small>${ptEsc(ptPasMeta(p))}</small></button>
+      <button class="ptplekok" data-ok="${p.id}" title="${p.status === 'zit' ? 'Weer op 🔨 Bezig' : '✅ Zit erin'}">${p.status === 'zit' ? '↺' : '✓'}</button>
+      <button class="ptplekdel" data-del="${p.id}" title="Blok verwijderen (twee keer tikken)">✕</button></div>`;
+  const k = cur ? L.findIndex(p => p.id === cur.id) : -1;
+  box.innerHTML = `<div class="ptblkhead">
+      <button class="ptblknav" data-nav="-1" ${L.length && k !== 0 ? '' : 'disabled'} title="Vorige blok">‹</button>
+      <button class="ptblknav" data-nav="1" ${L.length && k < L.length - 1 ? '' : 'disabled'} title="Volgende blok">›</button>
+      <span class="ptblkcur">${cur ? (k + 1) + ' / ' + L.length : L.length ? L.length + ' blok' + (L.length === 1 ? '' : 'ken') : 'Nog geen blokken'}</span>
+      <button class="ptblknew" data-new="1" title="Het huidige oefenblok bewaren als blok">＋ Blok van maat ${s.from}–${s.to}</button></div>` +
+    (open.length ? open.map(row).join('') : L.length ? '<p class="muted ptplekempty">Alle blokken zitten erin. 🎉</p>' : '') +
+    (done.length ? `<button class="ptlink ptplekmore" data-more="1">${ptBlkShowDone ? '▾' : '▸'} ✅ Zit erin (${done.length})</button>` + (ptBlkShowDone ? done.map(row).join('') : '') : '') +
+    '<p class="muted ptplektip">Snel een blok: ✏️ → 🏷️ → <b>Blokken</b> en zet een emoji in de partituur. Of geef een blok een emoji met ☺ in de blokbalk: dan staat hij ook in de partituur.</p>';
+}
+const ptPlekUI = ptBlkUI;   // oude naam (Ann.render)
+function ptBlkInit(){
   const btn = $('ptPlekBtn'), box = $('ptPlekBox'); if (!btn || !box || btn._init) return; btn._init = true;
-  btn.onclick = e => { e.currentTarget.blur(); ptPlekOpen = !ptPlekOpen; ptPlekUI(); };
+  btn.onclick = e => { e.currentTarget.blur(); ptBlkOpen = !ptBlkOpen; ptBlkUI(); };
   box.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b || !ptCur) return;
     b.blur();
-    if (b.dataset.more){ ptPlekShowDone = !ptPlekShowDone; ptPlekUI(); return; }
-    const id = b.dataset.go || b.dataset.pas || b.dataset.ok, it = (ptCur.ann || []).find(x => x.id === id); if (!it) return;
-    if (b.dataset.go) ptPlekGo(it);
-    else if (b.dataset.pas) ptPlekPas(it);
-    else if (b.dataset.ok) ptPlekOk(it);
+    if (b.dataset.more){ ptBlkShowDone = !ptBlkShowDone; ptBlkUI(); return; }
+    if (b.dataset.new){ $('ptPasNew').click(); return; }
+    if (b.dataset.nav){
+      const L = ptBlkSorted(), cur = ptPasCur(); if (!L.length) return;
+      const k = cur ? L.findIndex(p => p.id === cur.id) : -1, j = k < 0 ? (+b.dataset.nav > 0 ? 0 : L.length - 1) : k + +b.dataset.nav;
+      if (L[j]) ptPasLoad(L[j].id);
+      return;
+    }
+    const id = b.dataset.go || b.dataset.ok || b.dataset.del, p = (ptCur.pas || []).find(x => x.id === id); if (!p) return;
+    if (b.dataset.go) ptPasLoad(p.id);
+    else if (b.dataset.ok){ p.status = p.status === 'zit' ? 'bezig' : 'zit'; ptSaveCur(); ptPasUI(); if (typeof Ann !== 'undefined') Ann.redraw(); }
+    else if (b.dataset.del){
+      if (!b.classList.contains('arm')){ b.classList.add('arm'); b.textContent = 'Zeker?'; setTimeout(() => { if (b.isConnected){ b.classList.remove('arm'); b.textContent = '✕'; } }, 4000); return; }
+      ptCur.pas = ptCur.pas.filter(x => x.id !== p.id); if (ptCur.pcur === p.id) ptCur.pcur = null;
+      ptSaveCur(); ptPasUI(); if (typeof Ann !== 'undefined') Ann.dropMarkers(p.id);
+    }
   });
 }
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ptPlekInit); else ptPlekInit();
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ptBlkInit); else ptBlkInit();

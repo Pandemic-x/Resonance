@@ -112,3 +112,4 @@ html.dark .patabs button.on{color:#15130f}
 .pasellay{font-size:12.5px;color:var(--muted);display:inline-flex;gap:4px;align-items:center}
 .pasellay select{height:30px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:inherit;font-size:13px}
 .pasel .pahint{white-space:normal}
+.pa-blk.pa-done{opacity:.4}

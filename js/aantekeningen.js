@@ -33,6 +33,7 @@ const Ann = (function(){
     for (const k in DEF) if (a[k] === undefined) a[k] = Array.isArray(DEF[k]) ? JSON.parse(JSON.stringify(DEF[k])) : DEF[k];
     if (!Array.isArray(a.layers) || !a.layers.length) a.layers = JSON.parse(JSON.stringify(DEF.layers));
     if (!a.layers.some(l => l.id === a.layer)) a.layer = a.layers[0].id;
+    if (typeof BY !== 'undefined' && a.stamp && a.stamp.slice(0, 2) !== 'c:' && !BY[a.stamp]) a.stamp = OLDBLK && OLDBLK[a.stamp] ? 'B' + BLK.findIndex(b => b[0] === OLDBLK[a.stamp]) : 'down';
     return a;
   }
   /* ---------- lagen ---------- */
@@ -115,10 +116,7 @@ const Ann = (function(){
     P('mord', 'mordent', [['M-.8 .18L-.45 -.18L-.1 .18L.25 -.18L.6 .18', 'stroke', .15], ['M-.1 -.55V.55', 'stroke', .1]]),
     P('umord', 'upper mordent', [['M-.8 .18L-.45 -.18L-.1 .18L.25 -.18L.6 .18', 'stroke', .15]]),
     // Practice
-    T('hi', 'play higher ↑', 'sym', '↑'), T('lo', 'play lower ↓', 'sym', '↓'),
     T('sh', '♯', 'sym'), T('fl', '♭', 'sym'), T('na', '♮', 'sym'),
-    P('circ', 'circle', [[`M1.05 0A1.05 .85 0 1 1 -1.05 0A1.05 .85 0 1 1 1.05 0Z`, 'stroke', .13]]),
-    T('warn', '⚠️', 'emo'), T('look', '👓', 'emo'), T('rep', '🔁', 'emo'),
     T('count', 'count!', 'itb'), T('slow', 'slow', 'itb'), T('breathe', 'breathe', 'itb'),
     // More
     T('o8va', '8va', 'itb'), T('o8vb', '8vb', 'itb'),
@@ -127,7 +125,18 @@ const Ann = (function(){
     P('brl', '[ begin', [['M.28 -2.2H-.05V2.2H.28', 'stroke', .15]]),
     P('brr', '] einde', [['M-.28 -2.2H.05V2.2H-.28', 'stroke', .15]])
   ];
+  // Blokken (v1.22): elke emoji hier = een blok (passage) op die plek; de emoji staat dan in de partituur (item k:'blk')
+  const BLK = [['⚠️', 'let op'], ['👓', 'kijk uit'], ['○', 'omcirkeld'], ['↑', 'te laag, hoger'], ['↓', 'te hoog, lager'], ['🔁', 'herhalen'],
+    ['🎯', 'doel'], ['🔥', 'vuur'], ['⭐', 'ster'], ['💪', 'kracht'], ['🐢', 'langzaam'], ['🐇', 'snel'], ['🎻', 'viool'], ['🎹', 'piano'],
+    ['🎵', 'melodie'], ['❤️', 'mooi'], ['🧠', 'onthouden'], ['👂', 'luisteren'], ['✋', 'hand'], ['🌊', 'golf'], ['🏔️', 'top'],
+    ['🌙', 'rustig'], ['☀️', 'helder'], ['🎭', 'karakter'], ['✨', 'glans'], ['📌', 'vast'], ['🚀', 'vaart'], ['🍀', 'geluk']];
+  BLK.forEach(([e, n], j) => LIST.push({ id:'B' + j, n:'blok ' + e + ' ' + n, x:'blk', e, nm:n }));
+  const symE = e => /^[○↑↓]$/.test(e);
   const BY = {}; LIST.forEach(s => { BY[s.id] = s; });
+  const OLDBLK = { warn:'⚠️', look:'👓', circ:'○', hi:'↑', lo:'↓', rep:'🔁' };   // v1.20/21-stempels → worden blokken
+  const pasOf = it => it && it.pas && ptCur && (ptCur.pas || []).find(x => x.id === it.pas) || null;
+  const blkEmo = it => { const p = pasOf(it); return (p && p.emo) || it.e || ''; };
+  const blkDone = it => { const p = pasOf(it); return !!(p && p.status === 'zit'); };
   const TABS = {
     bow:{ n:'Bow', ids:['down', 'up', 'frog', 'tip', 'lowh', 'upph', 'wb', 'lift'] },
     vfing:{ n:'Fingers', ids:['f0', 'f1', 'f2', 'f3', 'f4', 'pos1', 'pos2', 'pos3', 'pos4', 'pos5', 'pos6', 'pos7', 'sI', 'sII', 'sIII', 'sIV', 'sulG', 'sulD', 'sulA', 'sulE', 'guide', 'sp22', 'sp13'] },
@@ -138,15 +147,16 @@ const Ann = (function(){
     tempo:{ n:'Tempo', ids:['taccel', 'trit', 'trall', 'tatempo', 'tTempoI', 'tpimosso', 'tmenomosso', 'trubato', 'mm'] },
     char:{ n:'Character', ids:['cdolce', 'cespressivo', 'ccantabile', 'clegato', 'cleggiero', 'cmarcato', 'cagitato'] },
     art:{ n:'Articulation', ids:['acc', 'stac', 'ten', 'marc', 'stcs', 'port', 'ferm', 'slur', 'tr', 'turn', 'mord', 'umord'] },
-    prac:{ n:'Practice', ids:['hi', 'lo', 'sh', 'fl', 'na', 'circ', 'warn', 'look', 'rep', 'count', 'slow', 'breathe'] },
+    blk:{ n:'Blokken', ids:BLK.map((_, j) => 'B' + j) },
+    prac:{ n:'Practice', ids:['sh', 'fl', 'na', 'count', 'slow', 'breathe'] },
     more:{ n:'More', ids:['o8va', 'o8vb', 'caes', 'breath', 'brl', 'brr'] },
     fav:{ n:'★', ids:[] }
   };
   // 'più' → id 'wpi' / 'tpimosso' (\W haalt de ù weg): zo blijven de id's ASCII
   const SETS = {
-    viool:['bow', 'vfing', 'tech', 'dyn', 'tempo', 'char', 'art', 'prac', 'more', 'fav'],
-    piano:['pfing', 'ped', 'dyn', 'tempo', 'char', 'art', 'prac', 'more', 'fav'],
-    overig:['bow', 'vfing', 'pfing', 'ped', 'tech', 'dyn', 'tempo', 'char', 'art', 'prac', 'more', 'fav']
+    viool:['blk', 'bow', 'vfing', 'tech', 'dyn', 'tempo', 'char', 'art', 'prac', 'more', 'fav'],
+    piano:['blk', 'pfing', 'ped', 'dyn', 'tempo', 'char', 'art', 'prac', 'more', 'fav'],
+    overig:['blk', 'bow', 'vfing', 'pfing', 'ped', 'tech', 'dyn', 'tempo', 'char', 'art', 'prac', 'more', 'fav']
   };
   function stamp(k){
     if (!k) return null;
@@ -328,9 +338,12 @@ const Ann = (function(){
     });
   }
   function drawItem(it, root){
-    const g = el('g', { class:'pa-it pa-' + (it.hl ? 'hl' : (it.c || 'ink')) + (it.ok ? ' pa-done' : '') + (sel.has(it.id) ? ' pa-sel' : '') }, root);
+    const g = el('g', { class:'pa-it pa-' + (it.hl ? 'hl' : (it.c || 'ink')) + (it.ok || (it.k === 'blk' && blkDone(it)) ? ' pa-done' : '') + (it.k === 'blk' ? ' pa-blk' : '') + (sel.has(it.id) ? ' pa-sel' : '') }, root);
     g.dataset.aid = it.id;
-    if (it.t === 's'){
+    if (it.t === 's' && it.k === 'blk'){
+      const p = pos(it.a), e = blkEmo(it); if (!p || !e){ g.remove(); return null; }
+      drawStamp(g, { x:'t', st:symE(e) ? 'sym' : 'emo', v:e }, p.x, p.y, p.sp, it.z || 1);
+    } else if (it.t === 's'){
       const p = pos(it.a), d = stamp(it.k); if (!p || !d){ g.remove(); return null; }
       drawStamp(g, d, p.x, p.y, p.sp, it.z || 1);
     } else if (it.t === 'p'){
@@ -362,8 +375,32 @@ const Ann = (function(){
     root = el('g', { transform:'translate(' + (-sh.clientLeft) + ' ' + (-sh.clientTop) + ')' }, lay);
     return root;
   }
+  function migrate(){   // oude plek-stempels (⚠️ 👓 ○ ↑ ↓ 🔁, v1.20/21) worden blok-markeringen met een eigen blok
+    if (!ptCur || !ptSteps.length || !ptCur.ann || typeof ptBlkNew !== 'function') return;
+    let ch = false;
+    ptCur.ann.forEach(it => {
+      if (it.t !== 's' || !OLDBLK[it.k] || !it.a || !ptSteps[it.a.i]) return;
+      const e = OLDBLK[it.k], p = pasOf(it);
+      it.k = 'blk'; it.e = e;
+      if (p){ if (!p.emo) p.emo = e; if (it.ok) p.status = 'zit'; }
+      else { const nb = ptBlkNew(it); if (nb && it.ok) nb.status = 'zit'; }
+      delete it.ok; delete it.okd; ch = true;
+    });
+    if (ch){ ptSaveCur(); if (typeof ptPasUI === 'function') ptPasUI(); }
+  }
+  function blkMsg(p){ msg('Blok "' + (p.emo ? p.emo + ' ' : '') + p.naam + '" gemaakt (maat ' + p.from + '–' + p.to + '). Zie ▦ Blokken bovenin.'); clearTimeout(blkMsg.t); blkMsg.t = setTimeout(() => msg(''), 4500); }
+  function ensureMarker(p){   // blok kreeg een emoji (☺): markering in de partituur bij de eerste maat van het blok
+    if (!ptCur || !p || !p.emo) return;
+    if (items().some(it => it.k === 'blk' && it.pas === p.id)) { render(); return; }
+    const i = ptSteps.findIndex(st => st.mn === p.from); if (i < 0) return;
+    const V = visStaves();
+    items().push({ id:uid(), t:'s', k:'blk', e:p.emo, pas:p.id, c:'ink', z:1, l:S().layer, a:{ i, st:V[0], dx:0, dy:-3.2 } });
+    ptSaveCur(); render();
+  }
+  function dropMarkers(pid){ if (!ptCur || !ptCur.ann) return; const n = ptCur.ann.length; ptCur.ann = ptCur.ann.filter(it => !(it.k === 'blk' && it.pas === pid)); if (ptCur.ann.length !== n) ptSaveCur(); render(); }
   function render(){
     raf = 0;
+    migrate();
     const lay = $('paLayer'); if (!lay) return;
     if (typeof ptPlekUI === 'function') ptPlekUI();   // lijst met lastige plekken (js/plekken.js)
     const s = S();
@@ -383,7 +420,7 @@ const Ann = (function(){
     const g = document.createElementNS(NS, 'g');
     if (!ptCur || !o || !o.ann) return g;
     geo();
-    const list = (ptCur.ann || []).filter(it => (o.hidden || shown(it)) && !(o.noDone && it.ok));
+    const list = (ptCur.ann || []).filter(it => (o.hidden || shown(it)) && !(o.noDone && (it.ok || (it.k === 'blk' && blkDone(it)))));
     list.filter(it => it.hl).concat(list.filter(it => !it.hl)).forEach(it => { const x = drawItem(it, g); if (x){ x.classList.remove('pa-sel'); delete x.dataset.aid; } });
     return g;
   }
@@ -393,7 +430,19 @@ const Ann = (function(){
   const sel = new Set();   // geselecteerde aantekeningen (id's), gereedschap ➰
   function items(){ if (!ptCur.ann) ptCur.ann = []; return ptCur.ann; }
   function checkPiece(){ if (ptCur && ptCur.id !== forId){ forId = ptCur.id; undo = []; redo = []; sel.clear(); } }
-  function snap(){ checkPiece(); undo.push(JSON.stringify(items())); if (undo.length > 60) undo.shift(); redo = []; undoUI(); }
+  function stateStr(){ return JSON.stringify({ ann:items(), pas:(ptCur.pas || []) }); }
+  function restoreState(str){
+    const o = JSON.parse(str);
+    if (Array.isArray(o)){ ptCur.ann = o; return; }
+    ptCur.ann = o.ann || [];
+    const curP = ptCur.pas || [], ids = new Set((o.pas || []).map(p => p.id));
+    const list = (o.pas || []).map(sp => { const c = curP.find(x => x.id === sp.id); if (!c) return sp; if (sp.emo) c.emo = sp.emo; else delete c.emo; return c; });
+    curP.forEach(c => { if (!ids.has(c.id) && !(c.viaMark && !c.ok && !c.secs && !c.last)) list.push(c); });   // nieuw blok van een emoji, nog niet geoefend: mag weg
+    ptCur.pas = list;
+    if (ptCur.pcur && !list.some(p => p.id === ptCur.pcur)) ptCur.pcur = null;
+    if (typeof ptPasUI === 'function') ptPasUI();
+  }
+  function snap(){ checkPiece(); undo.push(stateStr()); if (undo.length > 60) undo.shift(); redo = []; undoUI(); }
   function unhideCur(){   // tekenen op een verborgen laag: die laag weer tonen, anders zie je niets
     const L = S().layer, h = hiddenSet(); if (!ptCur || !h.has(L)) return;
     h.delete(L); ptCur.annHide = [...h];
@@ -401,8 +450,8 @@ const Ann = (function(){
     layersUI();
   }
   function commit(){ ptSaveCur(); undoUI(); const ids = new Set(items().map(x => x.id)); [...sel].forEach(id => { if (!ids.has(id)) sel.delete(id); }); render(); selUI(); }
-  function doUndo(){ checkPiece(); if (!undo.length) return; redo.push(JSON.stringify(items())); ptCur.ann = JSON.parse(undo.pop()); commit(); }
-  function doRedo(){ checkPiece(); if (!redo.length) return; undo.push(JSON.stringify(items())); ptCur.ann = JSON.parse(redo.pop()); commit(); }
+  function doUndo(){ checkPiece(); if (!undo.length) return; redo.push(stateStr()); restoreState(undo.pop()); commit(); }
+  function doRedo(){ checkPiece(); if (!redo.length) return; undo.push(stateStr()); restoreState(redo.pop()); commit(); }
   function undoUI(){ const u = $('paUndo'), r = $('paRedo'); if (u) u.disabled = !undo.length; if (r) r.disabled = !redo.length; }
   const toP = e => ptToSheet(e.clientX, e.clientY);
   const spAt = p => { const li = lineAt(p); return li != null ? G.lines[li].sp : G.sp; };
@@ -439,6 +488,7 @@ const Ann = (function(){
     draft.textContent = '';
     const g = el('g', { class:'pa-it pa-' + (mv.it.c || 'ink') }, draft);
     if (mv.it.t === 'x'){ drawText(g, mv.it.v, mv.x, mv.y, spAt(mv), mv.it.z || 1); return; }
+    if (mv.it.k === 'blk'){ const e = blkEmo(mv.it); drawStamp(g, { x:'t', st:symE(e) ? 'sym' : 'emo', v:e }, mv.x, mv.y, spAt(mv), mv.it.z || 1); return; }
     const d = stamp(mv.it.k);
     if (d) drawStamp(g, d, mv.x, mv.y, spAt(mv), mv.it.z || 1);
   }
@@ -462,7 +512,7 @@ const Ann = (function(){
       if (d.x === 'ask'){ askText(d.v); return false; }
       const h = hitTest(p, ['s', 'x']);
       if (h){ grab(h, p, e); return true; }
-      mv = { it:{ id:uid(), t:'s', k:s.stamp, c:s.color, z:s.size, l:s.layer }, x:p.x, y:p.y, ox:0, oy:0, isNew:true };
+      mv = { it:d.x === 'blk' ? { id:uid(), t:'s', k:'blk', e:d.e, nm:d.nm, c:s.color, z:s.size, l:s.layer } : { id:uid(), t:'s', k:s.stamp, c:s.color, z:s.size, l:s.layer }, x:p.x, y:p.y, ox:0, oy:0, isNew:true };
       drawMove(); cur = { kind:'move', id:e.pointerId, p0:p };
       return true;
     }
@@ -552,7 +602,7 @@ const Ann = (function(){
       const a = anchorAt({ x:m.x, y:m.y }, m.it.t !== 'x');
       if (!a){ render(); return; }
       snap();
-      unhideCur(); if (m.isNew){ m.it.a = a; items().push(m.it); }
+      unhideCur(); if (m.isNew){ m.it.a = a; items().push(m.it); if (m.it.k === 'blk' && typeof ptBlkNew === 'function'){ const nb = ptBlkNew(m.it); delete m.it.nm; if (nb) blkMsg(nb); } }
       else { const it = items().find(x => x.id === m.it.id); if (it) it.a = a; }
       commit();
     }
@@ -766,6 +816,7 @@ const Ann = (function(){
     return TABS[t].ids;
   }
   function btnIcon(d){
+    if (d.x === 'blk') return `<span style="font-size:${symE(d.e) ? 20 : 19}px;font-family:${(symE(d.e) ? ST.sym : ST.emo).f.replace(/"/g, '&quot;')}">${d.e}</span>`;
     if (d.x === 'span'){
       const svg = '<svg viewBox="-12 -8 24 16" width="26" height="18">' +
         (d.k === 'slur' ? '<path d="M-10 3Q0 -9 10 3Q0 -6 -10 3Z" fill="currentColor"/>' :
@@ -959,7 +1010,7 @@ const Ann = (function(){
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 
   return {
-    redraw, open, close, onFs, isActive:() => active, printLayer,
+    redraw, open, close, onFs, isActive:() => active, printLayer, ensureMarker, dropMarkers,
     // grijpt deze aanwijzer in (dan geen omslaan/cursor in partituren.js)?
     grabs:e => (active && S().tool !== 'pan') || (e && e.pointerType === 'pen' && S().stylus) || !!cur,
     _dbg:{ geo:() => { G = null; return geo(); }, anchorAt, pos, stamp, LIST, TABS, items:() => items(), render }
