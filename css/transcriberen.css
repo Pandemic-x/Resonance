@@ -76,6 +76,9 @@ button:disabled{opacity:.4;cursor:default}
 .trdi{width:16px;height:21px;display:block}
 .trtool{min-width:34px;padding:4px 9px;font-size:16px;line-height:1.2}
 .trtool.trtext{font-size:13px;font-weight:600}
+#trHitBtn{display:none}
+#trView.trrhy #trHitBtn{display:inline-flex}
+#trView.trrhy [data-acc], #trView.trrhy #trUpBtn, #trView.trrhy #trDownBtn, #trView.trrhy #trAddBtn{display:none}
 .trtup span{display:inline-block;font-size:12px;font-weight:700;font-style:italic;padding:0 4px;border:1.5px solid currentColor;border-bottom:none;border-radius:2px 2px 0 0;line-height:1.1}
 .trpsep{width:1px;align-self:stretch;background:var(--line);margin:2px 3px}
 .trmeas{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--muted);white-space:nowrap}

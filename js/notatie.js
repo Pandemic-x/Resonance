@@ -47,7 +47,9 @@ const Notatie = (function(){
     c2:{ vf:'mezzo-soprano', naam:'mezzosopraansleutel', kort:'mezzo',    bottom:{ l:'a', a:0, o:3 } },
     c3:{ vf:'alto',          naam:'altsleutel',         kort:'alt',       bottom:{ l:'f', a:0, o:3 } },
     c4:{ vf:'tenor',         naam:'tenorsleutel',       kort:'tenor',     bottom:{ l:'d', a:0, o:3 } },
-    c5:{ vf:'baritone-c',    naam:'baritonsleutel',     kort:'bariton',   bottom:{ l:'b', a:0, o:2 } }
+    c5:{ vf:'baritone-c',    naam:'baritonsleutel',     kort:'bariton',   bottom:{ l:'b', a:0, o:2 } },
+    // ritmebalk (23-11-2026): één lijn, slagwerksleutel, alle noten op de lijn (= B4 in vioolsleutel-plaatsing); alleen Notatie.score
+    r: { vf:'percussion',    naam:'ritmebalk',          kort:'ritme',     bottom:{ l:'e', a:0, o:4 } }
   };
   CLEFS.c = CLEFS.c3;   // oude naam voor de altsleutel
   const MAJ = { C:0, G:1, D:2, A:3, E:4, B:5, 'F#':6, 'C#':7, F:-1, Bb:-2, Eb:-3, Ab:-4, Db:-5, Gb:-6, Cb:-7 };
@@ -320,7 +322,9 @@ const Notatie = (function(){
        h.at(clientX, clientY) → {m, i (event-index), st (balk 0/1), off, pos (plaats op die balk, 0 = onderste lijn)} of null
        h.xAt(m, off, st) → x van die tijd in die maat (zonder st: alle balken samen) · h.noteEl(id) · h.mark(id, cls) / h.unmark(id, cls) (CSS nt-<cls>)
        h.layer = <g> bovenop (voor cursor/selectie, zonder fill-attribuut, kleuren via CSS) · h.chordEls = [{id, el, x, y}]
-     Notatie.beamGroups(evs, time) → [[index, …]] (zelfde groepen als getekend; gebruikt door de MusicXML-export). */
+     Notatie.beamGroups(evs, time) → [[index, …]] (zelfde groepen als getekend; gebruikt door de MusicXML-export).
+     Ritmebalk (23-11-2026): clef 'r' = één lijn met slagwerksleutel. Elke noot staat op de lijn, ongeacht ev.ps (de toonhoogtes
+       blijven dus bewaard als je weer een gewone sleutel kiest), stokken omhoog, geen toonsoort/voortekens, korte maatstrepen. */
   const Q = 48;
   const LEN_DUR = { 288:'wd', 192:'w', 144:'hd', 96:'h', 72:'qd', 48:'q', 36:'8d', 24:'8', 18:'16d', 12:'16', 9:'32d', 6:'32' };
   function meter(time){
@@ -400,11 +404,13 @@ const Notatie = (function(){
     el.classList.add('ntstaff', 'ntscore');
     el.innerHTML = ''; h.meas = []; h.sys = []; h.chordEls = []; h.byId = {};
     if (!VF){ el.innerHTML = '<p class="note">Notenschrift laden…</p>'; ready(() => { if (h.el.isConnected) renderScore(h); }); return; }
-    const grand = o.clef === 'grand';
+    const grand = o.clef === 'grand', rhy = o.clef === 'r';
     const clefs = grand ? ['g', 'f'] : [CLEFS[o.clef] ? o.clef : 'g'];
     const evsOf = (ms, k) => (k === 1 ? ms.evsF : ms.evs) || [];
-    const key = o.key || 'C', nKey = Math.abs(fifths(key));
+    const key = rhy ? 'C' : (o.key || 'C'), nKey = Math.abs(fifths(key));
     const time = o.time || [4, 4], sig = keySig(key);
+    const RP = { l:'b', a:0, o:4 };                     // ritmebalk: de plek op de lijn
+    const psOf = e => rhy ? [RP] : e.ps;
     const zoom = o.zoom || 1, W = Math.max(260, (o.width || el.clientWidth || 700) / zoom);
     const measures = o.measures || [], chords = o.chords || [];
     // ---- 1. breedtes schatten (bij twee balken: de breedste van de twee, plus wat lucht) ----
@@ -415,7 +421,7 @@ const Notatie = (function(){
       evs.forEach(e => {
         let ew = 14 + 30 * Math.sqrt(e.len / Q) + (e.tup ? 4 : 0);
         if (/d$/.test(durOf(e) || '')) ew += 6;
-        if (!e.rest) e.ps.forEach(p => { const k = p.l + p.o, cur = acc[k] != null ? acc[k] : sig[p.l]; if (p.a !== cur){ ew += 9; acc[k] = p.a; } });
+        if (!e.rest && !rhy) e.ps.forEach(p => { const k = p.l + p.o, cur = acc[k] != null ? acc[k] : sig[p.l]; if (p.a !== cur){ ew += 9; acc[k] = p.a; } });
         (chordAt[mi] || []).forEach(c => { if (c.off >= e.off && c.off < e.off + e.len) ew = Math.max(ew, c.text.length * 8 + 10); });
         w += ew;
       });
@@ -436,7 +442,7 @@ const Notatie = (function(){
     // ---- 3. hoogte per regel (per balk ruimte voor hulplijnen; akkoordsymbolen boven de bovenste balk) ----
     let y = 0;
     systems.forEach((S, si) => {
-      const rng = clefs.map((c, k) => { let lo = 0, hi = 8; S.ms.forEach(i => evsOf(measures[i], k).forEach(e => { if (!e.rest) e.ps.forEach(p => { const q = pos(p, c); lo = Math.min(lo, q); hi = Math.max(hi, q); }); })); return [lo, hi]; });
+      const rng = clefs.map((c, k) => { let lo = 0, hi = 8; S.ms.forEach(i => evsOf(measures[i], k).forEach(e => { if (!e.rest) psOf(e).forEach(p => { const q = pos(p, c); lo = Math.min(lo, q); hi = Math.max(hi, q); }); })); return [lo, hi]; });
       const hasCh = S.ms.some(i => chordAt[i]);
       const tupK = clefs.map((c, k) => S.ms.some(i => evsOf(measures[i], k).some(e => e.tup)) ? 16 : 0);   // ruimte voor het n-ool-cijfer
       const hi0 = rng[0][1], chordLift = Math.max(16, (hi0 - 8) * 5 + 20) + tupK[0];
@@ -446,7 +452,7 @@ const Notatie = (function(){
         const gap = Math.max(46, Math.max(20, -rng[k - 1][0] * 5 + 16) + Math.max(20, (rng[k][1] - 8) * 5 + 16) + tupK[k]);
         tops.push(tops[k - 1] + 40 + gap);
       }
-      const below = Math.max(24, -rng[clefs.length - 1][0] * 5 + 20) + tupK[clefs.length - 1], last = tops[tops.length - 1];
+      const below = Math.max(24, -rng[clefs.length - 1][0] * 5 + 20) + tupK[clefs.length - 1] - (rhy ? 14 : 0), last = tops[tops.length - 1];
       h.sys.push({ y0:y, y1:last + 40 + below, top:tops[0], tops, chordY:tops[0] - chordLift - 4 });
       y = last + 40 + below + 4;
     });
@@ -474,7 +480,16 @@ const Notatie = (function(){
           if (k === 0){ st.addClef(CLEFS[c].vf); if (nKey){ try { st.addKeySignature(key); } catch(e){} } if (mi === 0) st.addTimeSignature(time[0] + '/' + time[1]); }
           else if (BT.NONE != null) st.setBegBarType(BT.NONE);
           if (isLast && o.end !== false && BT.END != null) st.setEndBarType(BT.END);
+          if (rhy){   // één zichtbare lijn (de middelste), maatstrepen zelf tekenen: kort, één ruimte boven en onder de lijn
+            try { st.setConfigForLines([0, 1, 2, 3, 4].map(i => ({ visible:i === 2 }))); } catch(e){}
+            if (BT.NONE != null){ st.setBegBarType(BT.NONE); st.setEndBarType(BT.NONE); }
+          }
           st.setContext(ctx).draw();
+          if (rhy){
+            const ty = h.sys[si].tops[ci], bar = (bx, wd) => svgEl('rect', { x:bx, y:ty + 10, width:wd || 1, height:20, class:'ntbar' }, el.querySelector('svg'));
+            if (k === 0) bar(x);
+            if (isLast && o.end !== false){ bar(x + w - 6, 1); bar(x + w - 3, 3); } else bar(x + w - 1);
+          }
           return st;
         });
         geo.nx = staves[0].getNoteStartX();
@@ -492,12 +507,13 @@ const Notatie = (function(){
             let sn;
             if (e.rest){
               const full = e.full || (evs.length === 1 && e.len >= ms.cap);
-              sn = new VF.StaveNote({ clef:CLEFS[c].vf, keys:[vfKey(atPos(full ? 6 : 4, c))], duration:(full ? 'w' : durOf(e) || 'q') + 'r', align_center:!!full });
+              sn = new VF.StaveNote({ clef:CLEFS[c].vf, keys:[vfKey(atPos(full && !rhy ? 6 : 4, c))], duration:(full ? 'w' : durOf(e) || 'q') + 'r', align_center:!!full });
               if (!full && /d$/.test(durOf(e) || '')) VF.Dot.buildAndAttach([sn], { all:true });
             } else {
-              const ps = e.ps.slice().sort((a, b) => midi(a) - midi(b));
+              const ps = psOf(e).slice().sort((a, b) => midi(a) - midi(b));
               e._ps = ps;
-              sn = new VF.StaveNote({ clef:CLEFS[c].vf, keys:ps.map(vfKey), duration:durOf(e) || 'q', auto_stem:true });
+              sn = new VF.StaveNote(rhy ? { clef:CLEFS[c].vf, keys:[vfKey(RP)], duration:durOf(e) || 'q', stem_direction:1, auto_stem:false }
+                                        : { clef:CLEFS[c].vf, keys:ps.map(vfKey), duration:durOf(e) || 'q', auto_stem:true });
               if (/d$/.test(durOf(e) || '')) VF.Dot.buildAndAttach([sn], { all:true });
               const pv = prev[ci], tiedIn = pv && pv.ev.tie && !pv.ev.rest ? pv.ev._ps.map(midi) : [];
               ps.forEach((p, j) => {
@@ -518,7 +534,7 @@ const Notatie = (function(){
           noteSets.push(notes);
           if (!notes.length) return;
           // waardestrepen en n-olen vóór de voice: een Tuplet past de tijdwaarde van zijn noten aan (2/3 bij een triool)
-          beamGroups(evs, time).forEach(g => { try { beams.push(new VF.Beam(g.map(i => notes[i]), true)); } catch(e){} });
+          beamGroups(evs, time).forEach(g => { try { beams.push(new VF.Beam(g.map(i => notes[i]), !rhy)); } catch(e){} });
           const tg = {};
           evs.forEach((e, i) => { if (e.tup) (tg[e.tup.id] = tg[e.tup.id] || { t:e.tup, ix:[] }).ix.push(i); });
           Object.keys(tg).forEach(id => {

@@ -3,6 +3,8 @@
    Fase 1 (deze versie): één notenbalk of pianobalk (viool + bas, 23-11: wens Julian), één stem per balk (akkoorden mogen), nootwaarden 1/1 t/m 1/32 met punt, rusten, ♯ ♭ ♮, overbindingen,
    akkoordsymbolen (K), waardestrepen en maten vanzelf, ongedaan maken/opnieuw, afspelen met cursor, export MusicXML
    en ➜ Repertoire (kopie; daarna ↻ Bijwerken in Repertoire, passages en aantekeningen blijven staan).
+   Ritmebalk (23-11-2026, stap 2a): sleutel 'r' = één lijn; A–G (of X, of knop ♩ Slag) = slag, klinkt als ritmestem (Engine.click 'up'),
+   toonhoogtes van eerdere noten blijven bewaard (terug naar een gewone sleutel = melodie weer zichtbaar).
    Triolen (23-11-2026, stap 1 van "ritme en noten in de hele app combineren" = 2.0): Ctrl+3 of knop 3, zoals MuseScore.
    Later (fase 2/3): maat-/toonsoortwissel, herhalingen, kopiëren/plakken, transponeren, 2e stem,
    dynamiek/articulatie/bogen/tekst, MusicXML importeren.
@@ -32,11 +34,12 @@ const TR_DURS = [   // knoppen in het palet; k = MuseScore-toets
   { len:192, k:'7', n:'hele noot' }, { len:96, k:'6', n:'halve noot' }, { len:48, k:'5', n:'kwartnoot' },
   { len:24, k:'4', n:'achtste' }, { len:12, k:'3', n:'zestiende' }, { len:6, k:'2', n:'tweeëndertigste' }
 ];
-const TR_CLEFS = [['g', 'Vioolsleutel'], ['grand', 'Pianobalk (viool + bas)'], ['f', 'Bassleutel'], ['c3', 'Altsleutel'], ['c4', 'Tenorsleutel'], ['c1', 'Sopraansleutel']];
+const TR_CLEFS = [['g', 'Vioolsleutel'], ['grand', 'Pianobalk (viool + bas)'], ['r', 'Ritmebalk (één lijn, alleen ritme)'], ['f', 'Bassleutel'], ['c3', 'Altsleutel'], ['c4', 'Tenorsleutel'], ['c1', 'Sopraansleutel']];
 const TR_TIMES = [[4,4],[3,4],[2,4],[5,4],[6,4],[2,2],[3,2],[6,8],[9,8],[12,8],[3,8],[5,8],[7,8]];
 const TR_REF = { g:71, f:50, c1:67, c2:64, c3:60, c4:57, c5:53 };   // middenlijn: eerste noot komt hier in de buurt
 const TR_KLAV = { g:[55, 84], f:[36, 64], c1:[57, 81], c2:[53, 79], c3:[48, 76], c4:[45, 72], c5:[41, 67] };
 const TR_LET = ['c','d','e','f','g','a','b'];
+const TR_RP = { l:'b', a:0, o:4 };   // ritmebalk: elke slag wordt als B4 bewaard (de kern tekent hem op de lijn)
 const TR_TUP_SPANS = [192, 96, 48, 24, 12];   // duur van een hele triool: halve-noot-triool (1/1) … 32e-triool (1/16)
 
 let trDB = { items:[], cur:null }, trG = null, trDoc = null, trH = null, trInited = false, trSaveT = null;
@@ -72,6 +75,7 @@ function trCap(m, d){ d = d || trDoc; return m === 0 && d.pickup ? d.pickup : tr
 function trStart(m, d){ d = d || trDoc; const c = trM(d).cap; return m <= 0 ? 0 : d.pickup ? d.pickup + (m - 1) * c : m * c; }
 function trTotal(d){ d = d || trDoc; return trStart(d.n, d); }
 const trGrand = d => (d || trDoc).clef === 'grand';
+const trRhy = d => (d || trDoc).clef === 'r';     // ritmebalk (23-11-2026): één lijn, alleen ritme
 const trNSt = d => trGrand(d) ? 2 : 1;
 const trClefOf = (st, d) => trGrand(d) ? (st === 1 ? 'f' : 'g') : (d || trDoc).clef;
 function trEv(st, d){ d = d || trDoc; st = st == null ? trSt : st; if (st === 1 && trGrand(d)) return d.evsF || (d.evsF = []); return d.evs; }
@@ -325,6 +329,7 @@ function trPut(t, len, ps, tie){
 const trCurLen = () => trIn.dot ? trIn.len * 1.5 : trIn.len;
 function trHear(ps){
   if (!trG.hear || !ps || !ps.length || trPlay) return;
+  if (trRhy()){ try { ensureCtx(); Engine.click(actx.currentTime + .02, 'up', .15, true); } catch(e){} return; }
   try { ensureCtx(); const t = actx.currentTime + .02; ps.forEach(p => Engine.note(t, trMidi(p), .7, { inst:trG.inst, vol:.5 / Math.sqrt(ps.length) })); } catch(e){}
 }
 
@@ -343,6 +348,13 @@ function trEnter(ps, tie){
 function trLetter(l, shift){
   if (!trDoc) return;
   const sig = Notatie.keySig(trDoc.key);
+  if (trRhy()){   // ritmebalk: elke letter is een slag
+    const p = TR_RP;
+    if (trIn.on){ trEnter([p]); return; }
+    if (trSel == null){ trStartInput(); trEnter([p]); return; }
+    const e = trEvAt(trSel); if (!e) return;
+    trDo(() => trPut(e.t, e.len, [p], false)); trSel = e.t; trHear([p]); return;
+  }
   if (shift){   // noot erbij in het akkoord (boven de bovenste noot)
     const e = trNoteAt(trSel); if (!e){ trMsg('Kies eerst een noot (of voer er een in) om een toon bij te zetten.', 'muted'); return; }
     const top = Math.max(...e.ps.map(trMidi)), p = trNearest(l, sig[l], top, top);
@@ -365,6 +377,7 @@ function trChain(t){
 }
 function trSelNote(){ return trSel != null ? trNoteAt(trSel) : null; }
 function trPitch(fn, label){
+  if (trRhy()){ trMsg('Op de ritmebalk is er geen toonhoogte: alleen ritme.', 'muted'); return; }
   const e = trSelNote(); if (!e){ trMsg('Kies eerst een noot.', 'muted'); return; }
   let np = null;
   trDo(() => { const r = trEv().find(x => x.t === e.t); r.ps = r.ps.map(fn); np = r.ps; });
@@ -373,7 +386,7 @@ function trPitch(fn, label){
 }
 function trAcc(a){ trPitch(p => ({ l:p.l, a, o:p.o })); }
 function trInterval(n){
-  const e = trSelNote(); if (!e) return;
+  const e = trSelNote(); if (!e || trRhy()) return;
   const top = e.ps.slice().sort((x, y) => trMidi(x) - trMidi(y)).pop();
   const i = TR_LET.indexOf(top.l) + n - 1, l = TR_LET[i % 7], o = top.o + Math.floor(i / 7), p = { l, a:Notatie.keySig(trDoc.key)[l], o };
   if (trMidi(p) > 108 || e.ps.some(q => trMidi(q) === trMidi(p))) return;
@@ -457,9 +470,9 @@ function trTuplet(){
     trTps().push({ t, len:span, n:3, of:2 });
     if (ps) trEv().push({ t, len:span / 3, ps:trCopy(ps), tie:false });
   });
-  const nm = (TR_DURS.find(x => x.len === span / 2) || {}).n || '';
-  if (trIn.on){ trIn.len = span / 2; trIn.dot = false; trIn.t = t; trMsg('Triool van ' + nm + 'n: typ drie noten (0 = rust). Daarna ga je gewoon verder.', 'muted'); }
-  else { trSel = t; trMsg('Triool van ' + nm + 'n gemaakt. Delete op een rust erin haalt de triool weg.', 'muted'); }
+  const nm = ((TR_DURS.find(x => x.len === span / 2) || {}).n || '').replace(/noot$/, 'noten').replace(/e$/, 'en');
+  if (trIn.on){ trIn.len = span / 2; trIn.dot = false; trIn.t = t; trMsg('Triool van ' + nm + ': typ drie noten (0 = rust). Daarna ga je gewoon verder.', 'muted'); }
+  else { trSel = t; trMsg('Triool van ' + nm + ' gemaakt. Delete op een rust erin haalt de triool weg.', 'muted'); }
   trRender();
 }
 function trMove(dir, measure){
@@ -624,6 +637,7 @@ function trPalUI(){
   $('trMeasN').textContent = trDoc ? trDoc.n : '';
   const sb = $('trStBtn'); if (sb){ sb.hidden = !trDoc || !trGrand(); sb.innerHTML = trSt ? '⇅ Onderste balk' : '⇅ Bovenste balk'; }
   $('trView').classList.toggle('trinput', trIn.on);
+  $('trView').classList.toggle('trrhy', !!trDoc && trRhy());
   if (!trChEd) trStatus(trStatusText(sel));
   trRepUI();
 }
@@ -640,10 +654,11 @@ function trStatusText(sel){
   if (!trDoc) return '';
   if (trIn.on){
     const t = Math.min(trIn.t, trTotal());
-    return '<b>Invoeren</b>' + (trGrand() ? (trSt ? ' (onderste balk)' : ' (bovenste balk)') : '') + ' · ' + trLenName(trCurLen(), t < trTotal() && trTupAt(t)) + ' · ' + (t >= trTotal() ? 'einde' : trBeatLabel(t)) + ' · typ A–G (Shift = erbij), 0 = rust, 2–7 = nootwaarde, . = punt, Ctrl+3 = triool, T = overbinden, Esc = klaar';
+    return '<b>Invoeren</b>' + (trGrand() ? (trSt ? ' (onderste balk)' : ' (bovenste balk)') : '') + ' · ' + trLenName(trCurLen(), t < trTotal() && trTupAt(t)) + ' · ' + (t >= trTotal() ? 'einde' : trBeatLabel(t)) + ' · ' + (trRhy() ? 'A–G of X = slag' : 'typ A–G (Shift = erbij)') + ', 0 = rust, 2–7 = nootwaarde, . = punt, Ctrl+3 = triool, T = overbinden, Esc = klaar';
   }
   if (sel){
     if (sel.rest) return '<b>Rust</b> (' + (sel.full ? 'hele maat' : trEvName(sel)) + ') · ' + trBeatLabel(sel.t) + ' · typ een letter om er een noot van te maken';
+    if (trRhy()) return '<b>Slag</b> · ' + trEvName(sel) + (sel.tie ? ' · overgebonden' : '') + ' · ' + trBeatLabel(sel.t) + ' · 2–7 = andere waarde, 0 = rust, Ctrl+3 = triool';
     return '<b>' + sel.ps.map(trPName).join(' · ') + '</b> · ' + trEvName(sel) + (sel.tie ? ' · overgebonden' : '') + ' · ' + trBeatLabel(sel.t) + ' · ↑↓ halve toon, Ctrl+↑↓ octaaf, Shift+letter = toon erbij';
   }
   return 'Klik op een noot om hem te kiezen, of druk op <b>N</b> (of ✎ Invoeren) om noten te typen. K = akkoordsymbool, Ctrl+3 = triool.';
@@ -652,8 +667,9 @@ function trStatus(html){ const el = $('trStatus'); if (el) el.innerHTML = html; 
 function trMsg(html, cls){ const el = $('trMsg'); if (!el) return; el.innerHTML = html || ''; el.className = 'trmsg' + (cls ? ' ' + cls : ''); clearTimeout(trMsg.t); if (html) trMsg.t = setTimeout(() => { el.innerHTML = ''; }, 5000); }
 function trKlavBuild(){
   const box = $('trKlav'); if (!box) return;
-  box.hidden = !trG.klav; $('trKlavRow').hidden = !trG.klav;
-  if (!trG.klav || !trDoc) return;
+  const show = trG.klav && !(trDoc && trRhy());   // ritmebalk: geen klavier (knop ♩ Slag in het palet)
+  box.hidden = !show; $('trKlavRow').hidden = !show;
+  if (!show || !trDoc) return;
   const r = TR_KLAV[trClefOf(trSt)] || TR_KLAV.g, sig = r.join('-') + trG.names;   // pianobalk: bereik van de actieve balk
   if (!trKlav) trKlav = Notatie.klavier(box, { lo:r[0], hi:r[1], names:trG.names, onKey:trKlavKey });
   else if (trKlav._sig !== sig) trKlav.set({ lo:r[0], hi:r[1], names:trG.names });
@@ -661,6 +677,7 @@ function trKlavBuild(){
 }
 function trKlavKey(m){
   if (!trDoc) return;
+  if (trRhy()){ trLetter('b'); return; }
   const p = Notatie.spell(m, trDoc.key);
   if (trIn.add){   // bij de gekozen / laatst ingevoerde noot zetten
     const e = trSelNote(); if (!e){ trMsg('Kies eerst een noot om een toon bij te zetten.', 'muted'); return; }
@@ -686,7 +703,7 @@ function trSheetClick(ev){
   if (stChanged) trKlavBuild();
   if (!e){ return; }
   if (trIn.on){   // zoals MuseScore: klik = noot op die plek en die hoogte
-    const st = Notatie.atPos(a.pos, trClefOf(trSt)), sig = Notatie.keySig(trDoc.key), p = { l:st.l, a:sig[st.l], o:st.o };
+    const st = Notatie.atPos(a.pos, trClefOf(trSt)), sig = Notatie.keySig(trDoc.key), p = trRhy() ? TR_RP : { l:st.l, a:sig[st.l], o:st.o };
     if (trMidi(p) < 21 || trMidi(p) > 108) return;
     trIn.t = e.t; trEnter([p]); return;
   }
@@ -729,6 +746,12 @@ function trPlayStart(from){
     const tiedIn = new Set();
     trEv(sti).forEach(e => {
       if (e.t < from && !(e.t + e.len > from)) return;
+      if (trRhy()){   // ritmebalk: één tik per aanslag (overgebonden = geen nieuwe tik)
+        if (e.t < from) return;
+        const pv = trEv(sti).find(x => x.t + x.len === e.t);
+        if (pv && pv.tie) return;
+        Engine.click(at(e.t), 'up', Math.max(.08, e.len * spt * .9), true); return;
+      }
       e.ps.forEach(p => {
         const m = trMidi(p), k = e.t + ':' + m; if (tiedIn.has(k)) return;
         let end = e.t + e.len, cur = e;
@@ -804,7 +827,8 @@ function trXML(d){
   const grand = trGrand(d), nst = grand ? 2 : 1;
   const Ls = []; for (let st = 0; st < nst; st++) Ls.push(trLayout(d, st));
   const M = trM(d), sig = Notatie.keySig(d.key), fifths = Notatie.fifths(d.key), minor = /m$/.test(d.key);
-  const instr = grand ? 'Piano' : d.clef === 'g' ? 'Viool' : d.clef === 'c3' ? 'Altviool' : d.clef === 'f' ? 'Cello' : 'Partij';
+  const rhy = trRhy(d), RX = ['E', 4];   // ritmebalk: <unpitched>; bij één lijn telt MusicXML vanaf de onderste lijn = E4 (OSMD zet hem dan op de lijn)
+  const instr = rhy ? 'Ritme' : grand ? 'Piano' : d.clef === 'g' ? 'Viool' : d.clef === 'c3' ? 'Altviool' : d.clef === 'f' ? 'Cello' : 'Partij';
   const noteAt = (t, st) => trEv(st, d).find(e => e.t === t) || null;
   const harmony = (txt, off) => {
     const p = trChordParse(txt), offX = off ? '<offset>' + off + '</offset>' : '';
@@ -851,7 +875,10 @@ function trXML(d){
         let acc = '';
         if (!tin && p.a !== curA){ acc = '<accidental>' + ({ 0:'natural', 1:'sharp', '-1':'flat', 2:'double-sharp', '-2':'flat-flat' })[p.a] + '</accidental>'; }
         barAcc[bk] = p.a;
-        out += '<note>' + (j ? '<chord/>' : '') + '<pitch><step>' + p.l.toUpperCase() + '</step>' + (p.a ? '<alter>' + p.a + '</alter>' : '') + '<octave>' + p.o + '</octave></pitch>';
+        if (rhy && j) return;   // ritmebalk: één slag, geen akkoord
+        if (rhy) acc = '';
+        out += '<note>' + (j ? '<chord/>' : '') + (rhy ? '<unpitched><display-step>' + RX[0] + '</display-step><display-octave>' + RX[1] + '</display-octave></unpitched>'
+          : '<pitch><step>' + p.l.toUpperCase() + '</step>' + (p.a ? '<alter>' + p.a + '</alter>' : '') + '<octave>' + p.o + '</octave></pitch>');
         out += '<duration>' + e.len + '</duration>' + (tin ? '<tie type="stop"/>' : '') + (tout ? '<tie type="start"/>' : '') + '<voice>' + voice + '</voice><type>' + (TR_TYPE[base] || 'quarter') + '</type>' + (dot ? '<dot/>' : '') + acc + tm(e) + stf;
         if (!j && beams[i]) beams[i].forEach((b, k) => { out += '<beam number="' + (k + 1) + '">' + b + '</beam>'; });
         const tnj = j ? '' : tn;
@@ -869,9 +896,10 @@ function trXML(d){
   Ls[0].forEach((ms, mi) => {
     out += '<measure number="' + ms.num + '"' + (mi === 0 && d.pickup ? ' implicit="yes"' : '') + '>';
     if (mi === 0){
-      out += '<attributes><divisions>' + TQ + '</divisions><key><fifths>' + fifths + '</fifths><mode>' + (minor ? 'minor' : 'major') + '</mode></key>';
+      out += '<attributes><divisions>' + TQ + '</divisions>' + (rhy ? '' : '<key><fifths>' + fifths + '</fifths><mode>' + (minor ? 'minor' : 'major') + '</mode></key>');
       out += '<time><beats>' + d.time[0] + '</beats><beat-type>' + d.time[1] + '</beat-type></time>';
       if (grand) out += '<staves>2</staves><clef number="1"><sign>G</sign><line>2</line></clef><clef number="2"><sign>F</sign><line>4</line></clef>';
+      else if (rhy) out += '<clef><sign>percussion</sign></clef><staff-details><staff-lines>1</staff-lines></staff-details>';
       else { const cl = TR_XCLEF[d.clef] || TR_XCLEF.g; out += '<clef><sign>' + cl[0] + '</sign><line>' + cl[1] + '</line></clef>'; }
       out += '</attributes>';
       out += '<direction placement="above"><direction-type><metronome><beat-unit>' + (M.comp ? 'quarter' : (TR_TYPE[M.unit] || 'quarter')) + '</beat-unit>' + (M.comp ? '<beat-unit-dot/>' : '') + '<per-minute>' + d.bpm + '</per-minute></metronome></direction-type>' + (grand ? '<staff>1</staff>' : '') + '<sound tempo="' + Math.round(d.bpm * M.beat / TQ) + '"/></direction>';
@@ -922,7 +950,7 @@ async function trToRep(){
   } else {
     nieuw = true;
     it = { id:'p' + Date.now().toString(36), naam:trDoc.titel, titel:trDoc.titel, comp:trDoc.comp, data:xml, made:trToday(), last:null, s:{ bpm:trDoc.bpm, unit:trRepUnit() },
-           instr:trDoc.clef === 'grand' ? 'piano' : trDoc.clef === 'g' || trDoc.clef === 'c3' ? 'viool' : 'overig', bron:'transcriberen', trId:trDoc.id };
+           instr:trDoc.clef === 'grand' ? 'piano' : trDoc.clef === 'r' ? 'overig' : trDoc.clef === 'g' || trDoc.clef === 'c3' ? 'viool' : 'overig', bron:'transcriberen', trId:trDoc.id };
     trDoc.repId = it.id;
   }
   await PtDB.put(it);
@@ -1045,7 +1073,7 @@ function trKeydown(e){
   if (k === 'ArrowLeft' || k === 'ArrowRight'){ e.preventDefault(); trMove(k === 'ArrowRight' ? 1 : -1); return; }
   if (k === 'ArrowUp' || k === 'ArrowDown'){ e.preventDefault(); trPitch(p => trStep(p, k === 'ArrowUp' ? 1 : -1)); return; }
   if (k === 'Home'){ e.preventDefault(); if (trIn.on) trIn.t = 0; else trSel = 0; trRender(); trScrollTo(0); return; }
-  if (/^[a-g]$/i.test(k)){ e.preventDefault(); trLetter(low, e.shiftKey); return; }
+  if (/^[a-g]$/i.test(k) || (low === 'x' && trRhy())){ e.preventDefault(); trLetter(low === 'x' ? 'b' : low, e.shiftKey); return; }
   if (low === 'n'){ e.preventDefault(); trIn.on ? trStopInput() : trStartInput(); return; }
   if (/^Digit[2-7]$/.test(e.code) || /^[2-7]$/.test(k)){ e.preventDefault(); const dd = TR_DURS.find(x => x.k === (e.code ? e.code.slice(5) : k)); if (dd) trSetLen(dd.len); return; }
   if (k === '0' || e.code === 'Digit0'){ e.preventDefault(); trRest(); return; }
@@ -1092,6 +1120,7 @@ function trInit(){
   $('trDot').onclick = () => { $('trDot').blur(); trToggleDot(); };
   $('trRestBtn').onclick = () => { $('trRestBtn').blur(); trRest(); };
   $('trTupBtn').onclick = () => { $('trTupBtn').blur(); trTuplet(); };
+  $('trHitBtn').onclick = () => { $('trHitBtn').blur(); trLetter('b'); };
   $('trInBtn').onclick = () => { $('trInBtn').blur(); trIn.on ? trStopInput() : trStartInput(); };
   document.querySelectorAll('#trView [data-acc]').forEach(b => b.onclick = () => { b.blur(); trAcc(+b.dataset.acc); });
   $('trTieBtn').onclick = () => { $('trTieBtn').blur(); trTie(); };
@@ -1121,6 +1150,7 @@ function trInit(){
       }
       trDoc.clef = nc;
     });
+    if (nc === 'r' && oc !== 'r') note = (note ? note + ' ' : '') + 'Ritmebalk: alle noten staan nu op één lijn. De toonhoogtes blijven bewaard: kies weer een gewone sleutel om ze terug te zien.';
     trSt = 0; trSel = null; trKlavBuild(); trRender(); if (note) trMsg(note, 'muted');
   };
   $('trKey').onchange = () => { trDo(() => { trDoc.key = $('trKey').value; }); };

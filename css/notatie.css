@@ -8,6 +8,7 @@ body.notenleer nav, body.notenleer .controls, body.toonladders nav, body.toonlad
 .ntstaff svg [fill]:not([fill="none"]){fill:currentColor}
 .ntstaff svg [stroke]:not([stroke="none"]){stroke:currentColor}
 .ntstaff svg text{fill:currentColor}
+.ntstaff svg .ntbar{fill:currentColor}   /* korte maatstrepen van de ritmebalk */
 /* volgorde = voorrang: goed/fout wint van de afspeelcursor */
 .ntstaff .nt-hint{color:var(--accent)}
 .ntstaff .nt-cur{color:var(--accent)}
