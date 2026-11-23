@@ -936,18 +936,26 @@ function ptCacheDrop(it){ (it.ck || []).forEach(k => PtDB.cdel(ptCK(it.id, 'svg|
    Een lijn over het hele systeem (beide balken bij piano) die op de audioklok vloeiend van noot naar noot schuift
    en aan het eind van een regel naar de rechterkant glijdt. Posities komen uit de getekende noten (ptGeoBuild):
    regels = reeksen noten waarvan x oploopt (in de volgorde van de muziek, herhalingen hergebruiken dezelfde noten). */
+/* Volledig scherm kan 90° gedraaid zijn (#ptFsRot). getBoundingClientRect geeft dan schermcoördinaten met verwisselde assen.
+   ptBox(el) + ptLocPt/ptLocRect rekenen schermcoördinaten om naar de eigen (ongedraaide, ongeschaalde) coördinaten van el. */
+const ptRotNow = () => ptFsOn ? (+ptG.rot || 0) : 0;
+function ptBox(el){ const r = el.getBoundingClientRect(), rot = ptRotNow(), w = el.offsetWidth; return { r, rot, sc:w ? (rot ? r.height : r.width) / w : 1 }; }
+function ptLocPt(F, sx, sy){ const { r, rot, sc } = F; return rot === 90 ? { x:(sy - r.top) / sc, y:(r.right - sx) / sc } : rot === -90 ? { x:(r.bottom - sy) / sc, y:(sx - r.left) / sc } : { x:(sx - r.left) / sc, y:(sy - r.top) / sc }; }
+function ptLocRect(F, q){ const a = ptLocPt(F, q.left, q.top), b = ptLocPt(F, q.right, q.bottom), l = Math.min(a.x, b.x), t = Math.min(a.y, b.y), rr = Math.max(a.x, b.x), bb = Math.max(a.y, b.y); return { left:l, top:t, right:rr, bottom:bb, width:rr - l, height:bb - t }; }
+function ptLocDelta(dx, dy){ const rot = ptRotNow(); return rot === 90 ? { x:dy, y:-dx } : rot === -90 ? { x:-dy, y:dx } : { x:dx, y:dy }; }   // schermverschuiving → verschuiving in de partituur
 function ptGeoBuild(){
-  const sh = $('ptSheet'), sr = sh.getBoundingClientRect(), sc = sh.offsetWidth ? sr.width / sh.offsetWidth : 1;
+  const F = ptBox($('ptSheet'));
   const E = ptEls.map(g => {
     if (!g || !g.isConnected) return null;
-    const r = g.getBoundingClientRect(); if (!r.width && !r.height) return null;
+    const r0 = g.getBoundingClientRect(); if (!r0.width && !r0.height) return null;
+    const r = ptLocRect(F, r0);
     const pg = ptFsOn && ptPages.length > 1 ? ptPages.findIndex(p => p.contains(g)) : 0;
     // ankerpunt = midden van het (meest linkse) nootbolletje, niet de linkerrand (die ligt bij een voorteken te ver naar links)
     let ax = null;
     const heads = g.querySelectorAll('.vf-notehead');
-    if (heads.length){ let best = null; heads.forEach(hd => { const q = hd.getBoundingClientRect(); if ((q.width || q.height) && (!best || q.left < best.left)) best = q; }); if (best) ax = (best.left + best.right) / 2; }
+    if (heads.length){ let best = null; heads.forEach(hd => { const q0 = hd.getBoundingClientRect(); if (!(q0.width || q0.height)) return; const q = ptLocRect(F, q0); if (!best || q.left < best.left) best = q; }); if (best) ax = (best.left + best.right) / 2; }
     if (ax == null) ax = r.left + Math.min(r.width, 12) / 2;
-    return { x:(ax - sr.left) / sc, rt:(r.right - sr.left) / sc, t:(r.top - sr.top) / sc, b:(r.bottom - sr.top) / sc, pg };
+    return { x:ax, rt:r.right, t:r.top, b:r.bottom, pg };
   });
   const lineOf = new Array(E.length).fill(-1), lines = [];
   let cur = -1, lastX = -1e9, lastPg = -1;
@@ -1019,9 +1027,8 @@ function ptPosAt(cx, cy, target){   // klik/sleep-punt → {i, W}: op een noot p
 }
 function ptSetPause(i, W, by){ ptPausedAt = i; ptPausedW = W == null ? ptSteps[i].w : W; ptPausedBy = by; }
 function ptLineHide(){ const l = $('ptLine'); if (l){ l.hidden = true; l.classList.remove('paused'); } }
-function ptToSheet(cx, cy){   // schermcoördinaten → coördinaten binnen #ptSheet (rekening houdend met de schaal)
-  const sh = $('ptSheet'), sr = sh.getBoundingClientRect(), sc = sh.offsetWidth ? sr.width / sh.offsetWidth : 1;
-  return { x:(cx - sr.left) / sc, y:(cy - sr.top) / sc };
+function ptToSheet(cx, cy){   // schermcoördinaten → coördinaten binnen #ptSheet (rekening houdend met schaal en draaiing)
+  return ptLocPt(ptBox($('ptSheet')), cx, cy);
 }
 function ptStepAt(cx, cy, target){   // stap onder een punt: een noot (data-e) of de plek op de balk
   const g = target && target.closest && target.closest('[data-e]');
@@ -1108,13 +1115,14 @@ function ptFollowStep(i){   // meescrollen/omslaan op basis van de regel van de 
   if (ptFsOn && !ptFsCont){ const el = ptSteps[i] && ptSteps[i].els.map(e => ptEls[e]).find(Boolean); if (el) ptFsFollow(el); return; }
   if (!g) return;
   const L = ptGeo.lines[g.line];
-  const sh = $('ptSheet'), sr = sh.getBoundingClientRect(), sc = sh.offsetWidth ? sr.width / sh.offsetWidth : 1;
-  const top = sr.top + (L.t - 12) * sc, bot = sr.top + (L.b + 12) * sc;
-  if (ptFsOn){
-    const c = $('ptFsPage').getBoundingClientRect();
-    if ((top < c.top + 10 || bot > c.bottom - 10) && Date.now() - ptLastScroll > 500){ ptLastScroll = Date.now(); $('ptFsPage').scrollBy({ top:top - c.top - c.height * .25, behavior:'smooth' }); }
+  if (ptFsOn){   // in de eigen (eventueel gedraaide) coördinaten van #ptFsPage; #ptSheet en #ptFsPage draaien mee
+    const P = $('ptFsPage'), sh = $('ptSheet'), Fp = ptBox(P), Fs = ptBox(sh), o = ptLocRect(Fp, Fs.r), k = Fs.sc / (Fp.sc || 1);
+    const top = o.top + (L.t - 12) * k, bot = o.top + (L.b + 12) * k, ch = P.clientHeight;
+    if ((top < 10 || bot > ch - 10) && Date.now() - ptLastScroll > 500){ ptLastScroll = Date.now(); P.scrollBy({ top:top - ch * .25, behavior:'smooth' }); }
     return;
   }
+  const sh = $('ptSheet'), sr = sh.getBoundingClientRect(), sc = sh.offsetWidth ? sr.width / sh.offsetWidth : 1;
+  const top = sr.top + (L.t - 12) * sc, bot = sr.top + (L.b + 12) * sc;
   const H = window.innerHeight, hh = ptHeadH();
   if ((top < hh + 20 || bot > H - 50) && Date.now() - ptLastScroll > 500){ ptLastScroll = Date.now(); window.scrollBy({ top:top - Math.max(hh + 20, Math.min(200, H * .28)), behavior:'smooth' }); }
 }
@@ -1601,8 +1609,8 @@ function ptFsFollow(g){
   const pg = ptPages.findIndex(p => p.contains(g));
   if (pg < 0) return;
   if (ptFsCont){
-    const r = g.getBoundingClientRect(), c = $('ptFsPage').getBoundingClientRect();
-    if ((r.top < c.top + 20 || r.bottom > c.bottom - 20) && Date.now() - ptLastScroll > 600){ ptLastScroll = Date.now(); $('ptFsPage').scrollBy({ top:r.top - c.top - c.height * .3, behavior:'smooth' }); }
+    const P = $('ptFsPage'), r = ptLocRect(ptBox(P), g.getBoundingClientRect()), ch = P.clientHeight;
+    if ((r.top < 20 || r.bottom > ch - 20) && Date.now() - ptLastScroll > 600){ ptLastScroll = Date.now(); P.scrollBy({ top:r.top - ch * .3, behavior:'smooth' }); }
     return;
   }
   if (pg < ptFsP || pg >= ptFsP + ptFsN) ptFsGo(pg);
@@ -1706,7 +1714,7 @@ function ptFsTouch(){
   pg.addEventListener('pointerdown', e => { st = (e.pointerType === 'mouse' || (typeof Ann !== 'undefined' && Ann.grabs(e))) ? null : { x:e.clientX, y:e.clientY, t:Date.now() }; eat = false; }, true);
   pg.addEventListener('pointerup', e => {
     if (!st || !ptFsOn || ptFsCont) { st = null; return; }
-    const dx = e.clientX - st.x, dy = e.clientY - st.y, dt = Date.now() - st.t; st = null;
+    const d = ptLocDelta(e.clientX - st.x, e.clientY - st.y), dx = d.x, dy = d.y, dt = Date.now() - st.t; st = null;   // vegen in de leesrichting, ook gedraaid
     if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 700){ eat = true; ptFsTurn(dx < 0 ? 1 : -1); return; }
     if (Math.abs(dx) < 12 && Math.abs(dy) < 12 && dt < 450){
       const r = pg.getBoundingClientRect(), rot = +ptG.rot || 0;

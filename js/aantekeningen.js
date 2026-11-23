@@ -185,13 +185,14 @@ const Ann = (function(){
     return Array.from({ length:Math.max(1, ptStaves || 1) }, (_, k) => k);
   }
   function median(a){ if (!a.length) return NaN; const b = a.slice().sort((x, y) => x - y); return b[b.length >> 1]; }
-  function staves(sr, sc){   // alle balken (vijf lijnen) in de tekening, in coördinaten van #ptSheet
+  function staves(F){   // alle balken (vijf lijnen) in de tekening, in coördinaten van #ptSheet (ook in gedraaid volledig scherm)
     const segs = [];
     ptActive().querySelectorAll('path').forEach(p => {
       const d = p.getAttribute('d'); if (!d || d.length > 80) return;
       const m = LINE_RE.exec(d); if (!m || Math.abs(+m[2] - +m[4]) > .05 || Math.abs(+m[3] - +m[1]) < 15) return;
-      const r = p.getBoundingClientRect(); if (!r.width) return;
-      segs.push({ l:(r.left - sr.left) / sc, r:(r.right - sr.left) / sc, y:(r.top - sr.top) / sc });
+      const r0 = p.getBoundingClientRect(); if (!r0.width && !r0.height) return;
+      const r = ptLocRect(F, r0); if (!r.width) return;
+      segs.push({ l:r.left, r:r.right, y:r.top });
     });
     const buckets = new Map();
     segs.forEach(s => { const k = Math.round(s.l / 2) + '|' + Math.round(s.r / 2); if (!buckets.has(k)) buckets.set(k, []); buckets.get(k).push(s); });
@@ -212,14 +213,14 @@ const Ann = (function(){
   function geo(){
     if (!ptGeo) ptGeo = ptGeoBuild();
     if (G && G.geo === ptGeo) return G;
-    const sh = $('ptSheet'), sr = sh.getBoundingClientRect(), sc = sh.offsetWidth ? sr.width / sh.offsetWidth : 1;
+    const F = ptBox($('ptSheet'));
     // terugval-sp: hoogte van de nootbolletjes (≈ één balkruimte)
-    const hs = []; ptActive().querySelectorAll('.vf-notehead').forEach((h, k) => { if (k > 80) return; const r = h.getBoundingClientRect(); if (r.height) hs.push(r.height / sc); });
+    const hs = []; ptActive().querySelectorAll('.vf-notehead').forEach((h, k) => { if (k > 80) return; const r = ptLocRect(F, h.getBoundingClientRect()); if (r.height) hs.push(r.height); });
     let sp0 = median(hs); if (!(sp0 > 2)) sp0 = 10 * (ptFsOn ? 1 : (ptG.zoom || 100) / 100);
     const lines = ptGeo.lines.map(L => ({ l:Infinity, r:L.r, t:L.t, b:L.b, pg:L.pg, tops:[], sps:[] }));
     ptGeo.step.forEach(g => { if (g && lines[g.line]) lines[g.line].l = Math.min(lines[g.line].l, g.x); });
     let st = [];
-    try { st = staves(sr, sc); } catch(e){ console.warn('Aantekeningen: balken zoeken mislukt', e); }
+    try { st = staves(F); } catch(e){ console.warn('Aantekeningen: balken zoeken mislukt', e); }
     st.forEach(s => {   // balk → regel: horizontaal binnen de regel, verticaal het dichtst bij de noten van die regel
       const c = (s.top + s.bot) / 2; let best = -1, bd = Infinity;
       lines.forEach((L, k) => {

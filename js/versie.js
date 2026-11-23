@@ -5,8 +5,9 @@
    (wens gebruiker: gewoon doortellen 1.7 → 1.8 → 1.9 → 1.10 …; het eerste getal alleen omhoog bij een
    echt grote update, zoals het gedeelde notensysteem). Zelfde nummer in artifact én website. */
 const Versie = (function(){
-  const VERSIE = '1.29';
+  const VERSIE = '1.30';
   const NIEUW = [
+    ['1.30', '23-11', 'Repertoire: in gedraaid volledig scherm (90°) staan de cursor en je aantekeningen/stempels weer op de goede plek; tikken, slepen, vegen en meescrollen volgen de draaiing'],
     ['1.29', '23-11', 'Transcriberen: ritmebalk (één lijn, alleen ritme) voor je practice pad; slagen met A–G, X of ♩ Slag, met triolen, afspelen en naar Repertoire'],
     ['1.28', '23-11', 'Transcriberen: triolen (Ctrl+3 of knop 3, zoals MuseScore), ook in de pianobalk; ze klinken en gaan mee naar Repertoire en MusicXML'],
     ['1.27', '22-11', 'Transcriberen: pianobalk (viool- en bassleutel met accolade), wissel met Alt+↑ ↓ of ⇅; beide balken klinken en gaan mee naar Repertoire'],
